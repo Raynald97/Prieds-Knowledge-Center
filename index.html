@@ -48,6 +48,16 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 .topicLinks button{width:100%;border:0;background:transparent;text-align:left;padding:7px 8px;border-radius:4px;color:#27343A;font-size:12px;line-height:1.35}
 .topicLinks button:hover{color:#0789B2;background:#EFF9FC}
 .topicLinks button.active{background:var(--primary);color:#fff;font-weight:750}
+.faqCategoryGroup{margin:2px 0 5px;border-left:1px solid #D8E7EC;padding-left:6px}
+.topicLinks .faqCategoryToggle{display:flex;align-items:center;gap:6px;padding:7px 8px;background:#F2F9FB;color:#075D78;font-weight:800}
+.topicLinks .faqCategoryToggle:hover{background:#E7F5F9;color:#075D78}
+.faqCategoryChev{width:12px;display:inline-block;transition:.18s;color:#40545D}
+.faqCategoryName{flex:1;min-width:0}
+.faqCategoryCount{min-width:22px;padding:1px 6px;border-radius:10px;background:#DDF3F9;color:#08789A;font-size:10px;text-align:center}
+.faqCategoryLinks{display:none;padding:2px 0 4px 15px}
+.faqCategoryGroup.open>.faqCategoryLinks{display:grid}
+.faqCategoryGroup.open>.faqCategoryToggle .faqCategoryChev{transform:rotate(90deg)}
+.faqCategoryLinks button{padding:6px 8px}
 .main{min-width:0}
 .breadcrumb{font-size:12px;color:#95A0A5;margin:0 0 18px}
 .breadcrumb button{border:0;background:transparent;color:#6D7A80;padding:0}
@@ -123,659 +133,120 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 </div>
 <div class="mobileDrawer" id="mobileDrawer"><aside class="sidebar"><h2 class="sidebarTitle" data-ui="tocTitle"></h2><div id="mobileNav"></div></aside></div>
 <div class="lightbox" id="lightbox"><button class="close" id="lightboxClose">×</button><img id="lightboxImg"></div><div class="toast" id="toast"></div>
-
-<script src="knowledge-data.js"></script>
-<script src="knowledge-store.js"></script>
-
-<script type="module">
-const __kcState=await window.KCStore.load(window.KC_DEFAULT_DATA);
+<script src="knowledge-data.js"></script><script src="knowledge-store.js"></script><script type="module">const __kcState=await window.KCStore.load(window.KC_DEFAULT_DATA);
 let DATA=__kcState.data;
-
 const FAQ_ROWS=[
-["FAQ-001","Integrasi","Integration","WMS Lite","WMS Lite","Bagaimana cara melakukan sinkronisasi ulang Sales Order (SO) yang bermasalah?","How do I resynchronize a problematic Sales Order (SO)?","Klik ikon Sync di kanan atas, pilih sinkronisasi SO secara spesifik, lalu masukkan nomor SO yang bermasalah. Jalankan sinkronisasi dan periksa kembali status serta detail SO di Prieds. Jika data masih berbeda, pastikan SO pada sistem sumber, seperti Accurate atau Jurnal, tidak sedang diubah atau telah dihapus.","Click the Sync icon in the upper-right corner, select the specific SO synchronization option, and enter the affected SO number. Run the synchronization and recheck the SO status and details in Prieds. If the data still differs, confirm that the SO in the source system, such as Accurate or Jurnal, has not been edited or deleted."],
-["FAQ-002","Purchasing","Purchasing","WMS Lite & WMS Lite RFID","Both","Bagaimana cara memproses retur pembelian?","How do I process a purchase return?","Buka menu Purchasing > Purchase Return. Cari dokumen berdasarkan tanggal, supplier, nomor inbound, atau nomor PO, lalu pilih barang dan masukkan jumlah yang akan diretur. Simpan data, buka tab Return List, kemudian pilih Make DO untuk membuat dokumen pengiriman retur ke supplier.","Open Purchasing > Purchase Return. Find the document using the date, supplier, inbound number, or PO number, then select the items and enter the return quantity. Save the data, open the Return List tab, and select Make DO to create the return delivery document for the supplier."],
-["FAQ-003","Data & Biaya","Data & Cost","WMS Lite & WMS Lite RFID","Both","Apa arti nilai “NaN” pada kolom Cost?","What does “NaN” mean in the Cost column?","NaN berarti sistem tidak menemukan nilai biaya yang valid untuk item atau transaksi tersebut. Periksa master harga atau biaya item, data transaksi sumber, dan hasil sinkronisasi integrasi. Setelah datanya dilengkapi, lakukan sinkronisasi atau proses ulang dokumen terkait.","NaN means the system could not find a valid cost value for the item or transaction. Check the item price or cost master, the source transaction data, and the integration synchronization result. After completing the data, resynchronize or reprocess the related document."],
-["FAQ-004","Production","Production","WMS Lite","WMS Lite","Apa yang terjadi jika Assembly Report berstatus Done dibatalkan atau di-void?","What happens if a completed Assembly Report is voided?","Pembatalan akan mengembalikan perubahan stok yang berasal dari proses assembly dan membatalkan dokumen pekerjaan serta penyelesaian pesanan yang terkait. Sebelum melakukan void, pastikan dokumen tersebut belum digunakan oleh transaksi lanjutan agar tidak menimbulkan ketidaksesuaian data.","Voiding the report reverses the stock changes created by the assembly process and cancels the related work and order-completion documents. Before voiding, make sure the document has not been used by any downstream transaction to avoid data inconsistencies."],
-["FAQ-005","Integrasi Jurnal","Jurnal Integration","WMS Lite","WMS Lite","Bagaimana menangani Delivery Order yang tidak dapat di-void karena datanya berbeda dengan Jurnal?","How do I handle a Delivery Order that cannot be voided because its data differs from Jurnal?","Periksa terlebih dahulu apakah DO telah diubah atau dihapus di Jurnal. Lakukan rekonsiliasi nomor dokumen dan status pada kedua sistem. Jika prosedur perusahaan mengizinkan, koneksi Jurnal dapat diputus sementara untuk melakukan void di Prieds, kemudian disambungkan kembali dan disinkronkan. Hubungi Prieds Support jika ketidaksesuaian tetap terjadi.","First, check whether the DO was edited or deleted in Jurnal. Reconcile the document number and status in both systems. If permitted by your company procedure, temporarily disconnect Jurnal, void the document in Prieds, reconnect the integration, and synchronize again. Contact Prieds Support if the mismatch remains."],
-["FAQ-006","Outbound & Integrasi","Outbound & Integration","WMS Lite","WMS Lite","Mengapa Delivery Order tidak dapat dibuat dari Sales Order?","Why can’t a Delivery Order be created from a Sales Order?","Penyebab yang paling umum adalah SO belum tersinkronisasi, telah diubah pada sistem sumber, belum berstatus siap diproses, atau jumlah outstanding-nya sudah habis. Sinkronkan ulang nomor SO secara spesifik, lalu periksa status, item, jumlah, customer, dan site sebelum membuat DO kembali.","The most common causes are that the SO has not been synchronized, was edited in the source system, is not ready for processing, or has no remaining outstanding quantity. Resynchronize the specific SO, then verify its status, items, quantities, customer, and site before creating the DO again."],
-["FAQ-007","Master Product & Purchasing","Master Product & Purchasing","WMS Lite & WMS Lite RFID","Both","Mengapa SKU tidak muncul saat membuat Purchase Request?","Why does an SKU not appear when creating a Purchase Request?","Buka Master > Product Management dan cari SKU tersebut. Pastikan SKU aktif dan pengaturan Sellable/Purchaseable mengizinkan item untuk dibeli, misalnya Purchaseable & Not Sellable atau Sellable & Purchaseable. Simpan perubahan, lalu buka kembali halaman Purchase Request.","Open Master > Product Management and locate the SKU. Make sure the SKU is active and its Sellable/Purchaseable setting allows purchasing, such as Purchaseable & Not Sellable or Sellable & Purchaseable. Save the changes, then reopen the Purchase Request page."],
-["FAQ-008","Inbound & Putaway","Inbound & Putaway","WMS Lite & WMS Lite RFID","Both","Mengapa barcode tidak dapat dipindai saat proses putaway?","Why can’t a barcode be scanned during putaway?","Barcode mungkin sudah dialokasikan ke picklist, jumlah stoknya tidak mencukupi, atau statusnya tidak lagi tersedia untuk putaway. Periksa detail barcode dan dokumen picklist yang terkait. Selesaikan atau batalkan alokasi yang salah, lalu lakukan putaway sebelum barcode digunakan pada proses picking.","The barcode may already be allocated to a picklist, have insufficient remaining stock, or no longer be available for putaway. Check the barcode details and the related picklist document. Complete or cancel the incorrect allocation, then perform putaway before using the barcode for picking."],
-["FAQ-009","Sales Return","Sales Return","WMS Lite & WMS Lite RFID","Both","Mengapa sudah ada data pada menu Sales Return padahal belum membuat retur, dan bagaimana cara membuat retur penjualan?","Why are records shown in Sales Return even though no return has been created, and how do I create a sales return?","Tab Sales Return menampilkan DO yang telah dispatched dan memenuhi syarat untuk diretur; data tersebut belum berarti retur sudah dibuat. Pilih DO yang sesuai, masukkan jumlah retur, lalu Submit. Setelah itu buka tab Process Sales Return dan pilih Make DO saat barang telah kembali. Sistem akan menambahkan stok retur dan membuat proses putaway bila konfigurasi stok mengharuskannya.","The Sales Return tab displays dispatched DOs that are eligible for return; these records do not mean a return has already been created. Select the relevant DO, enter the return quantity, and submit it. Then open Process Sales Return and select Make DO when the goods have been received back. The system will add the returned stock and create a putaway process when required by the stock configuration."],
-["FAQ-010","Master Customer","Master Customer","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menambahkan customer baru?","How do I add a new customer?","Buka Master > Customer Management, lalu pilih tab Customer Register. Isi data customer yang wajib, pastikan informasinya benar, kemudian klik Submit. Data yang berhasil disimpan dapat dilihat dan diedit melalui tab Customer List.","Open Master > Customer Management and select the Customer Register tab. Complete the required customer information, verify the data, and click Submit. Successfully saved customers can be viewed and edited from the Customer List tab."],
-["FAQ-011","Login & Akses","Login & Access","WMS Lite & WMS Lite RFID","Both","Apa yang harus dilakukan jika tidak dapat login ke Prieds?","What should I do if I cannot log in to Prieds?","Pastikan username dan password telah dimasukkan dengan benar, termasuk penggunaan huruf besar dan kecil. Periksa juga koneksi internet dan alamat aplikasi yang digunakan. Jika akun tetap tidak dapat digunakan, hubungi administrator perusahaan atau Prieds Support untuk memeriksa status dan hak akses akun.","Make sure the username and password are entered correctly, including letter capitalization. Also check your internet connection and the application address. If the account still cannot be used, contact your company administrator or Prieds Support to verify the account status and access rights."],
-["FAQ-012","Master Product","Master Product","WMS Lite & WMS Lite RFID","Both","Bagaimana cara membuat SKU atau produk baru?","How do I create a new SKU or product?","Buka Master > Product Management dan klik Add New SKU. Isi SKU, nama barang, harga, UOM, UPC, SKU Type, serta pengaturan Sellable/Purchaseable. Lengkapi atribut atau safety stock bila diperlukan, lalu simpan hingga muncul notifikasi SKU Created.","Open Master > Product Management and click Add New SKU. Enter the SKU, item name, price, UOM, UPC, SKU Type, and Sellable/Purchaseable setting. Add attributes or safety stock when needed, then save the data until the SKU Created notification appears."],
-["FAQ-013","Master Product","Master Product","WMS Lite & WMS Lite RFID","Both","Kapan dan bagaimana menggunakan UOM Converter?","When and how should I use the UOM Converter?","Gunakan UOM Converter jika satu produk memiliki lebih dari satu satuan. Masukkan satuan konversi dan jumlah ekuivalennya, misalnya 1 lusin = 12 pcs. Pastikan satuan dasar dan nilai konversi benar agar transaksi stok tidak menghasilkan jumlah yang keliru.","Use the UOM Converter when a product has more than one unit of measure. Enter the conversion unit and its equivalent quantity, for example, 1 dozen = 12 pieces. Make sure the base unit and conversion value are correct to prevent incorrect stock quantities."],
-["FAQ-014","Master Product","Master Product","WMS Lite & WMS Lite RFID","Both","Bagaimana cara mencetak barcode SKU atau UPC secara massal?","How do I print SKU or UPC barcodes in bulk?","Pada halaman Product Management, klik Bulk Print Barcode, pilih produk yang akan dicetak, lalu tentukan jenis barcode SKU atau UPC. Setelah item dipilih, lanjutkan dengan Confirm Print dan periksa hasil pada halaman Print Preview sebelum mencetak.","On the Product Management page, click Bulk Print Barcode, select the products to print, and choose either SKU or UPC barcode. After selecting the items, continue with Confirm Print and review the Print Preview before printing."],
-["FAQ-015","Master Customer","Master Customer","WMS Lite & WMS Lite RFID","Both","Bagaimana cara mengimpor banyak data customer sekaligus?","How do I import multiple customer records at once?","Buka Master > Customer Management > Customer Register Import. Unduh template, isi data sesuai kolom yang tersedia tanpa mengubah struktur file, lalu unggah melalui Choose a File. Periksa hasil import, pilih Save Import, kemudian Submit untuk menyimpan data ke sistem.","Open Master > Customer Management > Customer Register Import. Download the template, complete the data without changing the file structure, and upload it through Choose a File. Review the imported records, select Save Import, and then Submit to save them to the system."],
-["FAQ-016","Master Supplier","Master Supplier","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menambahkan atau mengimpor supplier?","How do I add or import suppliers?","Untuk menambahkan satu supplier, buka Master > Supplier Management > Register Supplier, lengkapi data wajib, lalu Submit. Untuk import massal, gunakan tab Supplier Register Import, unduh template, isi datanya, unggah file, pilih Save Import, kemudian Submit.","To add one supplier, open Master > Supplier Management > Register Supplier, complete the required fields, and click Submit. For bulk import, use Supplier Register Import, download and complete the template, upload the file, select Save Import, and then Submit."],
-["FAQ-017","Master Storage","Master Storage","WMS Lite & WMS Lite RFID","Both","Bagaimana cara membuat lokasi penyimpanan atau SLOC baru?","How do I create a new storage location or SLOC?","Buka Master > Storage Management > Create Storage, lalu klik New Storage. Isi SLOC, zone, rack, row, column, dan kapasitas maksimum sesuai struktur gudang. Klik Submit dan konfirmasi penyimpanan data.","Open Master > Storage Management > Create Storage and click New Storage. Enter the SLOC, zone, rack, row, column, and maximum capacity according to the warehouse structure. Click Submit and confirm the data."],
-["FAQ-018","Master Storage","Master Storage","WMS Lite & WMS Lite RFID","Both","Apa urutan yang disarankan saat membuat 2D Storage Layout?","What is the recommended order for creating a 2D Storage Layout?","Buat layout secara berurutan dari Zone, kemudian Rack, lalu SLOC. Pilih objek induk sebelum menambahkan objek di bawahnya. Setelah objek ditambahkan ke canvas, atur ukuran, warna, teks, dan posisi sesuai kebutuhan, kemudian simpan layout.","Create the layout in this order: Zone, Rack, and then SLOC. Select the parent object before adding its child object. After adding each object to the canvas, adjust its size, color, text, and position as needed, and then save the layout."],
-["FAQ-019","Barcode Generator","Barcode Generator","WMS Lite","WMS Lite","Bagaimana cara membuat barcode atau QR Code baru?","How do I generate a new barcode or QR code?","Buka Master > Barcode Generator dan klik Create New Barcode. Pilih SKU, isi standar repacking, batch dan tanggal kedaluwarsa bila diperlukan, tentukan jumlah barcode serta template Barcode atau QR Code. Simpan data dan periksa hasilnya pada Print Preview.","Open Master > Barcode Generator and click Create New Barcode. Select the SKU, enter the standard repacking quantity, batch and expiry date when applicable, specify the number of labels, and choose the Barcode or QR Code template. Save the data and review the result in Print Preview."],
-["FAQ-020","Support","Support","WMS Lite","WMS Lite","Bagaimana cara membuat tiket bantuan atau melaporkan bug?","How do I create a support ticket or report a bug?","Klik ikon Support di kanan atas, lalu buka tab Create New Ticket. Pilih jenis tiket Bug atau Development, Issue Type, dan Page Name, kemudian tulis deskripsi yang jelas serta lampirkan gambar jika tersedia. Klik Submit dan pantau balasan melalui tab Ticket List atau Respond List.","Click the Support icon in the upper-right corner and open Create New Ticket. Select Bug or Development, choose the Issue Type and Page Name, write a clear description, and attach an image when available. Click Submit and monitor responses through Ticket List or Respond List."],
-["FAQ-021","Approval Document","Approval Document","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menyetujui atau menolak dokumen?","How do I approve or reject a document?","Buka menu Approval Documents dan pilih Details pada dokumen yang akan diperiksa. Pilih Approve untuk menyetujui. Untuk menolak, pilih Reject, isi alasan atau catatan penolakan, lalu Submit. Riwayat persetujuan dapat dilihat melalui Document Report List.","Open Approval Documents and select Details for the document you want to review. Choose Approve to approve it. To reject it, select Reject, enter the rejection reason or notes, and click Submit. The approval history is available in Document Report List."],
-["FAQ-022","Purchasing","Purchasing","WMS Lite","WMS Lite","Bagaimana cara membuat Purchase Request?","How do I create a Purchase Request?","Buka Purchasing > Purchase Request Form, pilih produk yang dibutuhkan, lalu isi Order Qty dan remark. Tentukan approver bila diperlukan, klik Submit, dan konfirmasi dokumen. Setelah disetujui, lanjutkan proses melalui Purchase Request Fulfillment.","Open Purchasing > Purchase Request Form, select the required products, and enter the Order Qty and remarks. Assign an approver when required, click Submit, and confirm the document. After approval, continue through Purchase Request Fulfillment."],
-["FAQ-023","Purchasing","Purchasing","WMS Lite","WMS Lite","Apa arti status Partially Fulfilled pada Purchase Request?","What does Partially Fulfilled mean on a Purchase Request?","Partially Fulfilled berarti hanya sebagian jumlah atau item pada Purchase Request yang telah dibuatkan Purchase Order. Dokumen akan tetap tersedia untuk memproses sisa jumlah yang belum terpenuhi. Periksa outstanding quantity sebelum membuat PO berikutnya.","Partially Fulfilled means that only part of the requested items or quantities has been converted into a Purchase Order. The document remains available so the outstanding quantity can be processed later. Check the remaining quantity before creating the next PO."],
-["FAQ-024","Purchasing","Purchasing","WMS Lite","WMS Lite","Bagaimana cara membuat Purchase Order dari Purchase Request?","How do I create a Purchase Order from a Purchase Request?","Buka Purchasing > Purchase Request Fulfillment, pilih Detail pada PR, masukkan item ke Purchase Request List, lalu klik Make PO. Lengkapi quantity, harga, diskon, supplier, dan approver. Setelah data benar, klik Create PO dan Submit PO.","Open Purchasing > Purchase Request Fulfillment, select Detail on the PR, add the items to the Purchase Request List, and click Make PO. Complete the quantity, price, discount, supplier, and approver information. When the data is correct, click Create PO and Submit PO."],
-["FAQ-025","Direct Purchase","Direct Purchase","WMS Lite & WMS Lite RFID","Both","Apa perbedaan proses lanjutan Direct Purchase dengan pembayaran Lunas dan TOP?","What is the difference between the next steps for a Paid and a Term-of-Payment Direct Purchase?","Untuk pembayaran Lunas, barang dapat dilanjutkan langsung ke proses Putaway sesuai konfigurasi sistem. Untuk pembayaran TOP, barang perlu melalui proses Inbound terlebih dahulu sebelum Putaway. Pada WMS Lite RFID, proses TOP dapat dilanjutkan melalui Inbound RFID By PO.","For a fully paid purchase, the goods can proceed directly to Putaway depending on the system configuration. For a term-of-payment purchase, the goods must go through Inbound before Putaway. In WMS Lite RFID, this can continue through Inbound RFID By PO."],
-["FAQ-026","Purchase Report","Purchase Report","WMS Lite & WMS Lite RFID","Both","Bagaimana cara melihat detail, mencetak, atau membatalkan transaksi pembelian?","How do I view, print, or void a purchase transaction?","Buka Purchasing > Purchase Report. Gunakan action Detail untuk memeriksa transaksi, Print untuk mencetak dokumen, dan Void untuk membatalkan transaksi yang masih memenuhi ketentuan. Pastikan dokumen belum digunakan pada proses lanjutan sebelum melakukan void.","Open Purchasing > Purchase Report. Use Detail to review the transaction, Print to print the document, and Void to cancel a transaction that is still eligible for cancellation. Make sure the document has not been used in a downstream process before voiding it."],
-["FAQ-027","Inbound","Inbound","WMS Lite","WMS Lite","Apa perbedaan PO-Inbound dan PO-Inbound-Generate-QR?","What is the difference between PO-Inbound and PO-Inbound-Generate-QR?","PO-Inbound digunakan untuk menerima barang berdasarkan jumlah secara bulk. PO-Inbound-Generate-QR digunakan ketika penerimaan perlu membentuk atau mengelola barcode/QR pada tingkat stok yang lebih spesifik. Pilih metode sesuai konfigurasi dan kebutuhan pelacakan barang.","PO-Inbound is used to receive goods in bulk quantities. PO-Inbound-Generate-QR is used when the receiving process must create or manage barcodes or QR codes at a more specific stock level. Choose the method according to the configuration and traceability requirements."],
-["FAQ-028","Inbound","Inbound","WMS Lite & WMS Lite RFID","Both","Kapan stok bertambah setelah proses inbound?","When is stock increased after the inbound process?","Stok akan diperbarui setelah dokumen inbound berhasil di-submit dan sistem membentuk Goods Receipt atau konfirmasi penerimaan. Barang biasanya masuk ke lokasi staging terlebih dahulu dan masih perlu diproses melalui Putaway agar tersimpan pada SLOC tujuan.","Stock is updated after the inbound document is successfully submitted and the system creates the Goods Receipt or receiving confirmation. The goods usually enter a staging location first and still need to be processed through Putaway to reach the destination SLOC."],
-["FAQ-029","Putaway","Putaway","WMS Lite & WMS Lite RFID","Both","Bagaimana proses putaway setelah barang diterima?","How do I perform putaway after receiving goods?","Buka Inbound atau Warehouse > Putaway App, pilih dokumen atau barang yang akan disimpan, pindai barcode barang, lalu pilih atau pindai SLOC tujuan. Pastikan jumlah dan lokasi benar sebelum Submit. Setelah selesai, stok akan tercatat pada lokasi penyimpanan tujuan.","Open Inbound or Warehouse > Putaway App, select the document or goods to store, scan the item barcode, and then select or scan the destination SLOC. Verify the quantity and location before submitting. Once completed, the stock is recorded in the destination storage location."],
-["FAQ-030","Putaway","Putaway","WMS Lite & WMS Lite RFID","Both","Mengapa SLOC tujuan tidak dapat dipilih saat putaway?","Why can’t a destination SLOC be selected during putaway?","SLOC mungkin tidak aktif, tidak sesuai dengan site atau zone dokumen, sudah mencapai kapasitas, atau tidak tersedia untuk jenis proses tersebut. Periksa Master > Storage Management dan pastikan struktur lokasi, kapasitas, serta site telah dikonfigurasi dengan benar.","The SLOC may be inactive, belong to a different site or zone, have reached its capacity, or be unavailable for that process type. Check Master > Storage Management and make sure the location structure, capacity, and site are configured correctly."],
-["FAQ-031","Outbound","Outbound","WMS Lite & WMS Lite RFID","Both","Bagaimana cara membuat Delivery Order dari Sales Order?","How do I create a Delivery Order from a Sales Order?","Buka Outbound > Create Delivery Order, pilih Sales Order yang akan diproses, lalu tentukan item dan jumlah yang dikirim. Lengkapi informasi pengiriman yang diperlukan dan Submit. Setelah DO terbentuk, lanjutkan ke Unassigned Picklist untuk menetapkan picker.","Open Outbound > Create Delivery Order, select the Sales Order to process, and specify the items and quantities to be shipped. Complete the required delivery information and submit the document. After the DO is created, continue to Unassigned Picklist to assign a picker."],
-["FAQ-032","Outbound","Outbound","WMS Lite","WMS Lite","Bagaimana cara menetapkan picker untuk sebuah dokumen?","How do I assign a picker to a document?","Buka Outbound > Unassigned Picklist, pilih jenis dokumen yang sesuai, lalu pilih dokumen yang akan diproses. Tentukan picker dan metode picking yang diperlukan, kemudian simpan penugasan. Picker dapat melanjutkan proses melalui Picklist App.","Open Outbound > Unassigned Picklist, select the relevant document type, and choose the document to process. Assign the picker and the required picking method, then save the assignment. The picker can continue through the Picklist App."],
-["FAQ-033","Outbound","Outbound","WMS Lite","WMS Lite","Mengapa picklist tidak dapat diselesaikan?","Why can’t a picklist be completed?","Pastikan picker telah ditetapkan, stok tersedia pada SLOC, barcode belum digunakan pada dokumen lain, dan jumlah hasil scan memenuhi order quantity. Periksa juga apakah barang masih berada di staging karena belum diproses putaway.","Make sure a picker has been assigned, stock is available in the SLOC, the barcode is not being used by another document, and the scanned quantity meets the order quantity. Also check whether the goods are still in staging because putaway has not been completed."],
-["FAQ-034","Packing & Dispatch","Packing & Dispatch","WMS Lite","WMS Lite","Bagaimana alur packing hingga barang dispatched?","What is the process from packing to dispatch?","Setelah picking selesai, buka Outbound > Packing System dan pilih dokumen yang akan dikemas. Verifikasi item dan jumlah, lengkapi informasi packing, kurir, atau loading sesuai konfigurasi, lalu Submit atau Dispatch. Status dokumen akan diperbarui setelah proses berhasil.","After picking is completed, open Outbound > Packing System and select the document to pack. Verify the items and quantities, complete the packing, courier, or loading information as configured, and then Submit or Dispatch. The document status is updated after the process succeeds."],
-["FAQ-035","Outbound","Outbound","WMS Lite & WMS Lite RFID","Both","Di mana saya dapat memeriksa status pengiriman?","Where can I check the delivery status?","Gunakan menu Delivery Status atau laporan Delivery Order untuk melihat status dokumen pengiriman. Cari berdasarkan nomor DO, customer, tanggal, atau informasi lain yang tersedia, lalu buka Detail untuk melihat perkembangan proses.","Use Delivery Status or the Delivery Order report to view the shipment status. Search by DO number, customer, date, or other available information, and open Detail to review the process progress."],
-["FAQ-036","Stock Movement","Stock Movement","WMS Lite & WMS Lite RFID","Both","Bagaimana alur Stock Transfer Out dan Stock Transfer In?","What is the Stock Transfer Out and Stock Transfer In process?","Buat dokumen Stock Transfer Out untuk mengirim stok dari gudang asal. Setelah picking dan dispatch selesai, gudang tujuan memproses dokumen melalui Stock Transfer In, kemudian melakukan Putaway ke SLOC tujuan. Pastikan jumlah yang diterima sesuai dengan dokumen pengiriman.","Create a Stock Transfer Out document to send stock from the origin warehouse. After picking and dispatch are completed, the destination warehouse processes the document through Stock Transfer In and performs Putaway to the destination SLOC. Make sure the received quantity matches the shipment document."],
-["FAQ-037","Stock Movement","Stock Movement","WMS Lite","WMS Lite","Kapan Stock Transfer mode Direct digunakan?","When should Direct Stock Transfer mode be used?","Mode Direct digunakan ketika pemindahan stok dapat diproses langsung sesuai konfigurasi tanpa alur picking yang lebih panjang. Pastikan gudang asal, gudang tujuan, item, jumlah, dan lokasi telah benar sebelum Submit karena transaksi akan memengaruhi stok kedua lokasi.","Direct mode is used when stock can be moved directly according to the configuration without a longer picking workflow. Verify the origin warehouse, destination warehouse, items, quantities, and locations before submitting because the transaction affects stock at both locations."],
-["FAQ-038","Stock Movement","Stock Movement","WMS Lite","WMS Lite","Apa fungsi Stock Transfer Between Barcode?","What is Stock Transfer Between Barcode used for?","Stock Transfer Between Barcode digunakan untuk memindahkan jumlah stok dari satu barcode ke barcode lain sesuai kebutuhan pengelolaan stok. Pastikan kedua barcode merujuk pada SKU yang sesuai dan jumlah yang dipindahkan tidak melebihi stok barcode asal.","Stock Transfer Between Barcode is used to move stock quantities from one barcode to another for stock management purposes. Make sure both barcodes refer to the appropriate SKU and that the transferred quantity does not exceed the source barcode stock."],
-["FAQ-039","Inventory & Stock Opname","Inventory & Stocktaking","WMS Lite & WMS Lite RFID","Both","Apa perbedaan Stock Opname manual dan Stock Opname menggunakan scan?","What is the difference between manual and scanned Stock Opname?","Stock Opname manual dilakukan dengan memilih item dan mengisi New Qty untuk mengganti jumlah sebelumnya. Mode scan digunakan untuk menghitung berdasarkan barcode atau stok pada SLOC tertentu. Gunakan metode yang paling sesuai dengan tingkat detail dan perangkat yang tersedia.","Manual Stock Opname is performed by selecting an item and entering a New Qty to replace the previous quantity. Scan mode counts stock using barcodes or stock within a specific SLOC. Use the method that matches the required level of detail and available devices."],
-["FAQ-040","Inventory & Stock Opname","Inventory & Stocktaking","WMS Lite & WMS Lite RFID","Both","Mengapa jumlah stok masih berbeda setelah Stock Opname?","Why is the stock quantity still different after Stock Opname?","Periksa apakah dokumen stock opname telah berhasil di-submit, site dan SLOC yang dipilih sudah benar, serta tidak ada transaksi inbound, outbound, atau transfer yang berjalan pada waktu yang sama. Tinjau Stock Opname Report dan Change Document Log untuk menelusuri perubahan.","Check whether the Stock Opname document was successfully submitted, the correct site and SLOC were selected, and no inbound, outbound, or transfer transaction occurred at the same time. Review the Stock Opname Report and Change Document Log to trace the changes."],
-["FAQ-041","Sales","Sales","WMS Lite & WMS Lite RFID","Both","Bagaimana cara membuat Sales Order?","How do I create a Sales Order?","Buka Sales > Sales Order, pilih produk dan masukkan jumlah serta harga pada cart. Pilih customer, terapkan promo atau diskon bila diperlukan, lalu klik Charge. Lengkapi informasi konfirmasi penjualan dan Submit hingga faktur atau dokumen penjualan terbentuk.","Open Sales > Sales Order, select the products, and enter their quantities and prices in the cart. Select the customer, apply a promotion or discount when required, and click Charge. Complete the sales confirmation information and submit it until the sales document or invoice is created."],
-["FAQ-042","Sales","Sales","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menyimpan transaksi Sales Order sebagai draft?","How do I save a Sales Order transaction as a draft?","Pada halaman Sales Order, gunakan fitur Save Bill atau simpan sementara sebelum melakukan Charge. Saat ingin melanjutkan, pilih draft atau bill yang tersimpan, periksa kembali item, jumlah, harga, customer, dan promo, lalu lanjutkan transaksi.","On the Sales Order page, use Save Bill or the temporary save option before clicking Charge. To continue later, select the saved draft or bill, recheck the items, quantities, prices, customer, and promotion, and then proceed with the transaction."],
-["FAQ-043","Sales Return","Sales Return","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menelusuri Sales Return ke dokumen SO dan DO asal?","How do I trace a Sales Return back to its original SO and DO?","Buka detail dokumen pada Sales Return, Process Sales Return, atau Return Detail List dan periksa nomor referensi DO. Dari nomor DO tersebut, buka DO Report atau Sales Order Report untuk melihat SO, customer, item, dan detail pengiriman asal.","Open the document details in Sales Return, Process Sales Return, or Return Detail List and check the referenced DO number. Use that DO number in the DO Report or Sales Order Report to view the original SO, customer, items, and shipment details."],
-["FAQ-044","Production","Production","WMS Lite","WMS Lite","Bagaimana cara membuat formula Assembly Product?","How do I create an Assembly Product formula?","Buka Production > Create Assembly Product, tentukan produk jadi dan komponen atau bahan penyusunnya, lalu isi jumlah sesuai formula. Simpan data hingga nomor formula assembly terbentuk. Formula biasanya dibuat sekali dan dapat digunakan kembali untuk proses assembly berikutnya.","Open Production > Create Assembly Product, select the finished product and its component materials, and enter the required quantities. Save the data until an assembly formula number is created. The formula is generally created once and can be reused for future assembly processes."],
-["FAQ-045","Production","Production","WMS Lite","WMS Lite","Apa perbedaan proses Assembly dengan picklist Direct dan Indirect?","What is the difference between Direct and Indirect picklist in Assembly?","Picklist Direct menggunakan komponen yang diproses langsung pada alur assembly sesuai konfigurasi, sedangkan Indirect menggunakan tahapan penugasan dan pengambilan barang melalui picklist. Pilih metode berdasarkan kontrol operasional dan kebutuhan pelacakan bahan baku.","Direct picklist processes components directly within the assembly workflow according to the configuration, while Indirect uses an assignment and picking stage through a picklist. Choose the method based on operational control and raw-material traceability requirements."],
-["FAQ-046","Production & Integrasi","Production & Integration","WMS Lite","WMS Lite","Bagaimana proses penyelesaian Assembly diteruskan ke Accurate atau Jurnal?","How is a completed Assembly process sent to Accurate or Jurnal?","Setelah proses assembly selesai, jalankan action penyelesaian pesanan atau Process sesuai integrasi yang digunakan. Sistem akan membentuk atau mengirim dokumen pekerjaan dan penyelesaian ke Accurate atau Jurnal. Periksa notifikasi, nomor dokumen, dan status sinkronisasi sebelum melanjutkan transaksi berikutnya.","After the assembly process is completed, run the order-completion or Process action according to the active integration. The system creates or sends the work and completion documents to Accurate or Jurnal. Check the notification, document number, and synchronization status before continuing."],
-["FAQ-047","Dashboard & Report","Dashboard & Report","WMS Lite & WMS Lite RFID","Both","Mengapa data dashboard atau laporan belum menampilkan transaksi terbaru?","Why does the dashboard or report not show the latest transaction?","Pastikan transaksi sumber telah berhasil di-submit dan tidak berstatus draft atau waiting. Gunakan fitur Refresh atau sinkronisasi yang tersedia, lalu periksa filter tanggal, site, dan status. Jika menggunakan integrasi, pastikan proses sinkronisasi telah selesai tanpa error.","Make sure the source transaction was successfully submitted and is not in Draft or Waiting status. Use the available Refresh or synchronization feature, and check the date, site, and status filters. If an integration is used, confirm that synchronization completed without errors."],
-["FAQ-048","Integrasi Accurate","Accurate Integration","WMS Lite","WMS Lite","Bagaimana cara menghubungkan Prieds dengan Accurate?","How do I connect Prieds to Accurate?","Buka menu Sync Accurate dan pilih proses Connect Prieds dengan Accurate. Ikuti langkah otorisasi akun dan pilih database atau perusahaan yang benar. Setelah koneksi berhasil, lakukan sinkronisasi database dan master data yang diperlukan sebelum memproses transaksi.","Open Sync Accurate and select Connect Prieds with Accurate. Follow the account authorization steps and choose the correct database or company. After the connection succeeds, synchronize the database and required master data before processing transactions."],
-["FAQ-049","Integrasi Accurate","Accurate Integration","WMS Lite","WMS Lite","Data apa saja yang dapat disinkronkan dari Accurate ke Prieds?","What data can be synchronized from Accurate to Prieds?","Data yang tersedia dalam panduan mencakup database, customer, supplier, item atau SKU, warehouse, atribut keuangan, department, CoA, shipment, branch, Sales Invoice, Sales Order, Purchase Order, dan Work Order. Hak akses dan konfigurasi perusahaan dapat memengaruhi pilihan yang tersedia.","The guide covers database, customer, supplier, item or SKU, warehouse, financial attributes, department, chart of accounts, shipment, branch, Sales Invoice, Sales Order, Purchase Order, and Work Order. Available options may depend on company permissions and configuration."],
-["FAQ-050","Integrasi","Integration","WMS Lite","WMS Lite","Kapan perlu melakukan sinkronisasi SO atau PO secara spesifik?","When should I run a specific SO or PO synchronization?","Lakukan sinkronisasi spesifik ketika satu dokumen tidak muncul, gagal diproses, atau telah diubah pada sistem sumber. Masukkan nomor dokumen yang tepat dan jalankan sinkronisasi hanya untuk dokumen tersebut agar proses lebih cepat dan risiko perubahan data lain lebih kecil.","Run a specific synchronization when one document is missing, cannot be processed, or has been edited in the source system. Enter the exact document number and synchronize only that document for a faster process and a lower risk of affecting other data."],
-["FAQ-051","Integrasi Jurnal","Jurnal Integration","WMS Lite","WMS Lite","Apa perbedaan koneksi Jurnal menggunakan API Key dan Redirect?","What is the difference between connecting Jurnal using an API Key and Redirect?","Mode API Key menggunakan kredensial atau token integrasi yang dimasukkan sesuai konfigurasi akun. Mode Redirect mengarahkan pengguna ke proses otorisasi akun Jurnal. Gunakan metode yang telah ditetapkan oleh administrator dan pastikan akun memiliki akses ke perusahaan yang benar.","API Key mode uses integration credentials or a token entered according to the account configuration. Redirect mode sends the user through the Jurnal account authorization flow. Use the method defined by your administrator and make sure the account has access to the correct company."],
-["FAQ-052","Integrasi","Integration","WMS Lite","WMS Lite","Apa yang harus dilakukan jika data Prieds berbeda dengan Accurate atau Jurnal?","What should I do if Prieds data differs from Accurate or Jurnal?","Bandingkan nomor dokumen, status, item, jumlah, tanggal, customer atau supplier, serta site pada kedua sistem. Pastikan tidak ada perubahan atau penghapusan dokumen di sistem sumber, lalu lakukan sinkronisasi spesifik. Jika perbedaan tetap ada, lampirkan bukti kedua sistem pada tiket Prieds Support.","Compare the document number, status, items, quantities, dates, customer or supplier, and site in both systems. Make sure the document was not edited or deleted in the source system, then run a specific synchronization. If the mismatch remains, attach evidence from both systems to a Prieds Support ticket."],
-["FAQ-053","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara melakukan Inbound Manual RFID?","How do I perform a Manual RFID Inbound?","Buka RFID Operational > Inbound Manual RFID dan pilih mode dengan SLOC atau tanpa SLOC. Pilih SKU, UOM conversion, dan SLOC bila diperlukan, lalu isi nomor dokumen. Klik Next, mulai Scan, pastikan seluruh tag berstatus valid, kemudian Submit.","Open RFID Operational > Inbound Manual RFID and choose either SLOC or non-SLOC mode. Select the SKU, UOM conversion, and SLOC when required, then enter the document number. Click Next, start scanning, make sure all tags are valid, and submit the transaction."],
-["FAQ-054","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Apa arti kartu berwarna biru dan merah saat Inbound Manual RFID?","What do the blue and red cards mean during Manual RFID Inbound?","Kartu biru dengan status Valid berarti tag berhasil dibaca dan dapat diproses. Kartu merah dengan status Stock Already Exist berarti kode RFID telah terdaftar pada stok atau barang lain. Hapus atau perbaiki seluruh kartu merah karena transaksi tidak dapat di-submit selama masih ada tag bermasalah.","A blue card with Valid status means the tag was read successfully and can be processed. A red card with Stock Already Exist means the RFID code is already registered to existing stock or another item. Remove or correct all red cards because the transaction cannot be submitted while an invalid tag remains."],
-["FAQ-055","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara melakukan Inbound RFID berdasarkan Purchase Order?","How do I perform RFID Inbound based on a Purchase Order?","Buka RFID Operational > Inbound RFID By PO, pilih dokumen PO, lalu pilih SKU yang akan diterima. Pindai barcode atau RFID, sesuaikan jumlah bila diperlukan, dan klik Continue. Isi waktu transaksi, nomor DO supplier, serta remark, lalu Submit. Setelah berhasil, lanjutkan ke Putaway.","Open RFID Operational > Inbound RFID By PO, select the PO document, and choose the SKU to receive. Scan the barcode or RFID, adjust the quantity when needed, and click Continue. Enter the transaction time, supplier DO number, and remarks, then submit. After completion, continue to Putaway."],
-["FAQ-056","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Mengapa field Purchase Invoice Accurate muncul pada Inbound RFID By PO?","Why does the Purchase Invoice Accurate field appear in RFID Inbound By PO?","Field tersebut muncul jika perusahaan terintegrasi dengan Accurate dan opsi Mendahului Terima Barang pada Faktur Pembelian diaktifkan. Pilih Purchase Invoice Accurate yang sesuai agar daftar inbound terisi berdasarkan dokumen sumber yang benar.","This field appears when the company is integrated with Accurate and the Advance Receipt option is enabled on the Purchase Invoice. Select the correct Accurate Purchase Invoice so the inbound list is populated from the appropriate source document."],
-["FAQ-057","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Bagaimana memproses barang retur penjualan menggunakan RFID?","How do I receive sales-return goods using RFID?","Buka RFID Operational > Inbound RFID By SRTN, pilih dokumen Sales Return, lalu pilih item yang akan diterima. Pindai barcode atau RFID, periksa jumlah, simpan hasil scan, dan Submit. Barang yang diterima selanjutnya dapat diproses sesuai lokasi staging dan putaway yang berlaku.","Open RFID Operational > Inbound RFID By SRTN, select the Sales Return document, and choose the items to receive. Scan the barcode or RFID, verify the quantities, save the scan result, and submit. The returned goods can then follow the applicable staging and putaway process."],
-["FAQ-058","RFID Outbound","RFID Outbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara melakukan Outbound RFID Manual?","How do I perform a Manual RFID Outbound?","Buka RFID Operational > Outbound RFID Manual, pilih SKU dan informasi yang diperlukan, lalu mulai Scan. Hanya tag berstatus Valid yang dapat diproses. Hapus tag berstatus Invalid atau Stock Already 0, lanjutkan ke Outbound Information, isi nomor dokumen, lalu Submit.","Open RFID Operational > Outbound RFID Manual, select the SKU and required information, and start scanning. Only tags with Valid status can be processed. Remove tags marked Invalid or Stock Already 0, continue to Outbound Information, enter the document number, and submit."],
-["FAQ-059","RFID Outbound","RFID Outbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara memproses Outbound RFID berdasarkan Delivery Order?","How do I process RFID Outbound based on a Delivery Order?","Buka RFID Operational > Outbound RFID By DO, pilih DO, lalu ambil barang dari SLOC yang tersedia dan pindai RFID atau barcode. Pastikan Scan Qty memenuhi Order Qty dan kartu item berwarna hijau. Submit untuk menyelesaikan proses; status DO akan menjadi Dispatched dan stok gudang berkurang.","Open RFID Operational > Outbound RFID By DO, select the DO, retrieve the goods from the available SLOC, and scan the RFID tag or barcode. Make sure the Scan Qty meets the Order Qty and the item card turns green. Submit to complete the process; the DO becomes Dispatched and warehouse stock is reduced."],
-["FAQ-060","RFID Outbound","RFID Outbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara memproses Outbound RFID berdasarkan Stock Transfer Order?","How do I process RFID Outbound based on a Stock Transfer Order?","Buka RFID Operational > Outbound RFID By STO, pilih dokumen STO, lalu pindai barcode atau RFID untuk setiap item. Pastikan jumlah scan terpenuhi, kemudian isi remark, kurir, dan nomor kendaraan pada Outbound Information. Submit untuk mengubah STO menjadi Dispatched dan mengurangi stok gudang asal.","Open RFID Operational > Outbound RFID By STO, select the STO document, and scan the barcode or RFID for each item. Make sure the required quantity is fully scanned, then enter the remarks, courier, and vehicle number in Outbound Information. Submit to mark the STO as Dispatched and reduce stock at the origin warehouse."],
-["FAQ-061","RFID Outbound","RFID Outbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara memproses Purchase Return menggunakan RFID?","How do I process a Purchase Return using RFID?","Setelah Purchase Return dibuat, buka RFID Operational > Outbound RFID By PRTN. Pilih dokumen PRTN, ambil barang dari SLOC, lalu pindai seluruh tag RFID sesuai Return Qty. Submit setelah jumlah terpenuhi. Status Purchase Return akan diperbarui dan stok gudang berkurang.","After creating the Purchase Return, open RFID Operational > Outbound RFID By PRTN. Select the PRTN document, retrieve the goods from the SLOC, and scan all RFID tags according to the Return Qty. Submit when the quantity is complete. The Purchase Return status is updated and warehouse stock is reduced."],
-["FAQ-062","RFID Troubleshooting","RFID Troubleshooting","WMS Lite RFID","WMS Lite RFID","Apa yang harus dilakukan jika RFID tag tidak terbaca oleh scanner?","What should I do if an RFID tag is not detected by the scanner?","Pastikan scanner aktif dan terhubung, tag berada dalam jangkauan, serta tidak terhalang material yang mengganggu pembacaan. Coba hentikan dan mulai ulang proses scan, lalu gunakan scan barcode kamera bila tersedia. Jika satu tag tetap tidak terbaca, periksa kondisi fisik tag atau ganti tag sesuai prosedur.","Make sure the scanner is active and connected, the tag is within range, and no material is blocking the signal. Stop and restart the scan, or use the camera barcode scan when available. If one tag still cannot be read, inspect its physical condition or replace it according to procedure."],
-["FAQ-063","RFID Troubleshooting","RFID Troubleshooting","WMS Lite RFID","WMS Lite RFID","Apa arti status Stock Already 0 atau Invalid pada proses Outbound RFID?","What do Stock Already 0 and Invalid mean during RFID Outbound?","Stock Already 0 berarti tag telah terdaftar, tetapi jumlah stok yang tersedia tidak mencukupi. Invalid berarti tag belum terdaftar pada item yang diproses. Tag dengan status tersebut harus dihapus dari daftar scan atau diperbaiki sebelum transaksi dapat dilanjutkan.","Stock Already 0 means the tag is registered, but the available stock quantity is insufficient. Invalid means the tag is not registered to the item being processed. Tags with either status must be removed from the scan list or corrected before the transaction can continue."]
+  ["FAQ-001","Integrasi","Integration","WMS Lite","WMS Lite","Bagaimana cara melakukan sinkronisasi ulang Sales Order (SO) yang bermasalah?","How do I resynchronize a problematic Sales Order (SO)?","Klik ikon Sync di kanan atas, pilih sinkronisasi SO secara spesifik, lalu masukkan nomor SO yang bermasalah. Jalankan sinkronisasi dan periksa kembali status serta detail SO di Prieds. Jika data masih berbeda, pastikan SO pada sistem sumber, seperti Accurate atau Jurnal, tidak sedang diubah atau telah dihapus.","Click the Sync icon in the upper-right corner, select the specific SO synchronization option, and enter the affected SO number. Run the synchronization and recheck the SO status and details in Prieds. If the data still differs, confirm that the SO in the source system, such as Accurate or Jurnal, has not been edited or deleted."],
+  ["FAQ-002","Purchasing","Purchasing","WMS Lite & WMS Lite RFID","Both","Bagaimana cara memproses retur pembelian?","How do I process a purchase return?","Buka menu Purchasing > Purchase Return. Cari dokumen berdasarkan tanggal, supplier, nomor inbound, atau nomor PO, lalu pilih barang dan masukkan jumlah yang akan diretur. Simpan data, buka tab Return List, kemudian pilih Make DO untuk membuat dokumen pengiriman retur ke supplier.","Open Purchasing > Purchase Return. Find the document using the date, supplier, inbound number, or PO number, then select the items and enter the return quantity. Save the data, open the Return List tab, and select Make DO to create the return delivery document for the supplier."],
+  ["FAQ-003","Data & Biaya","Data & Cost","WMS Lite & WMS Lite RFID","Both","Apa arti nilai “NaN” pada kolom Cost?","What does “NaN” mean in the Cost column?","NaN berarti sistem tidak menemukan nilai biaya yang valid untuk item atau transaksi tersebut. Periksa master harga atau biaya item, data transaksi sumber, dan hasil sinkronisasi integrasi. Setelah datanya dilengkapi, lakukan sinkronisasi atau proses ulang dokumen terkait.","NaN means the system could not find a valid cost value for the item or transaction. Check the item price or cost master, the source transaction data, and the integration synchronization result. After completing the data, resynchronize or reprocess the related document."],
+  ["FAQ-004","Production","Production","WMS Lite","WMS Lite","Apa yang terjadi jika Assembly Report berstatus Done dibatalkan atau di-void?","What happens if a completed Assembly Report is voided?","Pembatalan akan mengembalikan perubahan stok yang berasal dari proses assembly dan membatalkan dokumen pekerjaan serta penyelesaian pesanan yang terkait. Sebelum melakukan void, pastikan dokumen tersebut belum digunakan oleh transaksi lanjutan agar tidak menimbulkan ketidaksesuaian data.","Voiding the report reverses the stock changes created by the assembly process and cancels the related work and order-completion documents. Before voiding, make sure the document has not been used by any downstream transaction to avoid data inconsistencies."],
+  ["FAQ-005","Integrasi Jurnal","Jurnal Integration","WMS Lite","WMS Lite","Bagaimana menangani Delivery Order yang tidak dapat di-void karena datanya berbeda dengan Jurnal?","How do I handle a Delivery Order that cannot be voided because its data differs from Jurnal?","Periksa terlebih dahulu apakah DO telah diubah atau dihapus di Jurnal. Lakukan rekonsiliasi nomor dokumen dan status pada kedua sistem. Jika prosedur perusahaan mengizinkan, koneksi Jurnal dapat diputus sementara untuk melakukan void di Prieds, kemudian disambungkan kembali dan disinkronkan. Hubungi Prieds Support jika ketidaksesuaian tetap terjadi.","First, check whether the DO was edited or deleted in Jurnal. Reconcile the document number and status in both systems. If permitted by your company procedure, temporarily disconnect Jurnal, void the document in Prieds, reconnect the integration, and synchronize again. Contact Prieds Support if the mismatch remains."],
+  ["FAQ-006","Outbound & Integrasi","Outbound & Integration","WMS Lite","WMS Lite","Mengapa Delivery Order tidak dapat dibuat dari Sales Order?","Why can’t a Delivery Order be created from a Sales Order?","Penyebab yang paling umum adalah SO belum tersinkronisasi, telah diubah pada sistem sumber, belum berstatus siap diproses, atau jumlah outstanding-nya sudah habis. Sinkronkan ulang nomor SO secara spesifik, lalu periksa status, item, jumlah, customer, dan site sebelum membuat DO kembali.","The most common causes are that the SO has not been synchronized, was edited in the source system, is not ready for processing, or has no remaining outstanding quantity. Resynchronize the specific SO, then verify its status, items, quantities, customer, and site before creating the DO again."],
+  ["FAQ-007","Master Product & Purchasing","Master Product & Purchasing","WMS Lite & WMS Lite RFID","Both","Mengapa SKU tidak muncul saat membuat Purchase Request?","Why does an SKU not appear when creating a Purchase Request?","Buka Master > Product Management dan cari SKU tersebut. Pastikan SKU aktif dan pengaturan Sellable/Purchaseable mengizinkan item untuk dibeli, misalnya Purchaseable & Not Sellable atau Sellable & Purchaseable. Simpan perubahan, lalu buka kembali halaman Purchase Request.","Open Master > Product Management and locate the SKU. Make sure the SKU is active and its Sellable/Purchaseable setting allows purchasing, such as Purchaseable & Not Sellable or Sellable & Purchaseable. Save the changes, then reopen the Purchase Request page."],
+  ["FAQ-008","Inbound & Putaway","Inbound & Putaway","WMS Lite & WMS Lite RFID","Both","Mengapa barcode tidak dapat dipindai saat proses putaway?","Why can’t a barcode be scanned during putaway?","Barcode mungkin sudah dialokasikan ke picklist, jumlah stoknya tidak mencukupi, atau statusnya tidak lagi tersedia untuk putaway. Periksa detail barcode dan dokumen picklist yang terkait. Selesaikan atau batalkan alokasi yang salah, lalu lakukan putaway sebelum barcode digunakan pada proses picking.","The barcode may already be allocated to a picklist, have insufficient remaining stock, or no longer be available for putaway. Check the barcode details and the related picklist document. Complete or cancel the incorrect allocation, then perform putaway before using the barcode for picking."],
+  ["FAQ-009","Sales Return","Sales Return","WMS Lite & WMS Lite RFID","Both","Mengapa sudah ada data pada menu Sales Return padahal belum membuat retur, dan bagaimana cara membuat retur penjualan?","Why are records shown in Sales Return even though no return has been created, and how do I create a sales return?","Tab Sales Return menampilkan DO yang telah dispatched dan memenuhi syarat untuk diretur; data tersebut belum berarti retur sudah dibuat. Pilih DO yang sesuai, masukkan jumlah retur, lalu Submit. Setelah itu buka tab Process Sales Return dan pilih Make DO saat barang telah kembali. Sistem akan menambahkan stok retur dan membuat proses putaway bila konfigurasi stok mengharuskannya.","The Sales Return tab displays dispatched DOs that are eligible for return; these records do not mean a return has already been created. Select the relevant DO, enter the return quantity, and submit it. Then open Process Sales Return and select Make DO when the goods have been received back. The system will add the returned stock and create a putaway process when required by the stock configuration."],
+  ["FAQ-010","Master Customer","Master Customer","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menambahkan customer baru?","How do I add a new customer?","Buka Master > Customer Management, lalu pilih tab Customer Register. Isi data customer yang wajib, pastikan informasinya benar, kemudian klik Submit. Data yang berhasil disimpan dapat dilihat dan diedit melalui tab Customer List.","Open Master > Customer Management and select the Customer Register tab. Complete the required customer information, verify the data, and click Submit. Successfully saved customers can be viewed and edited from the Customer List tab."],
+  ["FAQ-011","Login & Akses","Login & Access","WMS Lite & WMS Lite RFID","Both","Apa yang harus dilakukan jika tidak dapat login ke Prieds?","What should I do if I cannot log in to Prieds?","Pastikan username dan password telah dimasukkan dengan benar, termasuk penggunaan huruf besar dan kecil. Periksa juga koneksi internet dan alamat aplikasi yang digunakan. Jika akun tetap tidak dapat digunakan, hubungi administrator perusahaan atau Prieds Support untuk memeriksa status dan hak akses akun.","Make sure the username and password are entered correctly, including letter capitalization. Also check your internet connection and the application address. If the account still cannot be used, contact your company administrator or Prieds Support to verify the account status and access rights."],
+  ["FAQ-012","Master Product","Master Product","WMS Lite & WMS Lite RFID","Both","Bagaimana cara membuat SKU atau produk baru?","How do I create a new SKU or product?","Buka Master > Product Management dan klik Add New SKU. Isi SKU, nama barang, harga, UOM, UPC, SKU Type, serta pengaturan Sellable/Purchaseable. Lengkapi atribut atau safety stock bila diperlukan, lalu simpan hingga muncul notifikasi SKU Created.","Open Master > Product Management and click Add New SKU. Enter the SKU, item name, price, UOM, UPC, SKU Type, and Sellable/Purchaseable setting. Add attributes or safety stock when needed, then save the data until the SKU Created notification appears."],
+  ["FAQ-013","Master Product","Master Product","WMS Lite & WMS Lite RFID","Both","Kapan dan bagaimana menggunakan UOM Converter?","When and how should I use the UOM Converter?","Gunakan UOM Converter jika satu produk memiliki lebih dari satu satuan. Masukkan satuan konversi dan jumlah ekuivalennya, misalnya 1 lusin = 12 pcs. Pastikan satuan dasar dan nilai konversi benar agar transaksi stok tidak menghasilkan jumlah yang keliru.","Use the UOM Converter when a product has more than one unit of measure. Enter the conversion unit and its equivalent quantity, for example, 1 dozen = 12 pieces. Make sure the base unit and conversion value are correct to prevent incorrect stock quantities."],
+  ["FAQ-014","Master Product","Master Product","WMS Lite & WMS Lite RFID","Both","Bagaimana cara mencetak barcode SKU atau UPC secara massal?","How do I print SKU or UPC barcodes in bulk?","Pada halaman Product Management, klik Bulk Print Barcode, pilih produk yang akan dicetak, lalu tentukan jenis barcode SKU atau UPC. Setelah item dipilih, lanjutkan dengan Confirm Print dan periksa hasil pada halaman Print Preview sebelum mencetak.","On the Product Management page, click Bulk Print Barcode, select the products to print, and choose either SKU or UPC barcode. After selecting the items, continue with Confirm Print and review the Print Preview before printing."],
+  ["FAQ-015","Master Customer","Master Customer","WMS Lite & WMS Lite RFID","Both","Bagaimana cara mengimpor banyak data customer sekaligus?","How do I import multiple customer records at once?","Buka Master > Customer Management > Customer Register Import. Unduh template, isi data sesuai kolom yang tersedia tanpa mengubah struktur file, lalu unggah melalui Choose a File. Periksa hasil import, pilih Save Import, kemudian Submit untuk menyimpan data ke sistem.","Open Master > Customer Management > Customer Register Import. Download the template, complete the data without changing the file structure, and upload it through Choose a File. Review the imported records, select Save Import, and then Submit to save them to the system."],
+  ["FAQ-016","Master Supplier","Master Supplier","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menambahkan atau mengimpor supplier?","How do I add or import suppliers?","Untuk menambahkan satu supplier, buka Master > Supplier Management > Register Supplier, lengkapi data wajib, lalu Submit. Untuk import massal, gunakan tab Supplier Register Import, unduh template, isi datanya, unggah file, pilih Save Import, kemudian Submit.","To add one supplier, open Master > Supplier Management > Register Supplier, complete the required fields, and click Submit. For bulk import, use Supplier Register Import, download and complete the template, upload the file, select Save Import, and then Submit."],
+  ["FAQ-017","Master Storage","Master Storage","WMS Lite & WMS Lite RFID","Both","Bagaimana cara membuat lokasi penyimpanan atau SLOC baru?","How do I create a new storage location or SLOC?","Buka Master > Storage Management > Create Storage, lalu klik New Storage. Isi SLOC, zone, rack, row, column, dan kapasitas maksimum sesuai struktur gudang. Klik Submit dan konfirmasi penyimpanan data.","Open Master > Storage Management > Create Storage and click New Storage. Enter the SLOC, zone, rack, row, column, and maximum capacity according to the warehouse structure. Click Submit and confirm the data."],
+  ["FAQ-018","Master Storage","Master Storage","WMS Lite & WMS Lite RFID","Both","Apa urutan yang disarankan saat membuat 2D Storage Layout?","What is the recommended order for creating a 2D Storage Layout?","Buat layout secara berurutan dari Zone, kemudian Rack, lalu SLOC. Pilih objek induk sebelum menambahkan objek di bawahnya. Setelah objek ditambahkan ke canvas, atur ukuran, warna, teks, dan posisi sesuai kebutuhan, kemudian simpan layout.","Create the layout in this order: Zone, Rack, and then SLOC. Select the parent object before adding its child object. After adding each object to the canvas, adjust its size, color, text, and position as needed, and then save the layout."],
+  ["FAQ-019","Barcode Generator","Barcode Generator","WMS Lite","WMS Lite","Bagaimana cara membuat barcode atau QR Code baru?","How do I generate a new barcode or QR code?","Buka Master > Barcode Generator dan klik Create New Barcode. Pilih SKU, isi standar repacking, batch dan tanggal kedaluwarsa bila diperlukan, tentukan jumlah barcode serta template Barcode atau QR Code. Simpan data dan periksa hasilnya pada Print Preview.","Open Master > Barcode Generator and click Create New Barcode. Select the SKU, enter the standard repacking quantity, batch and expiry date when applicable, specify the number of labels, and choose the Barcode or QR Code template. Save the data and review the result in Print Preview."],
+  ["FAQ-020","Support","Support","WMS Lite","WMS Lite","Bagaimana cara membuat tiket bantuan atau melaporkan bug?","How do I create a support ticket or report a bug?","Klik ikon Support di kanan atas, lalu buka tab Create New Ticket. Pilih jenis tiket Bug atau Development, Issue Type, dan Page Name, kemudian tulis deskripsi yang jelas serta lampirkan gambar jika tersedia. Klik Submit dan pantau balasan melalui tab Ticket List atau Respond List.","Click the Support icon in the upper-right corner and open Create New Ticket. Select Bug or Development, choose the Issue Type and Page Name, write a clear description, and attach an image when available. Click Submit and monitor responses through Ticket List or Respond List."],
+  ["FAQ-021","Approval Document","Approval Document","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menyetujui atau menolak dokumen?","How do I approve or reject a document?","Buka menu Approval Documents dan pilih Details pada dokumen yang akan diperiksa. Pilih Approve untuk menyetujui. Untuk menolak, pilih Reject, isi alasan atau catatan penolakan, lalu Submit. Riwayat persetujuan dapat dilihat melalui Document Report List.","Open Approval Documents and select Details for the document you want to review. Choose Approve to approve it. To reject it, select Reject, enter the rejection reason or notes, and click Submit. The approval history is available in Document Report List."],
+  ["FAQ-022","Purchasing","Purchasing","WMS Lite","WMS Lite","Bagaimana cara membuat Purchase Request?","How do I create a Purchase Request?","Buka Purchasing > Purchase Request Form, pilih produk yang dibutuhkan, lalu isi Order Qty dan remark. Tentukan approver bila diperlukan, klik Submit, dan konfirmasi dokumen. Setelah disetujui, lanjutkan proses melalui Purchase Request Fulfillment.","Open Purchasing > Purchase Request Form, select the required products, and enter the Order Qty and remarks. Assign an approver when required, click Submit, and confirm the document. After approval, continue through Purchase Request Fulfillment."],
+  ["FAQ-023","Purchasing","Purchasing","WMS Lite","WMS Lite","Apa arti status Partially Fulfilled pada Purchase Request?","What does Partially Fulfilled mean on a Purchase Request?","Partially Fulfilled berarti hanya sebagian jumlah atau item pada Purchase Request yang telah dibuatkan Purchase Order. Dokumen akan tetap tersedia untuk memproses sisa jumlah yang belum terpenuhi. Periksa outstanding quantity sebelum membuat PO berikutnya.","Partially Fulfilled means that only part of the requested items or quantities has been converted into a Purchase Order. The document remains available so the outstanding quantity can be processed later. Check the remaining quantity before creating the next PO."],
+  ["FAQ-024","Purchasing","Purchasing","WMS Lite","WMS Lite","Bagaimana cara membuat Purchase Order dari Purchase Request?","How do I create a Purchase Order from a Purchase Request?","Buka Purchasing > Purchase Request Fulfillment, pilih Detail pada PR, masukkan item ke Purchase Request List, lalu klik Make PO. Lengkapi quantity, harga, diskon, supplier, dan approver. Setelah data benar, klik Create PO dan Submit PO.","Open Purchasing > Purchase Request Fulfillment, select Detail on the PR, add the items to the Purchase Request List, and click Make PO. Complete the quantity, price, discount, supplier, and approver information. When the data is correct, click Create PO and Submit PO."],
+  ["FAQ-025","Direct Purchase","Direct Purchase","WMS Lite & WMS Lite RFID","Both","Apa perbedaan proses lanjutan Direct Purchase dengan pembayaran Lunas dan TOP?","What is the difference between the next steps for a Paid and a Term-of-Payment Direct Purchase?","Untuk pembayaran Lunas, barang dapat dilanjutkan langsung ke proses Putaway sesuai konfigurasi sistem. Untuk pembayaran TOP, barang perlu melalui proses Inbound terlebih dahulu sebelum Putaway. Pada WMS Lite RFID, proses TOP dapat dilanjutkan melalui Inbound RFID By PO.","For a fully paid purchase, the goods can proceed directly to Putaway depending on the system configuration. For a term-of-payment purchase, the goods must go through Inbound before Putaway. In WMS Lite RFID, this can continue through Inbound RFID By PO."],
+  ["FAQ-026","Purchase Report","Purchase Report","WMS Lite & WMS Lite RFID","Both","Bagaimana cara melihat detail, mencetak, atau membatalkan transaksi pembelian?","How do I view, print, or void a purchase transaction?","Buka Purchasing > Purchase Report. Gunakan action Detail untuk memeriksa transaksi, Print untuk mencetak dokumen, dan Void untuk membatalkan transaksi yang masih memenuhi ketentuan. Pastikan dokumen belum digunakan pada proses lanjutan sebelum melakukan void.","Open Purchasing > Purchase Report. Use Detail to review the transaction, Print to print the document, and Void to cancel a transaction that is still eligible for cancellation. Make sure the document has not been used in a downstream process before voiding it."],
+  ["FAQ-027","Inbound","Inbound","WMS Lite","WMS Lite","Apa perbedaan PO-Inbound dan PO-Inbound-Generate-QR?","What is the difference between PO-Inbound and PO-Inbound-Generate-QR?","PO-Inbound digunakan untuk menerima barang berdasarkan jumlah secara bulk. PO-Inbound-Generate-QR digunakan ketika penerimaan perlu membentuk atau mengelola barcode/QR pada tingkat stok yang lebih spesifik. Pilih metode sesuai konfigurasi dan kebutuhan pelacakan barang.","PO-Inbound is used to receive goods in bulk quantities. PO-Inbound-Generate-QR is used when the receiving process must create or manage barcodes or QR codes at a more specific stock level. Choose the method according to the configuration and traceability requirements."],
+  ["FAQ-028","Inbound","Inbound","WMS Lite & WMS Lite RFID","Both","Kapan stok bertambah setelah proses inbound?","When is stock increased after the inbound process?","Stok akan diperbarui setelah dokumen inbound berhasil di-submit dan sistem membentuk Goods Receipt atau konfirmasi penerimaan. Barang biasanya masuk ke lokasi staging terlebih dahulu dan masih perlu diproses melalui Putaway agar tersimpan pada SLOC tujuan.","Stock is updated after the inbound document is successfully submitted and the system creates the Goods Receipt or receiving confirmation. The goods usually enter a staging location first and still need to be processed through Putaway to reach the destination SLOC."],
+  ["FAQ-029","Putaway","Putaway","WMS Lite & WMS Lite RFID","Both","Bagaimana proses putaway setelah barang diterima?","How do I perform putaway after receiving goods?","Buka Inbound atau Warehouse > Putaway App, pilih dokumen atau barang yang akan disimpan, pindai barcode barang, lalu pilih atau pindai SLOC tujuan. Pastikan jumlah dan lokasi benar sebelum Submit. Setelah selesai, stok akan tercatat pada lokasi penyimpanan tujuan.","Open Inbound or Warehouse > Putaway App, select the document or goods to store, scan the item barcode, and then select or scan the destination SLOC. Verify the quantity and location before submitting. Once completed, the stock is recorded in the destination storage location."],
+  ["FAQ-030","Putaway","Putaway","WMS Lite & WMS Lite RFID","Both","Mengapa SLOC tujuan tidak dapat dipilih saat putaway?","Why can’t a destination SLOC be selected during putaway?","SLOC mungkin tidak aktif, tidak sesuai dengan site atau zone dokumen, sudah mencapai kapasitas, atau tidak tersedia untuk jenis proses tersebut. Periksa Master > Storage Management dan pastikan struktur lokasi, kapasitas, serta site telah dikonfigurasi dengan benar.","The SLOC may be inactive, belong to a different site or zone, have reached its capacity, or be unavailable for that process type. Check Master > Storage Management and make sure the location structure, capacity, and site are configured correctly."],
+  ["FAQ-031","Outbound","Outbound","WMS Lite & WMS Lite RFID","Both","Bagaimana cara membuat Delivery Order dari Sales Order?","How do I create a Delivery Order from a Sales Order?","Buka Outbound > Create Delivery Order, pilih Sales Order yang akan diproses, lalu tentukan item dan jumlah yang dikirim. Lengkapi informasi pengiriman yang diperlukan dan Submit. Setelah DO terbentuk, lanjutkan ke Unassigned Picklist untuk menetapkan picker.","Open Outbound > Create Delivery Order, select the Sales Order to process, and specify the items and quantities to be shipped. Complete the required delivery information and submit the document. After the DO is created, continue to Unassigned Picklist to assign a picker."],
+  ["FAQ-032","Outbound","Outbound","WMS Lite","WMS Lite","Bagaimana cara menetapkan picker untuk sebuah dokumen?","How do I assign a picker to a document?","Buka Outbound > Unassigned Picklist, pilih jenis dokumen yang sesuai, lalu pilih dokumen yang akan diproses. Tentukan picker dan metode picking yang diperlukan, kemudian simpan penugasan. Picker dapat melanjutkan proses melalui Picklist App.","Open Outbound > Unassigned Picklist, select the relevant document type, and choose the document to process. Assign the picker and the required picking method, then save the assignment. The picker can continue through the Picklist App."],
+  ["FAQ-033","Outbound","Outbound","WMS Lite","WMS Lite","Mengapa picklist tidak dapat diselesaikan?","Why can’t a picklist be completed?","Pastikan picker telah ditetapkan, stok tersedia pada SLOC, barcode belum digunakan pada dokumen lain, dan jumlah hasil scan memenuhi order quantity. Periksa juga apakah barang masih berada di staging karena belum diproses putaway.","Make sure a picker has been assigned, stock is available in the SLOC, the barcode is not being used by another document, and the scanned quantity meets the order quantity. Also check whether the goods are still in staging because putaway has not been completed."],
+  ["FAQ-034","Packing & Dispatch","Packing & Dispatch","WMS Lite","WMS Lite","Bagaimana alur packing hingga barang dispatched?","What is the process from packing to dispatch?","Setelah picking selesai, buka Outbound > Packing System dan pilih dokumen yang akan dikemas. Verifikasi item dan jumlah, lengkapi informasi packing, kurir, atau loading sesuai konfigurasi, lalu Submit atau Dispatch. Status dokumen akan diperbarui setelah proses berhasil.","After picking is completed, open Outbound > Packing System and select the document to pack. Verify the items and quantities, complete the packing, courier, or loading information as configured, and then Submit or Dispatch. The document status is updated after the process succeeds."],
+  ["FAQ-035","Outbound","Outbound","WMS Lite & WMS Lite RFID","Both","Di mana saya dapat memeriksa status pengiriman?","Where can I check the delivery status?","Gunakan menu Delivery Status atau laporan Delivery Order untuk melihat status dokumen pengiriman. Cari berdasarkan nomor DO, customer, tanggal, atau informasi lain yang tersedia, lalu buka Detail untuk melihat perkembangan proses.","Use Delivery Status or the Delivery Order report to view the shipment status. Search by DO number, customer, date, or other available information, and open Detail to review the process progress."],
+  ["FAQ-036","Stock Movement","Stock Movement","WMS Lite & WMS Lite RFID","Both","Bagaimana alur Stock Transfer Out dan Stock Transfer In?","What is the Stock Transfer Out and Stock Transfer In process?","Buat dokumen Stock Transfer Out untuk mengirim stok dari gudang asal. Setelah picking dan dispatch selesai, gudang tujuan memproses dokumen melalui Stock Transfer In, kemudian melakukan Putaway ke SLOC tujuan. Pastikan jumlah yang diterima sesuai dengan dokumen pengiriman.","Create a Stock Transfer Out document to send stock from the origin warehouse. After picking and dispatch are completed, the destination warehouse processes the document through Stock Transfer In and performs Putaway to the destination SLOC. Make sure the received quantity matches the shipment document."],
+  ["FAQ-037","Stock Movement","Stock Movement","WMS Lite","WMS Lite","Kapan Stock Transfer mode Direct digunakan?","When should Direct Stock Transfer mode be used?","Mode Direct digunakan ketika pemindahan stok dapat diproses langsung sesuai konfigurasi tanpa alur picking yang lebih panjang. Pastikan gudang asal, gudang tujuan, item, jumlah, dan lokasi telah benar sebelum Submit karena transaksi akan memengaruhi stok kedua lokasi.","Direct mode is used when stock can be moved directly according to the configuration without a longer picking workflow. Verify the origin warehouse, destination warehouse, items, quantities, and locations before submitting because the transaction affects stock at both locations."],
+  ["FAQ-038","Stock Movement","Stock Movement","WMS Lite","WMS Lite","Apa fungsi Stock Transfer Between Barcode?","What is Stock Transfer Between Barcode used for?","Stock Transfer Between Barcode digunakan untuk memindahkan jumlah stok dari satu barcode ke barcode lain sesuai kebutuhan pengelolaan stok. Pastikan kedua barcode merujuk pada SKU yang sesuai dan jumlah yang dipindahkan tidak melebihi stok barcode asal.","Stock Transfer Between Barcode is used to move stock quantities from one barcode to another for stock management purposes. Make sure both barcodes refer to the appropriate SKU and that the transferred quantity does not exceed the source barcode stock."],
+  ["FAQ-039","Inventory & Stock Opname","Inventory & Stocktaking","WMS Lite & WMS Lite RFID","Both","Apa perbedaan Stock Opname manual dan Stock Opname menggunakan scan?","What is the difference between manual and scanned Stock Opname?","Stock Opname manual dilakukan dengan memilih item dan mengisi New Qty untuk mengganti jumlah sebelumnya. Mode scan digunakan untuk menghitung berdasarkan barcode atau stok pada SLOC tertentu. Gunakan metode yang paling sesuai dengan tingkat detail dan perangkat yang tersedia.","Manual Stock Opname is performed by selecting an item and entering a New Qty to replace the previous quantity. Scan mode counts stock using barcodes or stock within a specific SLOC. Use the method that matches the required level of detail and available devices."],
+  ["FAQ-040","Inventory & Stock Opname","Inventory & Stocktaking","WMS Lite & WMS Lite RFID","Both","Mengapa jumlah stok masih berbeda setelah Stock Opname?","Why is the stock quantity still different after Stock Opname?","Periksa apakah dokumen stock opname telah berhasil di-submit, site dan SLOC yang dipilih sudah benar, serta tidak ada transaksi inbound, outbound, atau transfer yang berjalan pada waktu yang sama. Tinjau Stock Opname Report dan Change Document Log untuk menelusuri perubahan.","Check whether the Stock Opname document was successfully submitted, the correct site and SLOC were selected, and no inbound, outbound, or transfer transaction occurred at the same time. Review the Stock Opname Report and Change Document Log to trace the changes."],
+  ["FAQ-041","Sales","Sales","WMS Lite & WMS Lite RFID","Both","Bagaimana cara membuat Sales Order?","How do I create a Sales Order?","Buka Sales > Sales Order, pilih produk dan masukkan jumlah serta harga pada cart. Pilih customer, terapkan promo atau diskon bila diperlukan, lalu klik Charge. Lengkapi informasi konfirmasi penjualan dan Submit hingga faktur atau dokumen penjualan terbentuk.","Open Sales > Sales Order, select the products, and enter their quantities and prices in the cart. Select the customer, apply a promotion or discount when required, and click Charge. Complete the sales confirmation information and submit it until the sales document or invoice is created."],
+  ["FAQ-042","Sales","Sales","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menyimpan transaksi Sales Order sebagai draft?","How do I save a Sales Order transaction as a draft?","Pada halaman Sales Order, gunakan fitur Save Bill atau simpan sementara sebelum melakukan Charge. Saat ingin melanjutkan, pilih draft atau bill yang tersimpan, periksa kembali item, jumlah, harga, customer, dan promo, lalu lanjutkan transaksi.","On the Sales Order page, use Save Bill or the temporary save option before clicking Charge. To continue later, select the saved draft or bill, recheck the items, quantities, prices, customer, and promotion, and then proceed with the transaction."],
+  ["FAQ-043","Sales Return","Sales Return","WMS Lite & WMS Lite RFID","Both","Bagaimana cara menelusuri Sales Return ke dokumen SO dan DO asal?","How do I trace a Sales Return back to its original SO and DO?","Buka detail dokumen pada Sales Return, Process Sales Return, atau Return Detail List dan periksa nomor referensi DO. Dari nomor DO tersebut, buka DO Report atau Sales Order Report untuk melihat SO, customer, item, dan detail pengiriman asal.","Open the document details in Sales Return, Process Sales Return, or Return Detail List and check the referenced DO number. Use that DO number in the DO Report or Sales Order Report to view the original SO, customer, items, and shipment details."],
+  ["FAQ-044","Production","Production","WMS Lite","WMS Lite","Bagaimana cara membuat formula Assembly Product?","How do I create an Assembly Product formula?","Buka Production > Create Assembly Product, tentukan produk jadi dan komponen atau bahan penyusunnya, lalu isi jumlah sesuai formula. Simpan data hingga nomor formula assembly terbentuk. Formula biasanya dibuat sekali dan dapat digunakan kembali untuk proses assembly berikutnya.","Open Production > Create Assembly Product, select the finished product and its component materials, and enter the required quantities. Save the data until an assembly formula number is created. The formula is generally created once and can be reused for future assembly processes."],
+  ["FAQ-045","Production","Production","WMS Lite","WMS Lite","Apa perbedaan proses Assembly dengan picklist Direct dan Indirect?","What is the difference between Direct and Indirect picklist in Assembly?","Picklist Direct menggunakan komponen yang diproses langsung pada alur assembly sesuai konfigurasi, sedangkan Indirect menggunakan tahapan penugasan dan pengambilan barang melalui picklist. Pilih metode berdasarkan kontrol operasional dan kebutuhan pelacakan bahan baku.","Direct picklist processes components directly within the assembly workflow according to the configuration, while Indirect uses an assignment and picking stage through a picklist. Choose the method based on operational control and raw-material traceability requirements."],
+  ["FAQ-046","Production & Integrasi","Production & Integration","WMS Lite","WMS Lite","Bagaimana proses penyelesaian Assembly diteruskan ke Accurate atau Jurnal?","How is a completed Assembly process sent to Accurate or Jurnal?","Setelah proses assembly selesai, jalankan action penyelesaian pesanan atau Process sesuai integrasi yang digunakan. Sistem akan membentuk atau mengirim dokumen pekerjaan dan penyelesaian ke Accurate atau Jurnal. Periksa notifikasi, nomor dokumen, dan status sinkronisasi sebelum melanjutkan transaksi berikutnya.","After the assembly process is completed, run the order-completion or Process action according to the active integration. The system creates or sends the work and completion documents to Accurate or Jurnal. Check the notification, document number, and synchronization status before continuing."],
+  ["FAQ-047","Dashboard & Report","Dashboard & Report","WMS Lite & WMS Lite RFID","Both","Mengapa data dashboard atau laporan belum menampilkan transaksi terbaru?","Why does the dashboard or report not show the latest transaction?","Pastikan transaksi sumber telah berhasil di-submit dan tidak berstatus draft atau waiting. Gunakan fitur Refresh atau sinkronisasi yang tersedia, lalu periksa filter tanggal, site, dan status. Jika menggunakan integrasi, pastikan proses sinkronisasi telah selesai tanpa error.","Make sure the source transaction was successfully submitted and is not in Draft or Waiting status. Use the available Refresh or synchronization feature, and check the date, site, and status filters. If an integration is used, confirm that synchronization completed without errors."],
+  ["FAQ-048","Integrasi Accurate","Accurate Integration","WMS Lite","WMS Lite","Bagaimana cara menghubungkan Prieds dengan Accurate?","How do I connect Prieds to Accurate?","Buka menu Sync Accurate dan pilih proses Connect Prieds dengan Accurate. Ikuti langkah otorisasi akun dan pilih database atau perusahaan yang benar. Setelah koneksi berhasil, lakukan sinkronisasi database dan master data yang diperlukan sebelum memproses transaksi.","Open Sync Accurate and select Connect Prieds with Accurate. Follow the account authorization steps and choose the correct database or company. After the connection succeeds, synchronize the database and required master data before processing transactions."],
+  ["FAQ-049","Integrasi Accurate","Accurate Integration","WMS Lite","WMS Lite","Data apa saja yang dapat disinkronkan dari Accurate ke Prieds?","What data can be synchronized from Accurate to Prieds?","Data yang tersedia dalam panduan mencakup database, customer, supplier, item atau SKU, warehouse, atribut keuangan, department, CoA, shipment, branch, Sales Invoice, Sales Order, Purchase Order, dan Work Order. Hak akses dan konfigurasi perusahaan dapat memengaruhi pilihan yang tersedia.","The guide covers database, customer, supplier, item or SKU, warehouse, financial attributes, department, chart of accounts, shipment, branch, Sales Invoice, Sales Order, Purchase Order, and Work Order. Available options may depend on company permissions and configuration."],
+  ["FAQ-050","Integrasi","Integration","WMS Lite","WMS Lite","Kapan perlu melakukan sinkronisasi SO atau PO secara spesifik?","When should I run a specific SO or PO synchronization?","Lakukan sinkronisasi spesifik ketika satu dokumen tidak muncul, gagal diproses, atau telah diubah pada sistem sumber. Masukkan nomor dokumen yang tepat dan jalankan sinkronisasi hanya untuk dokumen tersebut agar proses lebih cepat dan risiko perubahan data lain lebih kecil.","Run a specific synchronization when one document is missing, cannot be processed, or has been edited in the source system. Enter the exact document number and synchronize only that document for a faster process and a lower risk of affecting other data."],
+  ["FAQ-051","Integrasi Jurnal","Jurnal Integration","WMS Lite","WMS Lite","Apa perbedaan koneksi Jurnal menggunakan API Key dan Redirect?","What is the difference between connecting Jurnal using an API Key and Redirect?","Mode API Key menggunakan kredensial atau token integrasi yang dimasukkan sesuai konfigurasi akun. Mode Redirect mengarahkan pengguna ke proses otorisasi akun Jurnal. Gunakan metode yang telah ditetapkan oleh administrator dan pastikan akun memiliki akses ke perusahaan yang benar.","API Key mode uses integration credentials or a token entered according to the account configuration. Redirect mode sends the user through the Jurnal account authorization flow. Use the method defined by your administrator and make sure the account has access to the correct company."],
+  ["FAQ-052","Integrasi","Integration","WMS Lite","WMS Lite","Apa yang harus dilakukan jika data Prieds berbeda dengan Accurate atau Jurnal?","What should I do if Prieds data differs from Accurate or Jurnal?","Bandingkan nomor dokumen, status, item, jumlah, tanggal, customer atau supplier, serta site pada kedua sistem. Pastikan tidak ada perubahan atau penghapusan dokumen di sistem sumber, lalu lakukan sinkronisasi spesifik. Jika perbedaan tetap ada, lampirkan bukti kedua sistem pada tiket Prieds Support.","Compare the document number, status, items, quantities, dates, customer or supplier, and site in both systems. Make sure the document was not edited or deleted in the source system, then run a specific synchronization. If the mismatch remains, attach evidence from both systems to a Prieds Support ticket."],
+  ["FAQ-053","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara melakukan Inbound Manual RFID?","How do I perform a Manual RFID Inbound?","Buka RFID Operational > Inbound Manual RFID dan pilih mode dengan SLOC atau tanpa SLOC. Pilih SKU, UOM conversion, dan SLOC bila diperlukan, lalu isi nomor dokumen. Klik Next, mulai Scan, pastikan seluruh tag berstatus valid, kemudian Submit.","Open RFID Operational > Inbound Manual RFID and choose either SLOC or non-SLOC mode. Select the SKU, UOM conversion, and SLOC when required, then enter the document number. Click Next, start scanning, make sure all tags are valid, and submit the transaction."],
+  ["FAQ-054","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Apa arti kartu berwarna biru dan merah saat Inbound Manual RFID?","What do the blue and red cards mean during Manual RFID Inbound?","Kartu biru dengan status Valid berarti tag berhasil dibaca dan dapat diproses. Kartu merah dengan status Stock Already Exist berarti kode RFID telah terdaftar pada stok atau barang lain. Hapus atau perbaiki seluruh kartu merah karena transaksi tidak dapat di-submit selama masih ada tag bermasalah.","A blue card with Valid status means the tag was read successfully and can be processed. A red card with Stock Already Exist means the RFID code is already registered to existing stock or another item. Remove or correct all red cards because the transaction cannot be submitted while an invalid tag remains."],
+  ["FAQ-055","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara melakukan Inbound RFID berdasarkan Purchase Order?","How do I perform RFID Inbound based on a Purchase Order?","Buka RFID Operational > Inbound RFID By PO, pilih dokumen PO, lalu pilih SKU yang akan diterima. Pindai barcode atau RFID, sesuaikan jumlah bila diperlukan, dan klik Continue. Isi waktu transaksi, nomor DO supplier, serta remark, lalu Submit. Setelah berhasil, lanjutkan ke Putaway.","Open RFID Operational > Inbound RFID By PO, select the PO document, and choose the SKU to receive. Scan the barcode or RFID, adjust the quantity when needed, and click Continue. Enter the transaction time, supplier DO number, and remarks, then submit. After completion, continue to Putaway."],
+  ["FAQ-056","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Mengapa field Purchase Invoice Accurate muncul pada Inbound RFID By PO?","Why does the Purchase Invoice Accurate field appear in RFID Inbound By PO?","Field tersebut muncul jika perusahaan terintegrasi dengan Accurate dan opsi Mendahului Terima Barang pada Faktur Pembelian diaktifkan. Pilih Purchase Invoice Accurate yang sesuai agar daftar inbound terisi berdasarkan dokumen sumber yang benar.","This field appears when the company is integrated with Accurate and the Advance Receipt option is enabled on the Purchase Invoice. Select the correct Accurate Purchase Invoice so the inbound list is populated from the appropriate source document."],
+  ["FAQ-057","RFID Inbound","RFID Inbound","WMS Lite RFID","WMS Lite RFID","Bagaimana memproses barang retur penjualan menggunakan RFID?","How do I receive sales-return goods using RFID?","Buka RFID Operational > Inbound RFID By SRTN, pilih dokumen Sales Return, lalu pilih item yang akan diterima. Pindai barcode atau RFID, periksa jumlah, simpan hasil scan, dan Submit. Barang yang diterima selanjutnya dapat diproses sesuai lokasi staging dan putaway yang berlaku.","Open RFID Operational > Inbound RFID By SRTN, select the Sales Return document, and choose the items to receive. Scan the barcode or RFID, verify the quantities, save the scan result, and submit. The returned goods can then follow the applicable staging and putaway process."],
+  ["FAQ-058","RFID Outbound","RFID Outbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara melakukan Outbound RFID Manual?","How do I perform a Manual RFID Outbound?","Buka RFID Operational > Outbound RFID Manual, pilih SKU dan informasi yang diperlukan, lalu mulai Scan. Hanya tag berstatus Valid yang dapat diproses. Hapus tag berstatus Invalid atau Stock Already 0, lanjutkan ke Outbound Information, isi nomor dokumen, lalu Submit.","Open RFID Operational > Outbound RFID Manual, select the SKU and required information, and start scanning. Only tags with Valid status can be processed. Remove tags marked Invalid or Stock Already 0, continue to Outbound Information, enter the document number, and submit."],
+  ["FAQ-059","RFID Outbound","RFID Outbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara memproses Outbound RFID berdasarkan Delivery Order?","How do I process RFID Outbound based on a Delivery Order?","Buka RFID Operational > Outbound RFID By DO, pilih DO, lalu ambil barang dari SLOC yang tersedia dan pindai RFID atau barcode. Pastikan Scan Qty memenuhi Order Qty dan kartu item berwarna hijau. Submit untuk menyelesaikan proses; status DO akan menjadi Dispatched dan stok gudang berkurang.","Open RFID Operational > Outbound RFID By DO, select the DO, retrieve the goods from the available SLOC, and scan the RFID tag or barcode. Make sure the Scan Qty meets the Order Qty and the item card turns green. Submit to complete the process; the DO becomes Dispatched and warehouse stock is reduced."],
+  ["FAQ-060","RFID Outbound","RFID Outbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara memproses Outbound RFID berdasarkan Stock Transfer Order?","How do I process RFID Outbound based on a Stock Transfer Order?","Buka RFID Operational > Outbound RFID By STO, pilih dokumen STO, lalu pindai barcode atau RFID untuk setiap item. Pastikan jumlah scan terpenuhi, kemudian isi remark, kurir, dan nomor kendaraan pada Outbound Information. Submit untuk mengubah STO menjadi Dispatched dan mengurangi stok gudang asal.","Open RFID Operational > Outbound RFID By STO, select the STO document, and scan the barcode or RFID for each item. Make sure the required quantity is fully scanned, then enter the remarks, courier, and vehicle number in Outbound Information. Submit to mark the STO as Dispatched and reduce stock at the origin warehouse."],
+  ["FAQ-061","RFID Outbound","RFID Outbound","WMS Lite RFID","WMS Lite RFID","Bagaimana cara memproses Purchase Return menggunakan RFID?","How do I process a Purchase Return using RFID?","Setelah Purchase Return dibuat, buka RFID Operational > Outbound RFID By PRTN. Pilih dokumen PRTN, ambil barang dari SLOC, lalu pindai seluruh tag RFID sesuai Return Qty. Submit setelah jumlah terpenuhi. Status Purchase Return akan diperbarui dan stok gudang berkurang.","After creating the Purchase Return, open RFID Operational > Outbound RFID By PRTN. Select the PRTN document, retrieve the goods from the SLOC, and scan all RFID tags according to the Return Qty. Submit when the quantity is complete. The Purchase Return status is updated and warehouse stock is reduced."],
+  ["FAQ-062","RFID Troubleshooting","RFID Troubleshooting","WMS Lite RFID","WMS Lite RFID","Apa yang harus dilakukan jika RFID tag tidak terbaca oleh scanner?","What should I do if an RFID tag is not detected by the scanner?","Pastikan scanner aktif dan terhubung, tag berada dalam jangkauan, serta tidak terhalang material yang mengganggu pembacaan. Coba hentikan dan mulai ulang proses scan, lalu gunakan scan barcode kamera bila tersedia. Jika satu tag tetap tidak terbaca, periksa kondisi fisik tag atau ganti tag sesuai prosedur.","Make sure the scanner is active and connected, the tag is within range, and no material is blocking the signal. Stop and restart the scan, or use the camera barcode scan when available. If one tag still cannot be read, inspect its physical condition or replace it according to procedure."],
+  ["FAQ-063","RFID Troubleshooting","RFID Troubleshooting","WMS Lite RFID","WMS Lite RFID","Apa arti status Stock Already 0 atau Invalid pada proses Outbound RFID?","What do Stock Already 0 and Invalid mean during RFID Outbound?","Stock Already 0 berarti tag telah terdaftar, tetapi jumlah stok yang tersedia tidak mencukupi. Invalid berarti tag belum terdaftar pada item yang diproses. Tag dengan status tersebut harus dihapus dari daftar scan atau diperbaiki sebelum transaksi dapat dilanjutkan.","Stock Already 0 means the tag is registered, but the available stock quantity is insufficient. Invalid means the tag is not registered to the item being processed. Tags with either status must be removed from the scan list or corrected before the transaction can continue."]
 ];
-
-const FAQ_MODULE={
-  id:'faq',
-  name:{id:'FAQ',en:'FAQ'},
-  desc:{
-    id:'Pertanyaan yang sering diajukan terkait WMS Lite dan WMS Lite RFID.',
-    en:'Frequently asked questions about WMS Lite and WMS Lite RFID.'
-  },
-  topics:FAQ_ROWS.map(([
-    id,
-    categoryId,
-    categoryEn,
-    scopeId,
-    scopeEn,
-    questionId,
-    questionEn,
-    answerId,
-    answerEn
-  ])=>({
-    title:{id:questionId,en:questionEn},
-    source:`FAQ List WMS RFID.xlsx • ${id}`,
-    createdAt:'2026-07-21T04:00:00.000Z',
-    updatedAt:'2026-07-21T04:00:00.000Z',
-    editor:'Prieds Learning Center',
-    blocks:{
-      id:[
-        {type:'label',text:'Jawaban'},
-        {type:'p',text:answerId},
-        {type:'label',text:'Informasi FAQ'},
-        {
-          type:'table',
-          rows:[
-            ['FAQ ID','Kategori','Cakupan Produk'],
-            [id,categoryId,scopeId]
-          ]
-        }
-      ],
-      en:[
-        {type:'label',text:'Answer'},
-        {type:'p',text:answerEn},
-        {type:'label',text:'FAQ Information'},
-        {
-          type:'table',
-          rows:[
-            ['FAQ ID','Category','Product Scope'],
-            [id,categoryEn,scopeEn]
-          ]
-        }
-      ]
-    }
-  }))
-};
-
-if(!DATA.some(m=>m.id==='faq')){
-  DATA=[...DATA,FAQ_MODULE];
-}
-
+const FAQ_MODULE={id:'faq',name:{id:'FAQ',en:'FAQ'},desc:{id:'Pertanyaan yang sering diajukan terkait WMS Lite dan WMS Lite RFID.',en:'Frequently asked questions about WMS Lite and WMS Lite RFID.'},topics:FAQ_ROWS.map(([id,categoryId,categoryEn,scopeId,scopeEn,questionId,questionEn,answerId,answerEn])=>({title:{id:questionId,en:questionEn},faqCategory:{key:categoryId,id:categoryId,en:categoryEn},source:`FAQ List WMS RFID.xlsx • ${id}`,createdAt:'2026-07-21T04:00:00.000Z',updatedAt:'2026-07-21T04:00:00.000Z',editor:'Prieds Learning Center',blocks:{id:[{type:'label',text:'Jawaban'},{type:'p',text:answerId},{type:'label',text:'Informasi FAQ'},{type:'table',rows:[['FAQ ID','Kategori','Cakupan Produk'],[id,categoryId,scopeId]]}],en:[{type:'label',text:'Answer'},{type:'p',text:answerEn},{type:'label',text:'FAQ Information'},{type:'table',rows:[['FAQ ID','Category','Product Scope'],[id,categoryEn,scopeEn]]}]}}))};
+if(!DATA.some(m=>m.id==='faq')) DATA=[...DATA,FAQ_MODULE];
 let ASSETS={...window.KC_DEFAULT_ASSETS,...(__kcState.assets||{})};
-
 const UI={
  id:{tocTitle:'Table of Content',findTitle:'Temukan artikel sesuai kebutuhan Anda',search:'Search',back:'Kembali ke daftar artikel',copy:'Salin panduan',footer:'Prieds Knowledge Center • Panduan resmi WMS Lite dan WMS Lite RFID',placeholder:'Contoh: Product Management',articles:'Artikel dalam menu ini',created:'Diperbarui dari User Guide • Editor: Prieds Learning Center',empty:'Tidak ada artikel yang sesuai.',results:'Hasil pencarian',home:'Knowledge Center',copied:'Panduan berhasil disalin.',login:'Fitur login dapat dihubungkan pada environment production.'},
  en:{tocTitle:'Table of Content',findTitle:'Find articles according to your needs',search:'Search',back:'Back to article list',copy:'Copy guide',footer:'Prieds Knowledge Center • Official WMS Lite and WMS Lite RFID guides',placeholder:'Example: Product Management',articles:'Articles in this menu',created:'Updated from User Guide • Editor: Prieds Learning Center',empty:'No matching articles were found.',results:'Search results',home:'Knowledge Center',copied:'Guide copied successfully.',login:'Login can be connected in the production environment.'}
 };
-
 let lang='id';
 let activeModule=DATA.find(m=>m.id==='master')||DATA[0];
 let activeTopic=0;
-let lastListMode={
-  type:'module',
-  module:activeModule,
-  items:activeModule.topics.map((x,i)=>({m:activeModule,x,i}))
-};
-
+let openModuleId=activeModule.id;
+const openFaqCategories=new Set();
+let lastListMode={type:'module',module:activeModule,items:activeModule.topics.map((x,i)=>({m:activeModule,x,i}))};
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({
-  '&':'&amp;',
-  '<':'&lt;',
-  '>':'&gt;',
-  '"':'&quot;',
-  "'":'&#39;'
-}[c]));
-
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const t=k=>UI[lang][k]||k;
-
-const topicMeta=topic=>({
-  createdAt:topic.createdAt||'2026-07-20T03:00:00.000Z',
-  updatedAt:topic.updatedAt||topic.createdAt||'2026-07-20T03:00:00.000Z',
-  editor:topic.editor||'Prieds Learning Center'
-});
-
-const fmtDate=v=>{
-  try{
-    return new Intl.DateTimeFormat(
-      lang==='id'?'id-ID':'en-GB',
-      {dateStyle:'medium',timeStyle:'short'}
-    ).format(new Date(v));
-  }catch(_){
-    return v||'-';
-  }
-};
-
-function getBlocks(topic){
-  return topic.blocks[lang]&&topic.blocks[lang].length
-    ?topic.blocks[lang]
-    :topic.blocks.id||[];
-}
-
-function preview(topic){
-  const b=getBlocks(topic).find(
-    b=>['p','step'].includes(b.type)&&b.text&&b.text.length>28
-  );
-
-  return b
-    ?b.text
-    :(lang==='id'
-      ?'Panduan penggunaan menu Prieds berdasarkan User Guide.'
-      :'Prieds menu guide based on the User Guide.');
-}
-
-function toastMsg(msg){
-  $('toast').textContent=msg;
-  $('toast').classList.add('show');
-  clearTimeout(window.__toast);
-  window.__toast=setTimeout(
-    ()=>$('toast').classList.remove('show'),
-    1800
-  );
-}
-
-function localize(){
-  document.documentElement.lang=lang;
-
-  document.querySelectorAll('[data-ui]').forEach(
-    el=>el.textContent=t(el.dataset.ui)
-  );
-
-  $('searchInput').placeholder=t('placeholder');
-  $('articleSearchInput').placeholder=t('placeholder');
-
-  renderNav();
-
-  if($('articleView').classList.contains('show')){
-    renderArticle();
-  }else{
-    rerenderLastList();
-  }
-}
-
-function navHtml(){
-  return DATA.map(m=>`
-    <div class="moduleGroup ${m.id===activeModule.id?'open':''}" data-group="${m.id}">
-      <button class="moduleToggle" data-module="${m.id}">
-        <span class="chev">›</span>
-        <span class="moduleName">${esc(m.name[lang])}</span>
-      </button>
-
-      <div class="topicLinks">
-        ${m.topics.map((x,i)=>`
-          <button
-            class="${m.id===activeModule.id&&i===activeTopic&&$('articleView').classList.contains('show')?'active':''}"
-            data-topic-module="${m.id}"
-            data-topic-index="${i}"
-          >
-            ${esc(x.title[lang])}
-          </button>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-function bindNav(root){
-  root.querySelectorAll('[data-module]').forEach(btn=>{
-    btn.onclick=()=>{
-      const m=DATA.find(x=>x.id===btn.dataset.module);
-      if(!m)return;
-
-      activeModule=m;
-      activeTopic=0;
-      showModuleList(m);
-      $('mobileDrawer').classList.remove('show');
-    };
-  });
-
-  root.querySelectorAll('[data-topic-module]').forEach(btn=>{
-    btn.onclick=()=>{
-      openArticle(
-        btn.dataset.topicModule,
-        +btn.dataset.topicIndex
-      );
-
-      $('mobileDrawer').classList.remove('show');
-    };
-  });
-}
-
-function renderNav(){
-  $('leftNav').innerHTML=navHtml();
-  $('mobileNav').innerHTML=navHtml();
-
-  bindNav($('leftNav'));
-  bindNav($('mobileNav'));
-}
-
-function showList(){
-  $('listView').classList.remove('hide');
-  $('articleView').classList.remove('show');
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function showArticle(){
-  $('listView').classList.add('hide');
-  $('articleView').classList.add('show');
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function articleCard(r){
-  const meta=topicMeta(r.x);
-
-  return `
-    <button
-      class="articleCard"
-      data-open-module="${r.m.id}"
-      data-open-index="${r.i}"
-    >
-      <div class="cardThumb">◖</div>
-
-      <div class="cardBody">
-        <h3>${esc(r.x.title[lang])}</h3>
-        <div class="cardMeta">
-          ${esc(meta.editor)} • ${fmtDate(meta.updatedAt)}
-        </div>
-        <p>${esc(preview(r.x))}</p>
-      </div>
-
-      <div class="cardArrow">›</div>
-    </button>
-  `;
-}
-
-function bindCards(){
-  $('articleList').querySelectorAll('[data-open-module]').forEach(btn=>{
-    btn.onclick=()=>openArticle(
-      btn.dataset.openModule,
-      +btn.dataset.openIndex
-    );
-  });
-}
-
-function showModuleList(m){
-  activeModule=m;
-  activeTopic=0;
-
-  lastListMode={
-    type:'module',
-    module:m,
-    items:m.topics.map((x,i)=>({m,x,i}))
-  };
-
-  showList();
-  renderNav();
-  renderModuleList(m);
-  history.replaceState(null,'','#'+m.id);
-}
-
-function renderModuleList(m){
-  $('breadcrumb').innerHTML=
-    `${t('home')} / ${esc(m.name[lang])}`;
-
-  $('listHeader').innerHTML=`
-    <div class="sectionBanner">
-      <div class="bannerIcon">▣</div>
-      <div>
-        <strong>${esc(m.name[lang])}</strong>
-        <small>${m.topics.length} ${t('articles')}</small>
-      </div>
-    </div>
-  `;
-
-  $('articleList').innerHTML=m.topics.length
-    ?m.topics.map((x,i)=>articleCard({m,x,i})).join('')
-    :`<div class="empty">${t('empty')}</div>`;
-
-  bindCards();
-}
-
-function searchArticles(q){
-  q=q.trim();
-
-  if(!q){
-    showModuleList(activeModule);
-    return;
-  }
-
-  const nq=normalize(q);
-  const items=[];
-
-  DATA.forEach(m=>m.topics.forEach((x,i)=>{
-    const blocks=getBlocks(x);
-
-    const hay=[
-      m.name[lang],
-      m.desc[lang],
-      x.title[lang],
-      ...blocks.filter(b=>b.text).map(b=>b.text)
-    ].join(' ');
-
-    if(normalize(hay).includes(nq)){
-      items.push({m,x,i});
-    }
-  }));
-
-  lastListMode={
-    type:'search',
-    query:q,
-    items
-  };
-
-  showList();
-
-  $('breadcrumb').innerHTML=
-    `${t('home')} / ${t('results')}`;
-
-  $('listHeader').innerHTML=`
-    <div class="sectionBanner">
-      <div class="bannerIcon">⌕</div>
-      <div>
-        <strong>${t('results')}</strong>
-        <small>
-          ${items.length} ${t('articles')} • “${esc(q)}”
-        </small>
-      </div>
-    </div>
-  `;
-
-  $('articleList').innerHTML=items.length
-    ?items.map(articleCard).join('')
-    :`<div class="empty">${t('empty')}</div>`;
-
-  bindCards();
-}
-
-function rerenderLastList(){
-  if(lastListMode.type==='search'){
-    searchArticles(lastListMode.query);
-  }else{
-    renderModuleList(lastListMode.module||activeModule);
-  }
-}
-
-function normalize(s){
-  return String(s||'')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^a-z0-9]+/g,' ');
-}
-
-function openArticle(mid,idx){
-  activeModule=DATA.find(m=>m.id===mid)||DATA[0];
-
-  activeTopic=Math.max(
-    0,
-    Math.min(idx,activeModule.topics.length-1)
-  );
-
-  showArticle();
-  renderNav();
-  renderArticle();
-
-  history.replaceState(
-    null,
-    '',
-    '#'+mid+'-'+activeTopic
-  );
-}
-
-function renderArticle(){
-  const topic=activeModule.topics[activeTopic];
-  const blocks=getBlocks(topic);
-
-  $('breadcrumb').innerHTML=`
-    <button id="crumbHome">${t('home')}</button>
-    /
-    <button id="crumbModule">${esc(activeModule.name[lang])}</button>
-    /
-    ${esc(topic.title[lang])}
-  `;
-
-  $('crumbHome').onclick=()=>showModuleList(activeModule);
-  $('crumbModule').onclick=()=>showModuleList(activeModule);
-
-  $('articleTitle').textContent=topic.title[lang];
-
-  {
-    const meta=topicMeta(topic);
-
-    $('articleSource').textContent=
-      (topic.source||'Prieds')
-      +' • '
-      +meta.editor
-      +' • '
-      +fmtDate(meta.updatedAt);
-  }
-
-  $('articleIntro').textContent=preview(topic);
-
-  let step=0;
-  let html='';
-
-  blocks.forEach(b=>{
-    if(b.type==='label'){
-      html+=`<div class="docLabel">${esc(b.text)}</div>`;
-    }else if(b.type==='subheading'){
-      html+=`<h2>${esc(b.text)}</h2>`;
-    }else if(b.type==='step'){
-      html+=`
-        <div class="stepCard">
-          <div class="stepNum">${++step}</div>
-          <div class="stepText">${esc(b.text)}</div>
-        </div>
-      `;
-    }else if(b.type==='p'){
-      html+=`<p class="docP">${esc(b.text)}</p>`;
-    }else if(b.type==='image'){
-      const src=ASSETS[b.asset];
-
-      if(src){
-        html+=`
-          <figure class="mediaCard">
-            <button data-asset="${b.asset}">
-              <img
-                loading="lazy"
-                src="${src}"
-                alt="${esc(b.caption||topic.title[lang])}"
-              >
-            </button>
-
-            ${b.caption
-              ?`<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>`
-              :''
-            }
-          </figure>
-        `;
-      }
-    }else if(b.type==='table'){
-      html+=`
-        <div class="docTableWrap">
-          <table class="docTable">
-            ${b.rows.map(r=>`
-              <tr>
-                ${r.map(c=>`<td>${esc(c)}</td>`).join('')}
-              </tr>
-            `).join('')}
-          </table>
-        </div>
-      `;
-    }
-  });
-
-  $('docContent').innerHTML=
-    html||`<div class="empty">${t('empty')}</div>`;
-
-  $('docContent').querySelectorAll('[data-asset]').forEach(btn=>{
-    btn.onclick=()=>openLightbox(ASSETS[btn.dataset.asset]);
-  });
-}
-
-function openLightbox(src){
-  $('lightboxImg').src=src;
-  $('lightbox').classList.add('show');
-}
-
-function copyGuide(){
-  const topic=activeModule.topics[activeTopic];
-  const blocks=getBlocks(topic);
-
-  const text=[
-    topic.title[lang],
-    ...blocks.filter(b=>b.text).map(b=>b.text)
-  ].join('\n');
-
-  navigator.clipboard
-    .writeText(text)
-    .then(()=>toastMsg(t('copied')));
-}
-
-function syncSearch(source,target){
-  target.value=source.value;
-  searchArticles(source.value);
-}
-
-document.querySelectorAll('[data-lang]').forEach(btn=>{
-  btn.onclick=()=>{
-    lang=btn.dataset.lang;
-
-    document.querySelectorAll('[data-lang]').forEach(x=>{
-      x.classList.toggle('active',x===btn);
-    });
-
-    localize();
-  };
-});
-
-$('searchInput').oninput=e=>searchArticles(e.target.value);
-
-$('searchBtn').onclick=()=>{
-  searchArticles($('searchInput').value);
-};
-
-$('searchInput').onkeydown=e=>{
-  if(e.key==='Enter'){
-    searchArticles(e.target.value);
-  }
-};
-
-$('articleSearchInput').oninput=e=>{
-  $('searchInput').value=e.target.value;
-  searchArticles(e.target.value);
-};
-
-$('articleSearchBtn').onclick=()=>{
-  $('searchInput').value=$('articleSearchInput').value;
-  searchArticles($('articleSearchInput').value);
-};
-
-$('backBtn').onclick=()=>{
-  showList();
-  rerenderLastList();
-  renderNav();
-};
-
-$('copyBtn').onclick=copyGuide;
-
-$('loginBtn').onclick=()=>{
-  location.href='master.html';
-};
-
-$('mobileMenu').onclick=()=>{
-  $('mobileDrawer').classList.toggle('show');
-  renderNav();
-};
-
-$('lightboxClose').onclick=()=>{
-  $('lightbox').classList.remove('show');
-};
-
-$('lightbox').onclick=e=>{
-  if(e.target===$('lightbox')){
-    $('lightbox').classList.remove('show');
-  }
-};
-
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){
-    $('lightbox').classList.remove('show');
-    $('mobileDrawer').classList.remove('show');
-  }
-});
-
+const topicMeta=topic=>({createdAt:topic.createdAt||'2026-07-20T03:00:00.000Z',updatedAt:topic.updatedAt||topic.createdAt||'2026-07-20T03:00:00.000Z',editor:topic.editor||'Prieds Learning Center'});
+const fmtDate=v=>{try{return new Intl.DateTimeFormat(lang==='id'?'id-ID':'en-GB',{dateStyle:'medium',timeStyle:'short'}).format(new Date(v))}catch(_){return v||'-'}};
+function getBlocks(topic){return topic.blocks[lang]&&topic.blocks[lang].length?topic.blocks[lang]:topic.blocks.id||[]}
+function preview(topic){const b=getBlocks(topic).find(b=>['p','step'].includes(b.type)&&b.text&&b.text.length>28);return b?b.text:(lang==='id'?'Panduan penggunaan menu Prieds berdasarkan User Guide.':'Prieds menu guide based on the User Guide.')}
+function toastMsg(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>$('toast').classList.remove('show'),1800)}
+function localize(){document.documentElement.lang=lang;document.querySelectorAll('[data-ui]').forEach(el=>el.textContent=t(el.dataset.ui));$('searchInput').placeholder=t('placeholder');$('articleSearchInput').placeholder=t('placeholder');renderNav();if($('articleView').classList.contains('show'))renderArticle();else rerenderLastList()}
+function topicNavButton(m,x,i){return `<button class="${m.id===activeModule.id&&i===activeTopic&&$('articleView').classList.contains('show')?'active':''}" data-topic-module="${m.id}" data-topic-index="${i}">${esc(x.title[lang])}</button>`}
+function faqCategoryGroups(m){const groups=[];m.topics.forEach((x,i)=>{const category=x.faqCategory||{key:'Other',id:'Lainnya',en:'Other'};let group=groups.find(g=>g.key===category.key);if(!group){group={key:category.key,name:{id:category.id,en:category.en},items:[]};groups.push(group)}group.items.push({x,i})});return groups}
+function moduleTopicsHtml(m){if(m.id!=='faq')return m.topics.map((x,i)=>topicNavButton(m,x,i)).join('');return faqCategoryGroups(m).map(group=>`<div class="faqCategoryGroup ${openFaqCategories.has(group.key)?'open':''}"><button class="faqCategoryToggle" data-faq-category="${esc(group.key)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span><span class="faqCategoryCount">${group.items.length}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicNavButton(m,x,i)).join('')}</div></div>`).join('')}
+function navHtml(){return DATA.map(m=>`<div class="moduleGroup ${m.id===openModuleId?'open':''}" data-group="${m.id}"><button class="moduleToggle" data-module="${m.id}"><span class="chev">›</span><span class="moduleName">${esc(m.name[lang])}</span></button><div class="topicLinks">${moduleTopicsHtml(m)}</div></div>`).join('')}
+function bindNav(root){root.querySelectorAll('[data-module]').forEach(btn=>btn.onclick=()=>{const m=DATA.find(x=>x.id===btn.dataset.module);if(!m)return;if(openModuleId===m.id){openModuleId=null;renderNav();return}openModuleId=m.id;activeModule=m;activeTopic=0;showModuleList(m)});root.querySelectorAll('[data-faq-category]').forEach(btn=>btn.onclick=()=>{const key=btn.dataset.faqCategory;if(openFaqCategories.has(key))openFaqCategories.delete(key);else openFaqCategories.add(key);renderNav()});root.querySelectorAll('[data-topic-module]').forEach(btn=>btn.onclick=()=>{openArticle(btn.dataset.topicModule,+btn.dataset.topicIndex);$('mobileDrawer').classList.remove('show')})}
+function renderNav(){$('leftNav').innerHTML=navHtml();$('mobileNav').innerHTML=navHtml();bindNav($('leftNav'));bindNav($('mobileNav'))}
+function showList(){ $('listView').classList.remove('hide');$('articleView').classList.remove('show');window.scrollTo({top:0,behavior:'smooth'}) }
+function showArticle(){ $('listView').classList.add('hide');$('articleView').classList.add('show');window.scrollTo({top:0,behavior:'smooth'}) }
+function articleCard(r){const meta=topicMeta(r.x);return `<button class="articleCard" data-open-module="${r.m.id}" data-open-index="${r.i}"><div class="cardThumb">◖</div><div class="cardBody"><h3>${esc(r.x.title[lang])}</h3><div class="cardMeta">${esc(meta.editor)} • ${fmtDate(meta.updatedAt)}</div><p>${esc(preview(r.x))}</p></div><div class="cardArrow">›</div></button>`}
+function bindCards(){$('articleList').querySelectorAll('[data-open-module]').forEach(btn=>btn.onclick=()=>openArticle(btn.dataset.openModule,+btn.dataset.openIndex))}
+function showModuleList(m){activeModule=m;activeTopic=0;openModuleId=m.id;lastListMode={type:'module',module:m,items:m.topics.map((x,i)=>({m,x,i}))};showList();renderNav();renderModuleList(m);history.replaceState(null,'','#'+m.id)}
+function renderModuleList(m){$('breadcrumb').innerHTML=`${t('home')} / ${esc(m.name[lang])}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">▣</div><div><strong>${esc(m.name[lang])}</strong><small>${m.topics.length} ${t('articles')}</small></div></div>`;$('articleList').innerHTML=m.topics.length?m.topics.map((x,i)=>articleCard({m,x,i})).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
+function searchArticles(q){q=q.trim();if(!q){showModuleList(activeModule);return}const nq=normalize(q),items=[];DATA.forEach(m=>m.topics.forEach((x,i)=>{const blocks=getBlocks(x);const hay=[m.name[lang],m.desc[lang],x.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join(' ');if(normalize(hay).includes(nq))items.push({m,x,i})}));lastListMode={type:'search',query:q,items};showList();$('breadcrumb').innerHTML=`${t('home')} / ${t('results')}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">⌕</div><div><strong>${t('results')}</strong><small>${items.length} ${t('articles')} • “${esc(q)}”</small></div></div>`;$('articleList').innerHTML=items.length?items.map(articleCard).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
+function rerenderLastList(){if(lastListMode.type==='search')searchArticles(lastListMode.query);else renderModuleList(lastListMode.module||activeModule)}
+function normalize(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ')}
+function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
+function renderArticle(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic);$('breadcrumb').innerHTML=`<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`;$('crumbHome').onclick=()=>showModuleList(activeModule);$('crumbModule').onclick=()=>showModuleList(activeModule);$('articleTitle').textContent=topic.title[lang];{const meta=topicMeta(topic);$('articleSource').textContent=(topic.source||'Prieds')+' • '+meta.editor+' • '+fmtDate(meta.updatedAt);}$('articleIntro').textContent=preview(topic);let step=0,html='';blocks.forEach(b=>{if(b.type==='label')html+=`<div class="docLabel">${esc(b.text)}</div>`;else if(b.type==='subheading')html+=`<h2>${esc(b.text)}</h2>`;else if(b.type==='step')html+=`<div class="stepCard"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`;else if(b.type==='p')html+=`<p class="docP">${esc(b.text)}</p>`;else if(b.type==='image'){const src=ASSETS[b.asset];if(src)html+=`<figure class="mediaCard"><button data-asset="${b.asset}"><img loading="lazy" src="${src}" alt="${esc(b.caption||topic.title[lang])}"></button>${b.caption?`<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>`:''}</figure>`}else if(b.type==='table')html+=`<div class="docTableWrap"><table class="docTable">${b.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`});$('docContent').innerHTML=html||`<div class="empty">${t('empty')}</div>`;$('docContent').querySelectorAll('[data-asset]').forEach(btn=>btn.onclick=()=>openLightbox(ASSETS[btn.dataset.asset]))}
+function openLightbox(src){$('lightboxImg').src=src;$('lightbox').classList.add('show')}
+function copyGuide(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic);const text=[topic.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join('\n');navigator.clipboard.writeText(text).then(()=>toastMsg(t('copied')))}
+function syncSearch(source,target){target.value=source.value;searchArticles(source.value)}
+document.querySelectorAll('[data-lang]').forEach(btn=>btn.onclick=()=>{lang=btn.dataset.lang;document.querySelectorAll('[data-lang]').forEach(x=>x.classList.toggle('active',x===btn));localize()});
+$('searchInput').oninput=e=>searchArticles(e.target.value);$('searchBtn').onclick=()=>searchArticles($('searchInput').value);$('searchInput').onkeydown=e=>{if(e.key==='Enter')searchArticles(e.target.value)};
+$('articleSearchInput').oninput=e=>{$('searchInput').value=e.target.value;searchArticles(e.target.value)};$('articleSearchBtn').onclick=()=>{$('searchInput').value=$('articleSearchInput').value;searchArticles($('articleSearchInput').value)};
+$('backBtn').onclick=()=>{showList();rerenderLastList();renderNav()};$('copyBtn').onclick=copyGuide;$('loginBtn').onclick=()=>{location.href='master.html'};
+$('mobileMenu').onclick=()=>{$('mobileDrawer').classList.toggle('show');renderNav()};$('lightboxClose').onclick=()=>$('lightbox').classList.remove('show');$('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.remove('show')};document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('lightbox').classList.remove('show');$('mobileDrawer').classList.remove('show')}});
 window.KCStore.subscribe(()=>location.reload());
-
-localize();
-renderNav();
-
-const hash=location.hash.match(/^#([a-z]+)(?:-(\d+))?$/);
-
-if(hash){
-  const m=DATA.find(x=>x.id===hash[1]);
-
-  if(m){
-    if(hash[2]!=null){
-      openArticle(m.id,+hash[2]);
-    }else{
-      showModuleList(m);
-    }
-  }
-}else{
-  showModuleList(activeModule);
-}
-</script>
-</body>
-</html>
+localize();renderNav();const hash=location.hash.match(/^#([a-z]+)(?:-(\d+))?$/);if(hash){const m=DATA.find(x=>x.id===hash[1]);if(m){if(hash[2]!=null)openArticle(m.id,+hash[2]);else showModuleList(m)}}else showModuleList(activeModule);
+</script></body></html>
