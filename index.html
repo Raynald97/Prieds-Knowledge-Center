@@ -613,7 +613,7 @@ const CHAT_UI={
 };
 const FEEDBACK_STORE_KEY='prieds_kc_ai_feedback_v1';
 const FEEDBACK_CHANNEL='prieds-kc-feedback';
-const CHAT_SESSION_KEY='prieds_kc_article_chat_v3';
+const CHAT_SESSION_KEY='prieds_kc_article_chat_v4';
 const NOT_FOUND_ANSWER='Maaf, saya tidak menemukan informasi tersebut pada artikel ini.';
 const chatText=k=>CHAT_UI[lang]?.[k]||CHAT_UI.id[k]||k;
 let aiSession=null;
@@ -661,7 +661,27 @@ const AI_CONCEPT_GROUPS=[
 
 function aiNormalize(value){return String(value??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' dan ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
 function aiTokens(value,{keepStop=false}={}){const tokens=aiNormalize(value).split(' ').filter(Boolean);return keepStop?tokens:tokens.filter(token=>token.length>1&&!AI_STOP_WORDS.has(token))}
-function expandConceptTokens(value){const normalized=aiNormalize(value),expanded=new Set(aiTokens(normalized));AI_CONCEPT_GROUPS.forEach(group=>{if(group.some(term=>normalized.includes(aiNormalize(term))))group.forEach(term=>aiTokens(term,{keepStop:true}).forEach(token=>expanded.add(token)))});return[...expanded]}
+const AI_GENERIC_CONCEPT_KEYS=new Set(['create','edit','delete','error']);
+function containsConceptTerm(normalizedValue,term){
+  const normalized=aiNormalize(normalizedValue),needle=aiNormalize(term);
+  if(!needle)return false;
+  if(needle.includes(' '))return(` ${normalized} `).includes(` ${needle} `);
+  return normalized.split(' ').includes(needle);
+}
+function conceptKeys(value){
+  const normalized=aiNormalize(value),keys=new Set();
+  AI_CONCEPT_GROUPS.forEach(group=>{if(group.some(term=>containsConceptTerm(normalized,term)))keys.add(aiNormalize(group[0]))});
+  return keys;
+}
+function expandConceptTokens(value){
+  const normalized=aiNormalize(value),expanded=new Set(aiTokens(normalized));
+  AI_CONCEPT_GROUPS.forEach(group=>{if(group.some(term=>containsConceptTerm(normalized,term)))group.forEach(term=>aiTokens(term,{keepStop:true}).forEach(token=>expanded.add(token)))});
+  return[...expanded];
+}
+function specificQueryTokens(value){
+  const generic=new Set(['buat','membuat','bikin','create','creating','tambah','menambahkan','edit','ubah','mengubah','update','hapus','delete','gagal','error','masalah','kendala','salah','jelaskan','fungsi','arti','status','proses','langkah','tahap','alur','bandingkan','perbedaan','beda']);
+  return[...new Set(aiTokens(value))].filter(token=>!generic.has(token));
+}
 function charTrigrams(value){const compact=`  ${aiNormalize(value)}  `,set=new Set();for(let i=0;i<compact.length-2;i++)set.add(compact.slice(i,i+3));return set}
 function setSimilarity(a,b){if(!a.size||!b.size)return 0;let intersect=0;a.forEach(value=>{if(b.has(value))intersect++});return(2*intersect)/(a.size+b.size)}
 function overlapScore(queryTokens,targetTokens){if(!queryTokens.length||!targetTokens.length)return 0;const target=new Set(targetTokens);let hits=0;queryTokens.forEach(token=>{if(target.has(token))hits++});return hits/queryTokens.length}
@@ -706,6 +726,8 @@ function createArticleSections(data){
             rows:payload.rows||null,
             targetId:payload.targetId||headingTarget,
             searchText:aiNormalize(searchText),
+            literalTokens:new Set(aiTokens(searchText,{keepStop:true})),
+            conceptKeys:conceptKeys(searchText),
             tokens,tokenFreq:frequencyMap(tokens),
             trigrams:charTrigrams(searchText)
           });
@@ -806,23 +828,33 @@ function ambiguousClarification(question){
 function retrieveKnowledge(question,{limit=7}={}){
   if(!knowledgeBase?.sections?.length)return[];
   const effectiveQuery=resolveConversationQuery(question),queryTokens=expandConceptTokens(effectiveQuery),queryNormalized=aiNormalize(effectiveQuery),queryTrigrams=charTrigrams(effectiveQuery),intent=detectIntent(question),active=currentArticleContext(),priorKeys=getPriorSourceKeys();
+  const rawQueryTokens=[...new Set(aiTokens(effectiveQuery))],specificTokens=specificQueryTokens(effectiveQuery),queryConcepts=conceptKeys(effectiveQuery),queryDomainConcepts=new Set([...queryConcepts].filter(key=>!AI_GENERIC_CONCEPT_KEYS.has(key)));
   const ranked=knowledgeBase.sections.map(section=>{
     const headingTokens=expandConceptTokens(`${section.heading} ${section.topicTitle} ${section.moduleName}`);
-    const bodyTokens=section.tokens;
+    const bodyTokens=section.tokens,literalTokens=section.literalTokens||new Set(aiTokens(section.searchText,{keepStop:true})),sectionConcepts=section.conceptKeys||conceptKeys(section.searchText);
     const cosine=tfidfCosine(queryTokens,section);
     const headingOverlap=overlapScore(queryTokens,headingTokens);
     const keywordOverlap=overlapScore(queryTokens,bodyTokens);
     const headingTrigram=setSimilarity(queryTrigrams,charTrigrams(`${section.heading} ${section.topicTitle}`));
     const paragraphTrigram=setSimilarity(queryTrigrams,section.trigrams);
-    const exactPhrase=queryNormalized.length>3&&section.searchText.includes(queryNormalized)?1:0;
-    const density=queryTokens.length?queryTokens.filter(token=>section.searchText.includes(token)).length/queryTokens.length:0;
-    let score=cosine*.37+headingOverlap*.18+keywordOverlap*.14+headingTrigram*.10+paragraphTrigram*.08+exactPhrase*.08+density*.05;
+    const exactPhrase=queryNormalized.length>3&&(` ${section.searchText} `).includes(` ${queryNormalized} `)?1:0;
+    const matchedRawTokens=rawQueryTokens.filter(token=>literalTokens.has(token));
+    const matchedSpecificTokens=specificTokens.filter(token=>literalTokens.has(token));
+    const rawCoverage=rawQueryTokens.length?matchedRawTokens.length/rawQueryTokens.length:0;
+    const totalIdf=rawQueryTokens.reduce((sum,token)=>sum+knowledgeBase.idf(token),0)||1;
+    const matchedIdf=matchedRawTokens.reduce((sum,token)=>sum+knowledgeBase.idf(token),0);
+    const weightedCoverage=matchedIdf/totalIdf;
+    const queryConceptMatches=[...queryConcepts].filter(key=>sectionConcepts.has(key)).length;
+    const domainConceptMatches=[...queryDomainConcepts].filter(key=>sectionConcepts.has(key)).length;
+    const density=queryTokens.length?queryTokens.filter(token=>literalTokens.has(token)||section.searchText.includes(token)).length/queryTokens.length:0;
+    const baseScore=cosine*.37+headingOverlap*.18+keywordOverlap*.14+headingTrigram*.10+paragraphTrigram*.08+exactPhrase*.08+density*.05;
+    let score=baseScore;
     if(active&&active.moduleId===section.moduleId&&active.topicIndex===section.topicIndex)score+=.07;
     if(priorKeys.has(`${section.moduleId}|${section.topicIndex}|${section.heading}`))score+=.06;
     if(intent==='tutorial'&&section.blockType==='step')score+=.055;
     if(intent==='comparison'&&(section.blockType==='table'||section.heading!==section.topicTitle))score+=.025;
-    return{...section,score,metrics:{cosine,headingOverlap,keywordOverlap,headingTrigram,paragraphTrigram}};
-  }).filter(item=>item.score>0).sort((a,b)=>b.score-a.score);
+    return{...section,score,metrics:{baseScore,cosine,headingOverlap,keywordOverlap,headingTrigram,paragraphTrigram,exactPhrase,density,rawMatchCount:matchedRawTokens.length,specificMatchCount:matchedSpecificTokens.length,rawCoverage,weightedCoverage,queryConceptMatches,domainConceptMatches}};
+  }).filter(item=>item.metrics.baseScore>.012).sort((a,b)=>b.score-a.score);
   const selected=[],perHeading=new Map();
   for(const item of ranked){
     const key=`${item.topicKey}|${item.heading}`,count=perHeading.get(key)||0;
@@ -831,6 +863,34 @@ function retrieveKnowledge(question,{limit=7}={}){
     if(selected.length>=limit)break;
   }
   return selected;
+}
+function hasSufficientArticleEvidence(question,results){
+  if(!results.length)return false;
+  const originalSpecific=specificQueryTokens(question),originalConcepts=conceptKeys(question),originalDomainConcepts=new Set([...originalConcepts].filter(key=>!AI_GENERIC_CONCEPT_KEYS.has(key)));
+  const hasPriorSource=(aiSession?.messages||[]).some(message=>message.role==='assistant'&&message.sources?.length);
+  const originalExpanded=expandConceptTokens(question),originalTrigrams=charTrigrams(question),originalNormalized=aiNormalize(question),originalRaw=[...new Set(aiTokens(question))];
+  const requiredSpecific=originalSpecific.length>=2?2:1;
+  return results.slice(0,7).some(candidate=>{
+    const metrics=candidate.metrics||{},literal=candidate.literalTokens||new Set(aiTokens(candidate.searchText,{keepStop:true})),candidateConcepts=candidate.conceptKeys||conceptKeys(candidate.searchText);
+    const specificMatches=originalSpecific.filter(token=>literal.has(token)).length;
+    const domainMatches=[...originalDomainConcepts].filter(key=>candidateConcepts.has(key)).length;
+    const anyConceptMatches=[...originalConcepts].filter(key=>candidateConcepts.has(key)).length;
+    const originalCosine=tfidfCosine(originalExpanded,candidate);
+    const originalHeadingTrigram=setSimilarity(originalTrigrams,charTrigrams(`${candidate.heading} ${candidate.topicTitle}`));
+    const originalParagraphTrigram=setSimilarity(originalTrigrams,candidate.trigrams);
+    const originalMatched=originalRaw.filter(token=>literal.has(token));
+    const originalTotalIdf=originalRaw.reduce((sum,token)=>sum+knowledgeBase.idf(token),0)||1;
+    const originalWeightedCoverage=originalMatched.reduce((sum,token)=>sum+knowledgeBase.idf(token),0)/originalTotalIdf;
+    const originalExactPhrase=originalNormalized.length>3&&(` ${candidate.searchText} `).includes(` ${originalNormalized} `);
+    if((metrics.baseScore||0)<.06)return false;
+    if(originalExactPhrase)return true;
+    if(originalDomainConcepts.size&&domainMatches>0&&(metrics.baseScore>=.075||specificMatches>0||originalCosine>=.09))return true;
+    if(originalSpecific.length&&specificMatches>=requiredSpecific&&(metrics.baseScore>=.07||originalCosine>=.08))return true;
+    if(hasPriorSource&&anyConceptMatches>0&&metrics.baseScore>=.08)return true;
+    if(originalHeadingTrigram>=.36&&originalParagraphTrigram>=.12&&metrics.baseScore>=.09)return true;
+    if(originalCosine>=.22&&originalWeightedCoverage>=.55)return true;
+    return false;
+  });
 }
 function confidenceFromResults(results){
   if(!results.length)return{value:0,label:'Rendah',className:'low'};
@@ -849,7 +909,7 @@ function uniqueSources(results,max=4){
 function truncateWords(text,maxWords=250){const words=String(text).split(/\s+/);return words.length<=maxWords?text:words.slice(0,maxWords).join(' ')+'…'}
 function markdownCitation(sources){if(!sources.length)return'';return`\n\n**Sumber:**\n${sources.map(source=>`- Bagian "${source.heading}" — Artikel "${source.topicTitle}"`).join('\n')}`}
 function composeArticleAnswer(question,results){
-  if(!results.length||results[0].score<.115)return{text:NOT_FOUND_ANSWER,sources:[],evidence:[],confidence:{value:0,label:'Rendah',className:'low'}};
+  if(!hasSufficientArticleEvidence(question,results))return{text:NOT_FOUND_ANSWER,sources:[],evidence:[],confidence:{value:0,label:'Rendah',className:'low'}};
   const intent=detectIntent(question),rawQueryTokens=expandConceptTokens(question);
   let best=results[0];
   if(intent==='problem'){
