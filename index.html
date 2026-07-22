@@ -373,48 +373,100 @@ function pageFunction(topic,module){const moduleKey=guideModuleKey(module);if(![
  ];const matched=rules.find(rule=>(!rule.module||rule.module===moduleKey)&&rule.match.test(searchable));if(matched)return matched[lang];const defaults={inbound:{id:'Halaman ini digunakan untuk mendukung proses penerimaan barang masuk hingga siap ditempatkan ke lokasi penyimpanan.',en:'This page supports incoming-goods receiving until the stock is ready to be stored.'},outbound:{id:'Halaman ini digunakan untuk mendukung proses penyiapan dan pengiriman barang keluar dari gudang.',en:'This page supports the preparation and dispatch of outgoing goods from the warehouse.'},purchase:{id:'Halaman ini digunakan untuk mendukung proses pengadaan barang mulai dari permintaan hingga transaksi pembelian.',en:'This page supports procurement activities from requests through purchase transactions.'},sales:{id:'Halaman ini digunakan untuk mencatat dan mengelola transaksi penjualan customer.',en:'This page is used to record and manage customer sales transactions.'},inventory:{id:'Halaman ini digunakan untuk memantau dan menjaga akurasi data persediaan.',en:'This page is used to monitor and maintain inventory-data accuracy.'},'stock-movement':{id:'Halaman ini digunakan untuk mengelola perpindahan stok antar lokasi atau gudang secara terkontrol.',en:'This page is used to manage controlled stock movement between locations or warehouses.'},production:{id:'Halaman ini digunakan untuk mengatur dan menjalankan proses produksi atau assembly beserta perubahan stoknya.',en:'This page is used to configure and perform production or assembly processes and their stock changes.'},master:{id:'Halaman ini digunakan untuk membuat dan memelihara data master yang dipakai oleh proses operasional Prieds.',en:'This page is used to create and maintain master data used by Prieds operational processes.'},integration:{id:'Halaman ini digunakan untuk menghubungkan, menyinkronkan, dan memantau pertukaran data Prieds dengan sistem eksternal.',en:'This page is used to connect, synchronize, and monitor data exchange between Prieds and external systems.'}};return defaults[moduleKey]?.[lang]||''}
 function toastMsg(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>$('toast').classList.remove('show'),1800)}
 function localize(){document.documentElement.lang=lang;document.querySelectorAll('[data-ui]').forEach(el=>el.textContent=t(el.dataset.ui));$('searchInput').placeholder=t('placeholder');$('articleSearchInput').placeholder=t('placeholder');renderNav();if($('articleView').classList.contains('show'))renderArticle();else rerenderLastList();localizeChat()}
-function topicNavButton(m,x,i){return `<button class="${m.id===activeModule.id&&i===activeTopic&&$('articleView').classList.contains('show')?'active':''}" data-topic-module="${m.id}" data-topic-index="${i}">${esc(x.title[lang])}</button>`}
+function topicNavButton(m,x,i,label){const text=label||x.title?.[lang]||x.title?.id||x.title?.en||'Menu';return `<button class="${m.id===activeModule.id&&i===activeTopic&&$('articleView').classList.contains('show')?'active':''}" data-topic-module="${m.id}" data-topic-index="${i}">${esc(text)}</button>`}
 function localizedMenuValue(value,fallback){
   if(value&&typeof value==='object')return{id:value.id||value.en||fallback,en:value.en||value.id||fallback,key:value.key||value.id||value.en||fallback};
   if(typeof value==='string'&&value.trim())return{id:value.trim(),en:value.trim(),key:value.trim()};
   return{id:fallback,en:fallback,key:fallback};
 }
-function inferredPageMenu(topic){
-  const titleId=topic?.title?.id||topic?.title?.en||'Menu';
-  const titleEn=topic?.title?.en||topic?.title?.id||'Menu';
-  const derive=value=>{
-    const clean=String(value||'').trim();
-    const separators=[' & ',' and ',' / ',' — ',' – ',' - ',':'];
-    for(const separator of separators){
-      if(clean.includes(separator)){
-        const first=clean.split(separator)[0].trim();
-        if(first)return first;
-      }
-    }
-    return clean||'Menu';
-  };
-  return{id:derive(titleId),en:derive(titleEn),key:derive(titleId)};
+function salesMenuName(title){
+  const value=String(title||'').trim();
+  if(/^point of sales\s*\(pos\)\s*report$/i.test(value)||/^point of sales report$/i.test(value)||/^pos sales report$/i.test(value))return'POS Report';
+  if(/^point of sales\s*\(pos\)$/i.test(value)||/^point of sales$/i.test(value))return'POS';
+  return value;
 }
-function topicMenuMeta(topic){
-  return topic?.pageMenu?localizedMenuValue(topic.pageMenu,topic?.title?.id||'Menu'):inferredPageMenu(topic);
+function topicMenuMeta(module,topic,index=0){
+  const fallbackId=topic?.title?.id||topic?.title?.en||'Menu';
+  const fallbackEn=topic?.title?.en||topic?.title?.id||'Menu';
+  const explicit=topic?.pageMenu?localizedMenuValue(topic.pageMenu,fallbackId):null;
+  let id=explicit?.id||fallbackId;
+  let en=explicit?.en||fallbackEn;
+  if(module?.id==='sales'){id=salesMenuName(id);en=salesMenuName(en)}
+  return{id,en,key:`${index}::${id}`};
 }
 function topicMenuStateKey(moduleId,menuKey){return`${moduleId}::${menuKey}`}
-function moduleMenuGroups(m){
-  const groups=[];
-  m.topics.forEach((x,i)=>{
-    const menu=topicMenuMeta(x);
-    let group=groups.find(item=>item.key===menu.key);
-    if(!group){group={key:menu.key,name:{id:menu.id,en:menu.en},items:[]};groups.push(group)}
-    group.items.push({x,i});
+function cleanTabName(value){
+  return String(value||'')
+    .replace(/\s+/g,' ')
+    .replace(/^[\s:–—-]+|[\s:;,.–—-]+$/g,'')
+    .trim();
+}
+function explicitTabNames(topic,useLang){
+  const value=topic?.tabMenu||topic?.tabMenus||topic?.tabs;
+  if(!value)return[];
+  const localized=value&&typeof value==='object'&&!Array.isArray(value)&&(value.id!==undefined||value.en!==undefined)?(value[useLang]??value.id??value.en):value;
+  const rows=Array.isArray(localized)?localized:[localized];
+  return rows.map(item=>{
+    if(item&&typeof item==='object')return item[useLang]||item.id||item.en||item.name||'';
+    return item;
+  }).map(cleanTabName).filter(Boolean);
+}
+function extractTabNamesFromText(text){
+  const names=[];
+  const patterns=[
+    /\btab(?:\s+(?:ke-?\s*\d+|pertama|kedua|ketiga|keempat|kelima|keenam|ketujuh|kedelapan|kesembilan|kesepuluh|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth))?\s*["“'‘]([^"”'’]+)["”'’]/gi,
+    /\b(?:tab menu|menu tab)\s*[:\-]?\s*["“'‘]?([A-Z][A-Za-z0-9/&()+\-\s]{2,60})["”'’]?(?=[,.;]|$)/g
+  ];
+  patterns.forEach(pattern=>{
+    let match;
+    while((match=pattern.exec(String(text||'')))!==null){
+      const name=cleanTabName(match[1]);
+      if(name&&!names.some(existing=>existing.toLowerCase()===name.toLowerCase()))names.push(name);
+    }
   });
-  return groups;
+  return names;
+}
+function topicBlockTexts(topic,useLang){
+  const blockRows=topic?.blocks?.[useLang]?.length?topic.blocks[useLang]:(topic?.blocks?.id||topic?.blocks?.en||[]);
+  const texts=Array.isArray(blockRows)?blockRows.filter(block=>block&&block.text).map(block=>block.text):[];
+  const stepRows=topic?.steps?.[useLang]?.length?topic.steps[useLang]:(topic?.steps?.id||topic?.steps?.en||[]);
+  if(Array.isArray(stepRows))texts.push(...stepRows);
+  return texts;
+}
+function topicTabNames(module,topic,useLang=lang){
+  const explicit=explicitTabNames(topic,useLang);
+  if(explicit.length)return explicit;
+  const extracted=[];
+  topicBlockTexts(topic,useLang).forEach(text=>{
+    extractTabNamesFromText(text).forEach(name=>{
+      if(!extracted.some(existing=>existing.toLowerCase()===name.toLowerCase()))extracted.push(name);
+    });
+  });
+  if(extracted.length)return extracted;
+  const otherLang=useLang==='id'?'en':'id';
+  topicBlockTexts(topic,otherLang).forEach(text=>{
+    extractTabNamesFromText(text).forEach(name=>{
+      if(!extracted.some(existing=>existing.toLowerCase()===name.toLowerCase()))extracted.push(name);
+    });
+  });
+  if(extracted.length)return extracted;
+  return[topic?.title?.[useLang]||topic?.title?.id||topic?.title?.en||'Menu'];
+}
+function topicTabMenuLabel(module,topic){
+  return topicTabNames(module,topic,lang).join(' & ');
+}
+function moduleMenuGroups(m){
+  return m.topics.map((x,i)=>{
+    const menu=topicMenuMeta(m,x,i);
+    return{key:menu.key,name:{id:menu.id,en:menu.en},items:[{x,i}]};
+  });
 }
 function faqCategoryGroups(m){const groups=[];m.topics.forEach((x,i)=>{const category=x.faqCategory||{key:'Other',id:'Lainnya',en:'Other'};let group=groups.find(g=>g.key===category.key);if(!group){group={key:category.key,name:{id:category.id,en:category.en},items:[]};groups.push(group)}group.items.push({x,i})});return groups}
 function moduleTopicsHtml(m){
   if(m.id==='faq')return faqCategoryGroups(m).map(group=>`<div class="faqCategoryGroup ${openFaqCategories.has(group.key)?'open':''}"><button class="faqCategoryToggle" data-faq-category="${esc(group.key)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span><span class="faqCategoryCount">${group.items.length}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicNavButton(m,x,i)).join('')}</div></div>`).join('');
   return moduleMenuGroups(m).map(group=>{
     const stateKey=topicMenuStateKey(m.id,group.key);
-    return`<div class="faqCategoryGroup ${openTopicMenus.has(stateKey)?'open':''}"><button class="faqCategoryToggle" data-topic-menu="${esc(stateKey)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicNavButton(m,x,i)).join('')}</div></div>`;
+    return`<div class="faqCategoryGroup ${openTopicMenus.has(stateKey)?'open':''}"><button class="faqCategoryToggle" data-topic-menu="${esc(stateKey)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicNavButton(m,x,i,topicTabMenuLabel(m,x))).join('')}</div></div>`;
   }).join('');
 }
 function navHtml(){return DATA.map(m=>`<div class="moduleGroup ${m.id===openModuleId?'open':''}" data-group="${m.id}"><button class="moduleToggle" data-module="${m.id}"><span class="chev">›</span><span class="moduleName">${esc(m.name[lang])}</span></button><div class="topicLinks">${moduleTopicsHtml(m)}</div></div>`).join('')}
@@ -434,7 +486,7 @@ function renderModuleList(m){$('breadcrumb').innerHTML=`${t('home')} / ${esc(m.n
 function searchArticles(q){q=q.trim();if(!q){showModuleList(activeModule);return}const nq=normalize(q),items=[];DATA.forEach(m=>m.topics.forEach((x,i)=>{const blocks=getBlocks(x);const hay=[m.name[lang],m.desc[lang],x.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join(' ');if(normalize(hay).includes(nq))items.push({m,x,i})}));lastListMode={type:'search',query:q,items};showList();$('breadcrumb').innerHTML=`${t('home')} / ${t('results')}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">⌕</div><div><strong>${t('results')}</strong><small>${items.length} ${t('articles')} • “${esc(q)}”</small></div></div>`;$('articleList').innerHTML=items.length?items.map(articleCard).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
 function rerenderLastList(){if(lastListMode.type==='search')searchArticles(lastListMode.query);else renderModuleList(lastListMode.module||activeModule)}
 function normalize(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ')}
-function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}else{const menu=topicMenuMeta(activeModule.topics[activeTopic]);if(menu)openTopicMenus.add(topicMenuStateKey(activeModule.id,menu.key))}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
+function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}else{const menu=topicMenuMeta(activeModule,activeModule.topics[activeTopic],activeTopic);if(menu)openTopicMenus.add(topicMenuStateKey(activeModule.id,menu.key))}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
 function renderArticle(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic),purpose=pageFunction(topic,activeModule),intro=articleIntro(topic,blocks);$('breadcrumb').innerHTML=`<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`;$('crumbHome').onclick=()=>showModuleList(activeModule);$('crumbModule').onclick=()=>showModuleList(activeModule);$('articleTitle').textContent=topic.title[lang];$('articlePurpose').hidden=!purpose;$('articlePurposeLabel').textContent=lang==='id'?'Fungsi Halaman':'Page Function';$('articlePurposeText').textContent=purpose;{const meta=topicMeta(topic);$('articleSource').textContent=(topic.source||'Prieds')+' • '+meta.editor+' • '+fmtDate(meta.updatedAt);}$('articleIntro').textContent=intro;$('articleIntro').hidden=!intro;let step=0,html='';blocks.forEach(b=>{if(b.type==='label')html+=`<div class="docLabel">${esc(b.text)}</div>`;else if(b.type==='subheading')html+=`<h2>${esc(b.text)}</h2>`;else if(b.type==='step')html+=`<div class="stepCard"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`;else if(b.type==='p')html+=`<p class="docP">${esc(b.text)}</p>`;else if(b.type==='image'){const src=ASSETS[b.asset];if(src)html+=`<figure class="mediaCard"><button data-asset="${b.asset}"><img loading="lazy" src="${src}" alt="${esc(b.caption||topic.title[lang])}"></button>${b.caption?`<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>`:''}</figure>`}else if(b.type==='table')html+=`<div class="docTableWrap"><table class="docTable">${b.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`});$('docContent').innerHTML=html||`<div class="empty">${t('empty')}</div>`;$('docContent').querySelectorAll('[data-asset]').forEach(btn=>btn.onclick=()=>openLightbox(ASSETS[btn.dataset.asset]));if(typeof updateChatContext==='function')updateChatContext()}
 function openLightbox(src){$('lightboxImg').src=src;$('lightbox').classList.add('show')}
 function copyGuide(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic);const text=[topic.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join('\n');navigator.clipboard.writeText(text).then(()=>toastMsg(t('copied')))}
