@@ -233,7 +233,55 @@ const FAQ_ROWS=[
   ["FAQ-062","RFID Troubleshooting","RFID Troubleshooting","WMS Lite RFID","WMS Lite RFID","Apa yang harus dilakukan jika RFID tag tidak terbaca oleh scanner?","What should I do if an RFID tag is not detected by the scanner?","Pastikan scanner aktif dan terhubung, tag berada dalam jangkauan, serta tidak terhalang material yang mengganggu pembacaan. Coba hentikan dan mulai ulang proses scan, lalu gunakan scan barcode kamera bila tersedia. Jika satu tag tetap tidak terbaca, periksa kondisi fisik tag atau ganti tag sesuai prosedur.","Make sure the scanner is active and connected, the tag is within range, and no material is blocking the signal. Stop and restart the scan, or use the camera barcode scan when available. If one tag still cannot be read, inspect its physical condition or replace it according to procedure."],
   ["FAQ-063","RFID Troubleshooting","RFID Troubleshooting","WMS Lite RFID","WMS Lite RFID","Apa arti status Stock Already 0 atau Invalid pada proses Outbound RFID?","What do Stock Already 0 and Invalid mean during RFID Outbound?","Stock Already 0 berarti tag telah terdaftar, tetapi jumlah stok yang tersedia tidak mencukupi. Invalid berarti tag belum terdaftar pada item yang diproses. Tag dengan status tersebut harus dihapus dari daftar scan atau diperbaiki sebelum transaksi dapat dilanjutkan.","Stock Already 0 means the tag is registered, but the available stock quantity is insufficient. Invalid means the tag is not registered to the item being processed. Tags with either status must be removed from the scan list or corrected before the transaction can continue."]
 ];
-const FAQ_MODULE={id:'faq',name:{id:'FAQ',en:'FAQ'},desc:{id:'Pertanyaan yang sering diajukan terkait WMS Lite dan WMS Lite RFID.',en:'Frequently asked questions about WMS Lite and WMS Lite RFID.'},topics:FAQ_ROWS.map(([id,categoryId,categoryEn,scopeId,scopeEn,questionId,questionEn,answerId,answerEn])=>({title:{id:questionId,en:questionEn},pageMenu:{id:categoryId,en:categoryEn},faqCategory:{key:categoryId,id:categoryId,en:categoryEn},source:`FAQ List WMS RFID.xlsx • ${id}`,createdAt:'2026-07-21T04:00:00.000Z',updatedAt:'2026-07-21T04:00:00.000Z',editor:'Prieds Learning Center',blocks:{id:[{type:'label',text:'Jawaban'},{type:'p',text:answerId},{type:'label',text:'Informasi FAQ'},{type:'table',rows:[['FAQ ID','Kategori','Cakupan Produk'],[id,categoryId,scopeId]]}],en:[{type:'label',text:'Answer'},{type:'p',text:answerEn},{type:'label',text:'FAQ Information'},{type:'table',rows:[['FAQ ID','Category','Product Scope'],[id,categoryEn,scopeEn]]}]}}))};
+function faqProductScope(scopeId,scopeEn,categoryId,categoryEn,questionId,questionEn){
+  const descriptor=[categoryId,categoryEn,questionId,questionEn].join(' ');
+  const additions=[];
+  const hasAccurate=/accurate/i.test(descriptor);
+  const hasJurnal=/jurnal/i.test(descriptor);
+  const isIntegration=/integrasi|integration|sinkronisasi|synchronization|sync\b|api key|redirect/i.test(descriptor);
+  const hasFEFO=/\bfefo\b/i.test(descriptor);
+  const hasFIFO=/\bfifo\b/i.test(descriptor);
+  if(hasAccurate)additions.push('Accurate');
+  if(hasJurnal)additions.push('Jurnal');
+  if(isIntegration&&!hasAccurate&&!hasJurnal)additions.push('Accurate / Jurnal');
+  if(hasFEFO)additions.push('FEFO');
+  if(hasFIFO)additions.push('FIFO');
+  const suffix=[...new Set(additions)].join(' • ');
+  return{
+    id:suffix?`${scopeId} • ${suffix}`:scopeId,
+    en:suffix?`${scopeEn} • ${suffix}`:scopeEn
+  };
+}
+const FAQ_MODULE={id:'faq',name:{id:'FAQ',en:'FAQ'},desc:{id:'Pertanyaan yang sering diajukan terkait WMS Lite dan WMS Lite RFID.',en:'Frequently asked questions about WMS Lite and WMS Lite RFID.'},topics:FAQ_ROWS.map(([id,categoryId,categoryEn,scopeId,scopeEn,questionId,questionEn,answerId,answerEn])=>{
+  const productScope=faqProductScope(scopeId,scopeEn,categoryId,categoryEn,questionId,questionEn);
+  return{title:{id:questionId,en:questionEn},pageMenu:{id:categoryId,en:categoryEn},faqCategory:{key:categoryId,id:categoryId,en:categoryEn},source:`FAQ List WMS RFID.xlsx • ${id}`,createdAt:'2026-07-21T04:00:00.000Z',updatedAt:'2026-07-21T04:00:00.000Z',editor:'Prieds Learning Center',blocks:{id:[{type:'label',text:'Jawaban'},{type:'p',text:answerId},{type:'label',text:'Informasi FAQ'},{type:'table',rows:[['Kategori','Cakupan Produk'],[categoryId,productScope.id]]}],en:[{type:'label',text:'Answer'},{type:'p',text:answerEn},{type:'label',text:'FAQ Information'},{type:'table',rows:[['Category','Product Scope'],[categoryEn,productScope.en]]}]}};
+})};
+function isFaqInformationTable(block){
+  if(block?.type!=='table'||!Array.isArray(block.rows)||!block.rows.length)return false;
+  const header=(block.rows[0]||[]).map(String).join(' ').toLowerCase();
+  return header.includes('faq id')||header.includes('cakupan produk')||header.includes('product scope');
+}
+function syncFaqInformationBlocks(currentBlocks,defaultBlocks){
+  const next={...(currentBlocks||{})};
+  ['id','en'].forEach(code=>{
+    const defaults=defaultBlocks?.[code]||[];
+    const defaultTable=defaults.find(isFaqInformationTable);
+    const defaultLabel=defaults.find(block=>block.type==='label'&&(/informasi faq/i.test(block.text||'')||/faq information/i.test(block.text||'')));
+    const source=Array.isArray(currentBlocks?.[code])&&currentBlocks[code].length?currentBlocks[code]:defaults;
+    let tableFound=false;
+    const updated=source.map(block=>{
+      if(isFaqInformationTable(block)){tableFound=true;return defaultTable||block}
+      return block
+    });
+    if(!tableFound&&defaultTable){
+      const hasInfoLabel=updated.some(block=>block.type==='label'&&(/informasi faq/i.test(block.text||'')||/faq information/i.test(block.text||'')));
+      if(!hasInfoLabel&&defaultLabel)updated.push(defaultLabel);
+      updated.push(defaultTable);
+    }
+    next[code]=updated;
+  });
+  return next;
+}
 let faqDataChanged=false;
 const storedFaq=DATA.find(m=>m.id==='faq');
 if(!storedFaq){DATA=[...DATA,FAQ_MODULE];faqDataChanged=true}else{
@@ -247,6 +295,8 @@ if(!storedFaq){DATA=[...DATA,FAQ_MODULE];faqDataChanged=true}else{
     let updated=topic;
     if(!topic.pageMenu){updated={...updated,pageMenu:defaults.pageMenu};faqDataChanged=true}
     if(!topic.faqCategory){updated={...updated,faqCategory:defaults.faqCategory};faqDataChanged=true}
+    const syncedBlocks=syncFaqInformationBlocks(updated.blocks,defaults.blocks);
+    if(JSON.stringify(syncedBlocks)!==JSON.stringify(updated.blocks||{})){updated={...updated,blocks:syncedBlocks};faqDataChanged=true}
     return updated
   });
   FAQ_MODULE.topics.forEach(topic=>{const faqId=(topic.source||'').split('•').pop().trim();if(!storedFaqIds.has(faqId)){storedFaq.topics.push(topic);faqDataChanged=true}})
@@ -262,6 +312,7 @@ let activeModule=DATA.find(m=>m.id==='master')||DATA[0];
 let activeTopic=0;
 let openModuleId=activeModule.id;
 const openFaqCategories=new Set();
+const openTopicMenus=new Set();
 let lastListMode={type:'module',module:activeModule,items:activeModule.topics.map((x,i)=>({m:activeModule,x,i}))};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -323,10 +374,56 @@ function pageFunction(topic,module){const moduleKey=guideModuleKey(module);if(![
 function toastMsg(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>$('toast').classList.remove('show'),1800)}
 function localize(){document.documentElement.lang=lang;document.querySelectorAll('[data-ui]').forEach(el=>el.textContent=t(el.dataset.ui));$('searchInput').placeholder=t('placeholder');$('articleSearchInput').placeholder=t('placeholder');renderNav();if($('articleView').classList.contains('show'))renderArticle();else rerenderLastList();localizeChat()}
 function topicNavButton(m,x,i){return `<button class="${m.id===activeModule.id&&i===activeTopic&&$('articleView').classList.contains('show')?'active':''}" data-topic-module="${m.id}" data-topic-index="${i}">${esc(x.title[lang])}</button>`}
+function localizedMenuValue(value,fallback){
+  if(value&&typeof value==='object')return{id:value.id||value.en||fallback,en:value.en||value.id||fallback,key:value.key||value.id||value.en||fallback};
+  if(typeof value==='string'&&value.trim())return{id:value.trim(),en:value.trim(),key:value.trim()};
+  return{id:fallback,en:fallback,key:fallback};
+}
+function inferredPageMenu(topic){
+  const titleId=topic?.title?.id||topic?.title?.en||'Menu';
+  const titleEn=topic?.title?.en||topic?.title?.id||'Menu';
+  const derive=value=>{
+    const clean=String(value||'').trim();
+    const separators=[' & ',' and ',' / ',' — ',' – ',' - ',':'];
+    for(const separator of separators){
+      if(clean.includes(separator)){
+        const first=clean.split(separator)[0].trim();
+        if(first)return first;
+      }
+    }
+    return clean||'Menu';
+  };
+  return{id:derive(titleId),en:derive(titleEn),key:derive(titleId)};
+}
+function topicMenuMeta(topic){
+  return topic?.pageMenu?localizedMenuValue(topic.pageMenu,topic?.title?.id||'Menu'):inferredPageMenu(topic);
+}
+function topicMenuStateKey(moduleId,menuKey){return`${moduleId}::${menuKey}`}
+function moduleMenuGroups(m){
+  const groups=[];
+  m.topics.forEach((x,i)=>{
+    const menu=topicMenuMeta(x);
+    let group=groups.find(item=>item.key===menu.key);
+    if(!group){group={key:menu.key,name:{id:menu.id,en:menu.en},items:[]};groups.push(group)}
+    group.items.push({x,i});
+  });
+  return groups;
+}
 function faqCategoryGroups(m){const groups=[];m.topics.forEach((x,i)=>{const category=x.faqCategory||{key:'Other',id:'Lainnya',en:'Other'};let group=groups.find(g=>g.key===category.key);if(!group){group={key:category.key,name:{id:category.id,en:category.en},items:[]};groups.push(group)}group.items.push({x,i})});return groups}
-function moduleTopicsHtml(m){if(m.id!=='faq')return m.topics.map((x,i)=>topicNavButton(m,x,i)).join('');return faqCategoryGroups(m).map(group=>`<div class="faqCategoryGroup ${openFaqCategories.has(group.key)?'open':''}"><button class="faqCategoryToggle" data-faq-category="${esc(group.key)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span><span class="faqCategoryCount">${group.items.length}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicNavButton(m,x,i)).join('')}</div></div>`).join('')}
+function moduleTopicsHtml(m){
+  if(m.id==='faq')return faqCategoryGroups(m).map(group=>`<div class="faqCategoryGroup ${openFaqCategories.has(group.key)?'open':''}"><button class="faqCategoryToggle" data-faq-category="${esc(group.key)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span><span class="faqCategoryCount">${group.items.length}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicNavButton(m,x,i)).join('')}</div></div>`).join('');
+  return moduleMenuGroups(m).map(group=>{
+    const stateKey=topicMenuStateKey(m.id,group.key);
+    return`<div class="faqCategoryGroup ${openTopicMenus.has(stateKey)?'open':''}"><button class="faqCategoryToggle" data-topic-menu="${esc(stateKey)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicNavButton(m,x,i)).join('')}</div></div>`;
+  }).join('');
+}
 function navHtml(){return DATA.map(m=>`<div class="moduleGroup ${m.id===openModuleId?'open':''}" data-group="${m.id}"><button class="moduleToggle" data-module="${m.id}"><span class="chev">›</span><span class="moduleName">${esc(m.name[lang])}</span></button><div class="topicLinks">${moduleTopicsHtml(m)}</div></div>`).join('')}
-function bindNav(root){root.querySelectorAll('[data-module]').forEach(btn=>btn.onclick=()=>{const m=DATA.find(x=>x.id===btn.dataset.module);if(!m)return;if(openModuleId===m.id){openModuleId=null;renderNav();return}openModuleId=m.id;activeModule=m;activeTopic=0;showModuleList(m)});root.querySelectorAll('[data-faq-category]').forEach(btn=>btn.onclick=()=>{const key=btn.dataset.faqCategory;if(openFaqCategories.has(key))openFaqCategories.delete(key);else openFaqCategories.add(key);renderNav()});root.querySelectorAll('[data-topic-module]').forEach(btn=>btn.onclick=()=>{openArticle(btn.dataset.topicModule,+btn.dataset.topicIndex);$('mobileDrawer').classList.remove('show')})}
+function bindNav(root){
+  root.querySelectorAll('[data-module]').forEach(btn=>btn.onclick=()=>{const m=DATA.find(x=>x.id===btn.dataset.module);if(!m)return;if(openModuleId===m.id){openModuleId=null;renderNav();return}openModuleId=m.id;activeModule=m;activeTopic=0;showModuleList(m)});
+  root.querySelectorAll('[data-faq-category]').forEach(btn=>btn.onclick=()=>{const key=btn.dataset.faqCategory;if(openFaqCategories.has(key))openFaqCategories.delete(key);else openFaqCategories.add(key);renderNav()});
+  root.querySelectorAll('[data-topic-menu]').forEach(btn=>btn.onclick=()=>{const key=btn.dataset.topicMenu;if(openTopicMenus.has(key))openTopicMenus.delete(key);else openTopicMenus.add(key);renderNav()});
+  root.querySelectorAll('[data-topic-module]').forEach(btn=>btn.onclick=()=>{openArticle(btn.dataset.topicModule,+btn.dataset.topicIndex);$('mobileDrawer').classList.remove('show')});
+}
 function renderNav(){$('leftNav').innerHTML=navHtml();$('mobileNav').innerHTML=navHtml();bindNav($('leftNav'));bindNav($('mobileNav'))}
 function showList(){ $('listView').classList.remove('hide');$('articleView').classList.remove('show');window.scrollTo({top:0,behavior:'smooth'});if(typeof updateChatContext==='function')updateChatContext() }
 function showArticle(){ $('listView').classList.add('hide');$('articleView').classList.add('show');window.scrollTo({top:0,behavior:'smooth'}) }
@@ -337,7 +434,7 @@ function renderModuleList(m){$('breadcrumb').innerHTML=`${t('home')} / ${esc(m.n
 function searchArticles(q){q=q.trim();if(!q){showModuleList(activeModule);return}const nq=normalize(q),items=[];DATA.forEach(m=>m.topics.forEach((x,i)=>{const blocks=getBlocks(x);const hay=[m.name[lang],m.desc[lang],x.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join(' ');if(normalize(hay).includes(nq))items.push({m,x,i})}));lastListMode={type:'search',query:q,items};showList();$('breadcrumb').innerHTML=`${t('home')} / ${t('results')}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">⌕</div><div><strong>${t('results')}</strong><small>${items.length} ${t('articles')} • “${esc(q)}”</small></div></div>`;$('articleList').innerHTML=items.length?items.map(articleCard).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
 function rerenderLastList(){if(lastListMode.type==='search')searchArticles(lastListMode.query);else renderModuleList(lastListMode.module||activeModule)}
 function normalize(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ')}
-function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
+function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}else{const menu=topicMenuMeta(activeModule.topics[activeTopic]);if(menu)openTopicMenus.add(topicMenuStateKey(activeModule.id,menu.key))}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
 function renderArticle(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic),purpose=pageFunction(topic,activeModule),intro=articleIntro(topic,blocks);$('breadcrumb').innerHTML=`<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`;$('crumbHome').onclick=()=>showModuleList(activeModule);$('crumbModule').onclick=()=>showModuleList(activeModule);$('articleTitle').textContent=topic.title[lang];$('articlePurpose').hidden=!purpose;$('articlePurposeLabel').textContent=lang==='id'?'Fungsi Halaman':'Page Function';$('articlePurposeText').textContent=purpose;{const meta=topicMeta(topic);$('articleSource').textContent=(topic.source||'Prieds')+' • '+meta.editor+' • '+fmtDate(meta.updatedAt);}$('articleIntro').textContent=intro;$('articleIntro').hidden=!intro;let step=0,html='';blocks.forEach(b=>{if(b.type==='label')html+=`<div class="docLabel">${esc(b.text)}</div>`;else if(b.type==='subheading')html+=`<h2>${esc(b.text)}</h2>`;else if(b.type==='step')html+=`<div class="stepCard"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`;else if(b.type==='p')html+=`<p class="docP">${esc(b.text)}</p>`;else if(b.type==='image'){const src=ASSETS[b.asset];if(src)html+=`<figure class="mediaCard"><button data-asset="${b.asset}"><img loading="lazy" src="${src}" alt="${esc(b.caption||topic.title[lang])}"></button>${b.caption?`<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>`:''}</figure>`}else if(b.type==='table')html+=`<div class="docTableWrap"><table class="docTable">${b.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`});$('docContent').innerHTML=html||`<div class="empty">${t('empty')}</div>`;$('docContent').querySelectorAll('[data-asset]').forEach(btn=>btn.onclick=()=>openLightbox(ASSETS[btn.dataset.asset]));if(typeof updateChatContext==='function')updateChatContext()}
 function openLightbox(src){$('lightboxImg').src=src;$('lightbox').classList.add('show')}
 function copyGuide(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic);const text=[topic.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join('\n');navigator.clipboard.writeText(text).then(()=>toastMsg(t('copied')))}
