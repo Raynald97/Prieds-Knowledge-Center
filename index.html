@@ -117,6 +117,35 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 .aiConversationFooter{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;background:#fff;border-top:1px solid #EDF1F3;font-size:9px;color:#7B898F}.aiEndBtn{border:0;background:transparent;color:#C34E39;font-weight:800;font-size:10px;padding:4px}.aiEndBtn:hover{text-decoration:underline}
 .aiSurveyOverlay{position:fixed;inset:0;z-index:310;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(18,37,45,.58)}.aiSurveyOverlay.show{display:flex}.aiSurvey{width:min(470px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:12px;box-shadow:0 22px 60px rgba(0,0,0,.25);padding:20px}.aiSurveyHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;border-bottom:1px solid #E0E7EA;padding-bottom:13px;margin-bottom:16px}.aiSurveyHeader h2{font-size:18px;margin:0}.aiSurveyHeader p{font-size:11px;color:#697980;margin:5px 0 0;line-height:1.45}.aiSurveyClose{border:0;background:transparent;color:#64747B;font-size:24px}.surveyField{margin:15px 0}.surveyField>label,.surveyLabel{display:block;font-size:11px;font-weight:800;color:#3F4F56;margin-bottom:8px}.surveyStars{display:flex;gap:7px}.surveyStar{width:42px;height:39px;border:1px solid #C9D7DC;background:#fff;border-radius:7px;color:#A0ADB2;font-size:21px}.surveyStar.active,.surveyStar:hover{background:#FFF8DD;border-color:#E2BC43;color:#E3AE14}.surveyOptions{display:flex;gap:7px;flex-wrap:wrap}.surveyOption{position:relative}.surveyOption input{position:absolute;opacity:0;pointer-events:none}.surveyOption span{display:block;border:1px solid #C6D3D8;border-radius:7px;padding:8px 10px;font-size:10px;color:#4D5D64;background:#fff}.surveyOption input:checked+span{border-color:var(--primary);background:#EAF9FD;color:#087A9C;font-weight:800}.surveyField textarea{width:100%;min-height:76px;border:1px solid #AEBCC1;border-radius:7px;padding:9px;resize:vertical;font-size:11px}.surveyActions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.surveySecondary{border:1px solid #B9C8CE;background:#fff;color:#53646B;border-radius:7px;padding:9px 12px;font-size:11px}.surveySubmit{border:0;background:var(--primary);color:#fff;border-radius:7px;padding:9px 14px;font-size:11px;font-weight:800}
 @media(max-width:700px){.aiChatLauncher{right:14px;bottom:14px}.aiChatPanel{right:7px;bottom:67px;width:calc(100vw - 14px);height:calc(100vh - 80px);border-radius:11px}.aiBubble{max-width:88%}}
+
+/* Responsive HD width adjustment */
+@media(min-width:901px){
+  .app{
+    padding-left:clamp(18px,1.6vw,32px);
+    padding-right:clamp(18px,1.6vw,32px);
+  }
+  .header,.workspace,.footer{
+    width:100%;
+    max-width:1920px;
+  }
+  .workspace{
+    grid-template-columns:clamp(285px,18vw,360px) minmax(0,1fr);
+    gap:clamp(28px,2.4vw,52px);
+  }
+  .docContent{
+    max-width:min(100%,1120px);
+  }
+}
+@media(min-width:1600px){
+  .header{
+    padding-left:clamp(30px,2.2vw,48px);
+    padding-right:clamp(30px,2.2vw,48px);
+  }
+  .sidebar{
+    padding-right:clamp(10px,1.2vw,24px);
+  }
+}
+
 </style></head><body>
 <div class="app">
 <header class="header">
@@ -375,24 +404,68 @@ function toastMsg(msg){$('toast').textContent=msg;$('toast').classList.add('show
 function localize(){document.documentElement.lang=lang;document.querySelectorAll('[data-ui]').forEach(el=>el.textContent=t(el.dataset.ui));$('searchInput').placeholder=t('placeholder');$('articleSearchInput').placeholder=t('placeholder');renderNav();if($('articleView').classList.contains('show'))renderArticle();else rerenderLastList();localizeChat()}
 function topicNavButton(m,x,i,label){const text=label||x.title?.[lang]||x.title?.id||x.title?.en||'Menu';return `<button class="${m.id===activeModule.id&&i===activeTopic&&$('articleView').classList.contains('show')?'active':''}" data-topic-module="${m.id}" data-topic-index="${i}">${esc(text)}</button>`}
 function localizedMenuValue(value,fallback){
-  if(value&&typeof value==='object')return{id:value.id||value.en||fallback,en:value.en||value.id||fallback,key:value.key||value.id||value.en||fallback};
-  if(typeof value==='string'&&value.trim())return{id:value.trim(),en:value.trim(),key:value.trim()};
-  return{id:fallback,en:fallback,key:fallback};
+  if(value&&typeof value==='object')return{id:value.id||value.en||fallback,en:value.en||value.id||fallback};
+  if(typeof value==='string'&&value.trim())return{id:value.trim(),en:value.trim()};
+  return{id:fallback,en:fallback};
 }
-function salesMenuName(title){
-  const value=String(title||'').trim();
-  if(/^point of sales\s*\(pos\)\s*report$/i.test(value)||/^point of sales report$/i.test(value)||/^pos sales report$/i.test(value))return'POS Report';
-  if(/^point of sales\s*\(pos\)$/i.test(value)||/^point of sales$/i.test(value))return'POS';
-  return value;
+function cleanMenuName(value){
+  return String(value||'')
+    .replace(/\s+/g,' ')
+    .replace(/^[\s:–—-]+|[\s:;,.–—-]+$/g,'')
+    .trim();
+}
+function normalizeMenuKey(value){
+  return cleanMenuName(value)
+    .toLowerCase()
+    .replace(/point of sales\s*\(pos\)/g,'pos')
+    .replace(/point of sales/g,'pos')
+    .replace(/\bsales order\b/g,'so')
+    .replace(/[^a-z0-9]+/g,' ')
+    .trim();
+}
+function firstTabName(value){
+  const clean=cleanMenuName(value);
+  if(!clean)return'Menu';
+  return cleanMenuName(clean.split(/\s+&\s+/)[0]);
+}
+function canonicalMenuName(moduleId,value){
+  const clean=cleanMenuName(value);
+  if(!clean)return'Menu';
+  if(/^point of sales\s*\(pos\)\s*report$/i.test(clean)||/^point of sales report$/i.test(clean)||/^pos sales report$/i.test(clean))return'POS Report';
+  if(/^point of sales\s*\(pos\)$/i.test(clean)||/^point of sales$/i.test(clean))return'POS';
+  if(moduleId==='sales'&&/^so report$/i.test(clean))return'Sales Order Report';
+  return clean;
+}
+function titleMenuCandidate(module,topic){
+  const id=canonicalMenuName(module?.id,firstTabName(topic?.title?.id||topic?.title?.en||'Menu'));
+  const en=canonicalMenuName(module?.id,firstTabName(topic?.title?.en||topic?.title?.id||'Menu'));
+  return{id,en};
 }
 function topicMenuMeta(module,topic,index=0){
   const fallbackId=topic?.title?.id||topic?.title?.en||'Menu';
   const fallbackEn=topic?.title?.en||topic?.title?.id||'Menu';
-  const explicit=topic?.pageMenu?localizedMenuValue(topic.pageMenu,fallbackId):null;
-  let id=explicit?.id||fallbackId;
-  let en=explicit?.en||fallbackEn;
-  if(module?.id==='sales'){id=salesMenuName(id);en=salesMenuName(en)}
-  return{id,en,key:`${index}::${id}`};
+  const explicit=localizedMenuValue(topic?.pageMenu,fallbackId);
+  const raw={
+    id:canonicalMenuName(module?.id,explicit.id),
+    en:canonicalMenuName(module?.id,explicit.en)
+  };
+  const fromTitle=titleMenuCandidate(module,topic);
+
+  const rawHasReport=/\breport\b/i.test(raw.id)||/\breport\b/i.test(raw.en);
+  const titleHasReport=/\breport\b/i.test(fromTitle.id)||/\breport\b/i.test(fromTitle.en);
+  const rawHasRFID=/\brfid\b/i.test(raw.id)||/\brfid\b/i.test(raw.en);
+  const titleHasRFID=/\brfid\b/i.test(fromTitle.id)||/\brfid\b/i.test(fromTitle.en);
+
+  /*
+   * A report/RFID guide must not inherit the non-report/non-RFID menu name.
+   * This prevents duplicate Layer-2 entries such as:
+   * Sales Order + Sales Order, or POS + POS.
+   */
+  const useTitle=(titleHasReport&&!rawHasReport)||(titleHasRFID&&!rawHasRFID);
+  const selected=useTitle?fromTitle:raw;
+  const stableKey=normalizeMenuKey(selected.id||selected.en)||`menu-${index}`;
+
+  return{id:selected.id,en:selected.en,key:stableKey};
 }
 function topicMenuStateKey(moduleId,menuKey){return`${moduleId}::${menuKey}`}
 function cleanTabName(value){
@@ -456,10 +529,17 @@ function topicTabMenuLabel(module,topic){
   return topicTabNames(module,topic,lang).join(' & ');
 }
 function moduleMenuGroups(m){
-  return m.topics.map((x,i)=>{
+  const groups=[];
+  m.topics.forEach((x,i)=>{
     const menu=topicMenuMeta(m,x,i);
-    return{key:menu.key,name:{id:menu.id,en:menu.en},items:[{x,i}]};
+    let group=groups.find(item=>item.key===menu.key);
+    if(!group){
+      group={key:menu.key,name:{id:menu.id,en:menu.en},items:[]};
+      groups.push(group);
+    }
+    group.items.push({x,i});
   });
+  return groups;
 }
 function faqCategoryGroups(m){const groups=[];m.topics.forEach((x,i)=>{const category=x.faqCategory||{key:'Other',id:'Lainnya',en:'Other'};let group=groups.find(g=>g.key===category.key);if(!group){group={key:category.key,name:{id:category.id,en:category.en},items:[]};groups.push(group)}group.items.push({x,i})});return groups}
 function moduleTopicsHtml(m){
