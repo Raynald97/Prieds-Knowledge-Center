@@ -146,6 +146,40 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
   }
 }
 
+
+/* Article-aware AI retrieval additions */
+.aiBubble{white-space:normal}
+.aiMarkdown{font-size:11px;line-height:1.58;color:inherit}
+.aiMarkdown p{margin:0 0 8px}.aiMarkdown p:last-child{margin-bottom:0}
+.aiMarkdown ul,.aiMarkdown ol{margin:6px 0 8px;padding-left:19px}
+.aiMarkdown li{margin:3px 0}
+.aiMarkdown table{width:100%;border-collapse:collapse;margin:8px 0;font-size:10px;background:#fff}
+.aiMarkdown th,.aiMarkdown td{border:1px solid #D6E2E7;padding:6px;vertical-align:top;text-align:left}
+.aiMarkdown th{background:#EAF9FD;color:#087B9D}
+.aiMarkdown pre{overflow:auto;background:#263238;color:#F5F8F9;border-radius:6px;padding:9px;margin:8px 0;font-size:10px}
+.aiMarkdown code{font-family:Consolas,Monaco,monospace;background:#EDF3F5;border-radius:3px;padding:1px 3px}
+.aiMarkdown pre code{background:transparent;padding:0}
+.aiAnswerMeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px solid #E4EBEE}
+.aiConfidence{display:inline-flex;align-items:center;border-radius:999px;padding:4px 7px;font-size:9px;font-weight:800}
+.aiConfidence.high{background:#E5F8EF;color:#11835A}.aiConfidence.medium{background:#FFF7DC;color:#94700E}.aiConfidence.low{background:#FFF0ED;color:#B94A37}
+.aiAnswerActions{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.aiAnswerAction{border:1px solid #C5D5DB;background:#fff;color:#52666E;border-radius:5px;padding:5px 7px;font-size:9px}
+.aiAnswerAction:hover{border-color:#8FCFDF;background:#EFFAFF;color:#087B9D}
+.aiEvidence{margin-top:8px;border:1px solid #DDE7EA;border-radius:6px;background:#F9FBFC}
+.aiEvidence summary{cursor:pointer;padding:7px 8px;font-size:9px;font-weight:800;color:#61757D}
+.aiEvidenceList{display:grid;gap:6px;padding:0 8px 8px}
+.aiEvidenceItem{border-left:3px solid #9DDFF1;background:#fff;padding:6px 7px;font-size:9px;line-height:1.45;color:#5B6B72}
+.aiSourcesLabel{margin-top:8px;font-size:9px;font-weight:800;color:#65777E}
+.aiSource strong{display:block;color:#087B9D;font-size:10px}
+.aiSource em{display:block;color:#60757D;font-size:9px;font-style:normal;margin-top:2px}
+.aiSource small{display:block;color:#7A8B91;font-size:8px;margin-top:3px}
+.aiIndexing{display:flex;align-items:center;gap:6px;color:#60777F}
+.aiIndexingSpinner{width:11px;height:11px;border:2px solid #C6E8F1;border-top-color:#169FC7;border-radius:50%;animation:aiSpin .8s linear infinite}
+@keyframes aiSpin{to{transform:rotate(360deg)}}
+.kcAiHighlight{animation:kcAiPulse 3.6s ease-out;border-radius:5px}
+@keyframes kcAiPulse{0%,22%{background:#FFF0A8;box-shadow:0 0 0 6px rgba(255,214,64,.28)}100%{background:transparent;box-shadow:0 0 0 0 rgba(255,214,64,0)}}
+@media(max-width:700px){.aiAnswerActions{width:100%;margin-left:0}.aiAnswerAction{flex:1}.aiMarkdown table{font-size:9px}}
+
 </style></head><body>
 <div class="app">
 <header class="header">
@@ -567,46 +601,413 @@ function searchArticles(q){q=q.trim();if(!q){showModuleList(activeModule);return
 function rerenderLastList(){if(lastListMode.type==='search')searchArticles(lastListMode.query);else renderModuleList(lastListMode.module||activeModule)}
 function normalize(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ')}
 function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}else{const menu=topicMenuMeta(activeModule,activeModule.topics[activeTopic],activeTopic);if(menu)openTopicMenus.add(topicMenuStateKey(activeModule.id,menu.key))}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
-function renderArticle(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic),purpose=pageFunction(topic,activeModule),intro=articleIntro(topic,blocks);$('breadcrumb').innerHTML=`<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`;$('crumbHome').onclick=()=>showModuleList(activeModule);$('crumbModule').onclick=()=>showModuleList(activeModule);$('articleTitle').textContent=topic.title[lang];$('articlePurpose').hidden=!purpose;$('articlePurposeLabel').textContent=lang==='id'?'Fungsi Halaman':'Page Function';$('articlePurposeText').textContent=purpose;{const meta=topicMeta(topic);$('articleSource').textContent=(topic.source||'Prieds')+' • '+meta.editor+' • '+fmtDate(meta.updatedAt);}$('articleIntro').textContent=intro;$('articleIntro').hidden=!intro;let step=0,html='';blocks.forEach(b=>{if(b.type==='label')html+=`<div class="docLabel">${esc(b.text)}</div>`;else if(b.type==='subheading')html+=`<h2>${esc(b.text)}</h2>`;else if(b.type==='step')html+=`<div class="stepCard"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`;else if(b.type==='p')html+=`<p class="docP">${esc(b.text)}</p>`;else if(b.type==='image'){const src=ASSETS[b.asset];if(src)html+=`<figure class="mediaCard"><button data-asset="${b.asset}"><img loading="lazy" src="${src}" alt="${esc(b.caption||topic.title[lang])}"></button>${b.caption?`<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>`:''}</figure>`}else if(b.type==='table')html+=`<div class="docTableWrap"><table class="docTable">${b.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`});$('docContent').innerHTML=html||`<div class="empty">${t('empty')}</div>`;$('docContent').querySelectorAll('[data-asset]').forEach(btn=>btn.onclick=()=>openLightbox(ASSETS[btn.dataset.asset]));if(typeof updateChatContext==='function')updateChatContext()}
+function sectionDomId(moduleId,topicIndex,blockIndex){return`kc-section-${String(moduleId||'module').replace(/[^a-z0-9_-]/gi,'-')}-${topicIndex}-${blockIndex}`}
+function renderArticle(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic),purpose=pageFunction(topic,activeModule),intro=articleIntro(topic,blocks);$('breadcrumb').innerHTML=`<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`;$('crumbHome').onclick=()=>showModuleList(activeModule);$('crumbModule').onclick=()=>showModuleList(activeModule);$('articleTitle').textContent=topic.title[lang];$('articleTitle').dataset.kcSection='article-title';$('articlePurpose').hidden=!purpose;$('articlePurposeLabel').textContent=lang==='id'?'Fungsi Halaman':'Page Function';$('articlePurposeText').textContent=purpose;{const meta=topicMeta(topic);$('articleSource').textContent=(topic.source||'Prieds')+' • '+meta.editor+' • '+fmtDate(meta.updatedAt);}$('articleIntro').textContent=intro;$('articleIntro').hidden=!intro;let step=0,html='';blocks.forEach((b,blockIndex)=>{const sid=sectionDomId(activeModule.id,activeTopic,blockIndex);if(b.type==='label')html+=`<div class="docLabel" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</div>`;else if(b.type==='subheading')html+=`<h2 id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</h2>`;else if(b.type==='step')html+=`<div class="stepCard" id="${sid}" data-kc-section="${blockIndex}"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`;else if(b.type==='p')html+=`<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</p>`;else if(b.type==='image'){const src=ASSETS[b.asset];if(src)html+=`<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${b.asset}"><img loading="lazy" src="${src}" alt="${esc(b.caption||topic.title[lang])}"></button>${b.caption?`<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>`:''}</figure>`}else if(b.type==='table')html+=`<div class="docTableWrap" id="${sid}" data-kc-section="${blockIndex}"><table class="docTable">${b.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`});$('docContent').innerHTML=html||`<div class="empty">${t('empty')}</div>`;$('docContent').querySelectorAll('[data-asset]').forEach(btn=>btn.onclick=()=>openLightbox(ASSETS[btn.dataset.asset]));if(typeof updateChatContext==='function')updateChatContext()}
 function openLightbox(src){$('lightboxImg').src=src;$('lightbox').classList.add('show')}
 function copyGuide(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic);const text=[topic.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join('\n');navigator.clipboard.writeText(text).then(()=>toastMsg(t('copied')))}
 function syncSearch(source,target){target.value=source.value;searchArticles(source.value)}
+
 const CHAT_UI={
-  id:{launcher:'Tanya AI',title:'AI Knowledge Assistant',subtitle:'Jawaban berdasarkan artikel Knowledge Center',contextAll:'Konteks: Seluruh artikel',contextArticle:'Artikel aktif',placeholder:'Tanyakan cara menggunakan fitur Prieds...',disclaimer:'AI dapat keliru. Verifikasi pada artikel sumber.',end:'Akhiri percakapan',welcome:'Halo! Saya membantu mencari dan menjelaskan artikel yang tersedia di Prieds Knowledge Center. Apa yang ingin Anda pahami?',summary:'Ringkas artikel ini',steps:'Jelaskan langkah-langkahnya',related:'Cari artikel terkait',find:'Bagaimana cara membuat Delivery Order?',needQuestion:'Ketik pertanyaan terlebih dahulu.',needConversation:'Ajukan minimal satu pertanyaan sebelum mengakhiri percakapan.',notFound:'Saya belum menemukan jawaban yang cukup sesuai. Coba gunakan nama menu, dokumen, atau proses yang lebih spesifik.',source:'Buka artikel sumber',basedOn:'Berdasarkan artikel',answerIntro:'Berikut informasi yang paling relevan:',stepsIntro:'Langkah utama yang tersedia pada artikel:',moreSources:'Artikel terkait lainnya:',surveyTitle:'Bagaimana pengalaman Anda?',surveySubtitle:'Masukan Anda membantu kami meningkatkan jawaban AI Knowledge Assistant.',rating:'Nilai kepuasan percakapan',helpful:'Apakah jawaban AI membantu?',resolved:'Apakah kebutuhan Anda terselesaikan?',yes:'Ya',no:'Tidak',resolvedYes:'Terselesaikan',partial:'Sebagian',unresolved:'Belum',comment:'Komentar tambahan (opsional)',back:'Kembali ke chat',submit:'Kirim feedback',thanks:'Terima kasih. Feedback Anda telah tersimpan dan tersedia pada Feedback Survey Report.'},
-  en:{launcher:'Ask AI',title:'AI Knowledge Assistant',subtitle:'Answers based on Knowledge Center articles',contextAll:'Context: All articles',contextArticle:'Active article',placeholder:'Ask how to use a Prieds feature...',disclaimer:'AI may be inaccurate. Verify the source article.',end:'End conversation',welcome:'Hello! I can find and explain the articles available in the Prieds Knowledge Center. What would you like to understand?',summary:'Summarize this article',steps:'Explain the steps',related:'Find related articles',find:'How do I create a Delivery Order?',needQuestion:'Enter a question first.',needConversation:'Ask at least one question before ending the conversation.',notFound:'I could not find a sufficiently relevant answer. Try using a more specific menu, document, or process name.',source:'Open source article',basedOn:'Based on article',answerIntro:'Here is the most relevant information:',stepsIntro:'The main steps available in the article are:',moreSources:'Other related articles:',surveyTitle:'How was your experience?',surveySubtitle:'Your feedback helps us improve the AI Knowledge Assistant answers.',rating:'Conversation satisfaction rating',helpful:'Was the AI answer helpful?',resolved:'Was your need resolved?',yes:'Yes',no:'No',resolvedYes:'Resolved',partial:'Partially',unresolved:'Not yet',comment:'Additional comment (optional)',back:'Back to chat',submit:'Submit feedback',thanks:'Thank you. Your feedback has been saved and is available in the Feedback Survey Report.'}
+  id:{launcher:'Tanya AI',title:'AI Knowledge Assistant',subtitle:'Jawaban dari seluruh artikel yang dikelola Admin',contextAll:'Knowledge base',contextArticle:'Artikel aktif (ranking boost)',placeholder:'Tanyakan isi atau cara menggunakan fitur Prieds...',disclaimer:'Jawaban hanya menggunakan artikel Knowledge Center.',end:'Akhiri percakapan',welcome:'Halo! Saya siap membantu berdasarkan seluruh artikel yang tersedia di Prieds Knowledge Center. Silakan tanyakan menu, proses, atau kendala yang ingin dipahami.',summary:'Ringkas artikel ini',steps:'Jelaskan langkah-langkahnya',related:'Apa artikel yang terkait?',find:'Bagaimana cara membuat Purchase Order?',needQuestion:'Ketik pertanyaan terlebih dahulu.',needConversation:'Ajukan minimal satu pertanyaan sebelum mengakhiri percakapan.',source:'Lihat bagian artikel',surveyTitle:'Bagaimana pengalaman Anda?',surveySubtitle:'Masukan Anda membantu kami meningkatkan jawaban AI Knowledge Assistant.',rating:'Nilai kepuasan percakapan',helpful:'Apakah jawaban AI membantu?',resolved:'Apakah kebutuhan Anda terselesaikan?',yes:'Ya',no:'Tidak',resolvedYes:'Terselesaikan',partial:'Sebagian',unresolved:'Belum',comment:'Komentar tambahan (opsional)',back:'Kembali ke chat',submit:'Kirim feedback',thanks:'Terima kasih. Feedback Anda telah tersimpan dan tersedia pada Feedback Survey Report.',indexing:'Menganalisis seluruh artikel...',copy:'Salin jawaban',regenerate:'Buat ulang',evidence:'Potongan artikel yang digunakan',confidence:'Confidence'},
+  en:{launcher:'Ask AI',title:'AI Knowledge Assistant',subtitle:'Answers from all Admin-managed articles',contextAll:'Knowledge base',contextArticle:'Active article (ranking boost)',placeholder:'Ask about a Prieds feature, process, or issue...',disclaimer:'Answers only use Knowledge Center articles.',end:'End conversation',welcome:'Hello! I can help using all articles available in the Prieds Knowledge Center. Ask about a menu, process, or issue.',summary:'Summarize this article',steps:'Explain the steps',related:'Which articles are related?',find:'How do I create a Purchase Order?',needQuestion:'Enter a question first.',needConversation:'Ask at least one question before ending the conversation.',source:'View article section',surveyTitle:'How was your experience?',surveySubtitle:'Your feedback helps us improve the AI Knowledge Assistant.',rating:'Conversation satisfaction rating',helpful:'Was the AI answer helpful?',resolved:'Was your need resolved?',yes:'Yes',no:'No',resolvedYes:'Resolved',partial:'Partially',unresolved:'Not yet',comment:'Additional comment (optional)',back:'Back to chat',submit:'Submit feedback',thanks:'Thank you. Your feedback has been saved and is available in the Feedback Survey Report.',indexing:'Analyzing all articles...',copy:'Copy answer',regenerate:'Regenerate',evidence:'Article excerpts used',confidence:'Confidence'}
 };
 const FEEDBACK_STORE_KEY='prieds_kc_ai_feedback_v1';
 const FEEDBACK_CHANNEL='prieds-kc-feedback';
+const CHAT_SESSION_KEY='prieds_kc_article_chat_v3';
+const NOT_FOUND_ANSWER='Maaf, saya tidak menemukan informasi tersebut pada artikel ini.';
+const chatText=k=>CHAT_UI[lang]?.[k]||CHAT_UI.id[k]||k;
 let aiSession=null;
 let aiSurveyPending=false;
-const chatText=k=>CHAT_UI[lang]?.[k]||CHAT_UI.id[k]||k;
-const createSession=()=>({id:'CHAT-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase(),startedAt:new Date().toISOString(),endedAt:null,language:lang,messages:[]});
-function currentArticleContext(){if(!$('articleView').classList.contains('show'))return null;const topic=activeModule?.topics?.[activeTopic];if(!topic)return null;return{moduleId:activeModule.id,moduleName:activeModule.name[lang]||activeModule.name.id,topicId:topic.id,topicIndex:activeTopic,topicTitle:topic.title[lang]||topic.title.id}}
-function topicTitle(topic,useLang=lang){return topic?.title?.[useLang]||topic?.title?.id||topic?.title?.en||'-'}
-function moduleTitle(module,useLang=lang){return module?.name?.[useLang]||module?.name?.id||module?.name?.en||'-'}
-function topicBlocks(topic,useLang=lang){const raw=topic?.blocks?.[useLang]?.length?topic.blocks[useLang]:(topic?.blocks?.id||[]),seenText=new Set();return raw.filter(block=>{if(!['p','step'].includes(block.type)||!block.text)return true;const key=normalize(block.text).trim();if(!key||seenText.has(key))return false;seenText.add(key);return true})}
-function blockPlainText(block){if(block?.text)return block.text;if(block?.caption)return block.caption;if(Array.isArray(block?.rows))return block.rows.flat().join(' ');return''}
-function topicPlainText(topic,useLang=lang){return topicBlocks(topic,useLang).map(blockPlainText).filter(Boolean).join(' ')}
-function aiTokens(text){const stop=new Set(['yang','dan','atau','untuk','dari','ke','di','pada','cara','bagaimana','apa','saya','ini','itu','the','and','or','for','from','to','in','on','how','what','is','are','a','an','please','tolong']);return normalize(text).split(' ').filter(x=>x.length>1&&!stop.has(x))}
-function searchKnowledge(query){const nq=normalize(query),tokens=aiTokens(query),active=currentArticleContext();const results=[];DATA.forEach((m)=>m.topics.forEach((topic,i)=>{const title=topicTitle(topic),moduleName=moduleTitle(m),body=topicPlainText(topic);const nt=normalize(title),nm=normalize(moduleName),nb=normalize(body);let score=0;if(nq&&nt.includes(nq))score+=16;if(nq&&nb.includes(nq))score+=9;tokens.forEach(token=>{if(nt.includes(token))score+=6;if(nm.includes(token))score+=3;if(nb.includes(token))score+=1.5});if(active&&active.moduleId===m.id&&active.topicIndex===i)score+=2;if(score>0)results.push({m,topic,i,score,title,moduleName,body})}));return results.sort((a,b)=>b.score-a.score).slice(0,5)}
-function extractSentences(text,max=4){const clean=String(text||'').replace(/\s+/g,' ').trim();if(!clean)return[];const parts=clean.match(/[^.!?]+[.!?]?/g)||[clean];return parts.map(x=>x.trim()).filter(x=>x.length>25).slice(0,max)}
-function aiSourceData(item){return{moduleId:item.m.id,topicIndex:item.i,title:item.title,module:item.moduleName}}
-function buildAiAnswer(query){const qn=normalize(query);const current=currentArticleContext();const asksSummary=/ringkas|rangkuman|summary|summarize|jelaskan artikel|explain this article/.test(qn);const asksSteps=/langkah|tahap|cara|how to|steps|process|proses|alur/.test(qn);const greeting=/^(halo|hai|hi|hello|hey|selamat pagi|selamat siang|selamat sore)\b/.test(qn);if(greeting)return{text:chatText('welcome'),sources:[]};let results=searchKnowledge(query);if((asksSummary||asksSteps)&&current){const item=DATA.find(m=>m.id===current.moduleId);const topic=item?.topics?.[current.topicIndex];if(topic){const forced={m:item,topic,i:current.topicIndex,title:topicTitle(topic),moduleName:moduleTitle(item),body:topicPlainText(topic),score:99};results=[forced,...results.filter(r=>!(r.m.id===forced.m.id&&r.i===forced.i))]}}if(!results.length||results[0].score<2.5)return{text:chatText('notFound'),sources:[]};const best=results[0];const blocks=topicBlocks(best.topic);const steps=blocks.filter(b=>b.type==='step'&&b.text).map(b=>b.text).slice(0,6);const paragraphs=blocks.filter(b=>['p','step','subheading'].includes(b.type)&&b.text).map(b=>b.text);let text=`${chatText('basedOn')} “${best.title}”\n\n`;if(asksSteps&&steps.length){text+=chatText('stepsIntro')+'\n'+steps.map((s,i)=>`${i+1}. ${s}`).join('\n')}else{const sentences=extractSentences(paragraphs.join(' '),asksSummary?5:4);text+=chatText('answerIntro')+'\n'+(sentences.length?sentences.join(' '):best.body.slice(0,700))}const sources=results.slice(0,3).map(aiSourceData);return{text,sources}}
-function renderChatMessages(){if(!aiSession)aiSession=createSession();const messages=aiSession.messages;$('aiMessages').innerHTML=messages.length?messages.map(msg=>`<div class="aiMessage ${msg.role==='user'?'user':'assistant'}">${msg.role==='assistant'?'<div class="aiAvatar">✦</div>':''}<div class="aiBubble">${esc(msg.text)}${msg.sources?.length?`<div class="aiSources">${msg.sources.map(s=>`<button class="aiSource" type="button" data-ai-source="${esc(s.moduleId)}|${s.topicIndex}">${esc(s.title)}<span>${esc(s.module)} • ${chatText('source')}</span></button>`).join('')}</div>`:''}</div></div>`).join(''):`<div class="aiMessage assistant"><div class="aiAvatar">✦</div><div class="aiBubble">${esc(chatText('welcome'))}</div></div>`;$('aiMessages').querySelectorAll('[data-ai-source]').forEach(btn=>btn.onclick=()=>{const [mid,idx]=btn.dataset.aiSource.split('|');openArticle(mid,+idx);closeChat()});$('aiMessages').scrollTop=$('aiMessages').scrollHeight}
-function updateChatContext(){const ctx=currentArticleContext();$('aiContext').innerHTML=ctx?`<strong>${esc(chatText('contextArticle'))}:</strong> ${esc(ctx.topicTitle)}`:`<strong>${esc(chatText('contextAll'))}</strong>`;renderQuickPrompts()}
-function renderQuickPrompts(){const current=currentArticleContext();const prompts=current?[chatText('summary'),chatText('steps'),chatText('related')]:[chatText('find'),lang==='id'?'Bagaimana proses putaway?':'How does putaway work?',lang==='id'?'Mengapa SKU tidak muncul?':'Why is an SKU not shown?'];$('aiQuickPrompts').innerHTML=prompts.map(p=>`<button type="button" data-ai-prompt="${esc(p)}">${esc(p)}</button>`).join('');$('aiQuickPrompts').querySelectorAll('[data-ai-prompt]').forEach(b=>b.onclick=()=>sendAiQuestion(b.dataset.aiPrompt))}
-function localizeChat(){if(!$('aiChatPanel'))return;$('aiLauncherLabel').textContent=chatText('launcher');$('aiChatTitle').textContent=chatText('title');$('aiChatSubtitle').textContent=chatText('subtitle');$('aiInput').placeholder=chatText('placeholder');$('aiDisclaimer').textContent=chatText('disclaimer');$('aiEndBtn').textContent=chatText('end');$('surveyTitle').textContent=chatText('surveyTitle');$('surveySubtitle').textContent=chatText('surveySubtitle');$('surveyRatingLabel').textContent=chatText('rating');$('surveyHelpfulLabel').textContent=chatText('helpful');$('surveyResolvedLabel').textContent=chatText('resolved');$('helpfulYes').textContent=chatText('yes');$('helpfulNo').textContent=chatText('no');$('resolvedYes').textContent=chatText('resolvedYes');$('resolvedPartial').textContent=chatText('partial');$('resolvedNo').textContent=chatText('unresolved');$('surveyCommentLabel').textContent=chatText('comment');$('surveyBack').textContent=chatText('back');$('surveySubmit').textContent=chatText('submit');updateChatContext();renderChatMessages()}
+let knowledgeBase=null;
+let knowledgeReady=false;
+let knowledgeBuildPromise=null;
+
+const AI_STOP_WORDS=new Set('yang dan atau untuk dari ke di pada dengan sebagai adalah itu ini tersebut saya anda kamu kita mereka sebuah suatu dalam agar jika maka karena oleh saat ketika setelah sebelum lalu kemudian bagaimana apa apakah mengapa kenapa dimana kapan siapa berapa bisa dapat ingin mau tolong mohon cara menggunakan gunakan fitur menu proses halaman artikel informasi tentang terkait the and or for from to in on at with as is are was were be been this that these those i you we they a an please how what why where when who can could would should use using'.split(' '));
+const AI_CONCEPT_GROUPS=[
+ ['purchase order','po','pesanan pembelian','order pembelian'],
+ ['purchase request','pr','permintaan pembelian'],
+ ['sales order','so','pesanan penjualan'],
+ ['delivery order','do','surat jalan','pengiriman'],
+ ['purchase return','prtn','retur pembelian'],
+ ['sales return','srtn','retur penjualan'],
+ ['stock transfer order','sto','transfer stok','pemindahan stok'],
+ ['inbound','penerimaan barang','barang masuk','receiving'],
+ ['outbound','pengeluaran barang','barang keluar','shipping'],
+ ['putaway','penyimpanan barang','simpan ke sloc'],
+ ['picking','picklist','pengambilan barang','ambil barang'],
+ ['packing','pengemasan','kemas barang'],
+ ['dispatch','dispatched','kirim barang','pengiriman selesai'],
+ ['inventory','stock','stok','persediaan'],
+ ['stock opname','stocktaking','hitung stok','opname'],
+ ['storage','sloc','lokasi penyimpanan','gudang'],
+ ['sku','produk','barang','item'],
+ ['supplier','vendor','pemasok'],
+ ['customer','pelanggan'],
+ ['create','buat','membuat','tambah','menambahkan'],
+ ['edit','ubah','mengubah','update','perbarui'],
+ ['delete','hapus','menghapus'],
+ ['void','cancel','batal','membatalkan','pembatalan'],
+ ['error','gagal','masalah','kendala','tidak bisa','tidak dapat'],
+ ['sync','sinkronisasi','synchronize','integrasi'],
+ ['accurate','accurate online'],
+ ['jurnal','mekari jurnal'],
+ ['rfid','tag rfid','radio frequency identification'],
+ ['barcode','qr','qr code'],
+ ['assembly','perakitan','produksi'],
+ ['report','laporan'],
+ ['login','masuk','sign in'],
+ ['approval','persetujuan','approve','reject','penolakan']
+];
+
+function aiNormalize(value){return String(value??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' dan ').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
+function aiTokens(value,{keepStop=false}={}){const tokens=aiNormalize(value).split(' ').filter(Boolean);return keepStop?tokens:tokens.filter(token=>token.length>1&&!AI_STOP_WORDS.has(token))}
+function expandConceptTokens(value){const normalized=aiNormalize(value),expanded=new Set(aiTokens(normalized));AI_CONCEPT_GROUPS.forEach(group=>{if(group.some(term=>normalized.includes(aiNormalize(term))))group.forEach(term=>aiTokens(term,{keepStop:true}).forEach(token=>expanded.add(token)))});return[...expanded]}
+function charTrigrams(value){const compact=`  ${aiNormalize(value)}  `,set=new Set();for(let i=0;i<compact.length-2;i++)set.add(compact.slice(i,i+3));return set}
+function setSimilarity(a,b){if(!a.size||!b.size)return 0;let intersect=0;a.forEach(value=>{if(b.has(value))intersect++});return(2*intersect)/(a.size+b.size)}
+function overlapScore(queryTokens,targetTokens){if(!queryTokens.length||!targetTokens.length)return 0;const target=new Set(targetTokens);let hits=0;queryTokens.forEach(token=>{if(target.has(token))hits++});return hits/queryTokens.length}
+function frequencyMap(tokens){const map=new Map();tokens.forEach(token=>map.set(token,(map.get(token)||0)+1));return map}
+function cleanArticleText(value){return String(value??'').replace(/\s+/g,' ').replace(/\u00a0/g,' ').trim()}
+function topicTitle(topic,useLang='id'){return topic?.title?.[useLang]||topic?.title?.id||topic?.title?.en||'-'}
+function moduleTitle(module,useLang='id'){return module?.name?.[useLang]||module?.name?.id||module?.name?.en||'-'}
+function topicRawBlocks(topic,useLang='id'){return topic?.blocks?.[useLang]?.length?topic.blocks[useLang]:(topic?.blocks?.id||[])}
+function tablePlainText(rows){return(Array.isArray(rows)?rows:[]).map(row=>(Array.isArray(row)?row:[]).map(cleanArticleText).filter(Boolean).join(' | ')).filter(Boolean).join('\n')}
+function splitLongText(text,maxChars=760){const clean=cleanArticleText(text);if(clean.length<=maxChars)return[clean];const sentences=clean.match(/[^.!?]+[.!?]?/g)||[clean],chunks=[];let current='';sentences.forEach(sentence=>{const candidate=(current+' '+sentence.trim()).trim();if(candidate.length>maxChars&&current){chunks.push(current);current=sentence.trim()}else current=candidate});if(current)chunks.push(current);return chunks}
+function currentArticleContext(){if(!$('articleView').classList.contains('show'))return null;const topic=activeModule?.topics?.[activeTopic];if(!topic)return null;return{moduleId:activeModule.id,moduleName:moduleTitle(activeModule),topicIndex:activeTopic,topicTitle:topicTitle(topic)}}
+function getPriorSourceKeys(){const keys=new Set();(aiSession?.messages||[]).slice(-6).forEach(message=>(message.sources||[]).forEach(source=>keys.add(`${source.moduleId}|${source.topicIndex}|${source.heading}`)));return keys}
+
+function createArticleSections(data){
+  const sections=[];
+  data.forEach((module,moduleOrder)=>{
+    module.topics.forEach((topic,topicIndex)=>{
+      const blocksId=topicRawBlocks(topic,'id'),blocksEn=topicRawBlocks(topic,'en'),max=Math.max(blocksId.length,blocksEn.length);
+      const titleId=topicTitle(topic,'id'),titleEn=topicTitle(topic,'en'),moduleId=module.id,moduleNameId=moduleTitle(module,'id'),moduleNameEn=moduleTitle(module,'en');
+      let headingId=titleId,headingEn=titleEn,headingTarget='articleTitle',headingOrder=-1,stepNumber=0;
+      const dedupe=new Set();
+      const addSection=(payload)=>{
+        const textId=cleanArticleText(payload.textId),textEn=cleanArticleText(payload.textEn||payload.textId);
+        if(!textId&&!textEn)return;
+        const dedupeKey=aiNormalize(`${payload.headingId}|${textId}|${textEn}`);
+        if(!dedupeKey||dedupe.has(dedupeKey))return;
+        dedupe.add(dedupeKey);
+        splitLongText(textId||textEn).forEach((part,partIndex)=>{
+          const englishParts=splitLongText(textEn||textId),english=englishParts[Math.min(partIndex,englishParts.length-1)]||textEn||part;
+          const searchText=[moduleNameId,moduleNameEn,titleId,titleEn,payload.headingId,payload.headingEn,part,english].filter(Boolean).join(' ');
+          const tokens=expandConceptTokens(searchText);
+          sections.push({
+            id:`${moduleId}:${topicIndex}:${payload.blockIndex}:${partIndex}`,
+            moduleId,moduleOrder,moduleName:moduleNameId,moduleNameEn,
+            topicIndex,topicTitle:titleId,topicTitleEn:titleEn,
+            topicKey:`${moduleId}|${topicIndex}`,
+            heading:payload.headingId||titleId,headingEn:payload.headingEn||titleEn,
+            headingOrder:payload.headingOrder??payload.blockIndex,
+            blockIndex:payload.blockIndex,blockType:payload.blockType,
+            stepNumber:payload.stepNumber||null,
+            text:part,textEn:english,
+            rows:payload.rows||null,
+            targetId:payload.targetId||headingTarget,
+            searchText:aiNormalize(searchText),
+            tokens,tokenFreq:frequencyMap(tokens),
+            trigrams:charTrigrams(searchText)
+          });
+        });
+      };
+      const purpose=typeof pageFunction==='function'?pageFunction(topic,module):'';
+      if(purpose)addSection({blockIndex:-3,blockType:'purpose',headingId:'Fungsi Halaman',headingEn:'Page Function',headingOrder:-3,textId:purpose,textEn:purpose,targetId:'articlePurpose'});
+      const intro=typeof articleIntro==='function'?articleIntro(topic,blocksId):'';
+      if(intro)addSection({blockIndex:-2,blockType:'intro',headingId:'Ringkasan',headingEn:'Summary',headingOrder:-2,textId:intro,textEn:intro,targetId:'articleIntro'});
+      for(let blockIndex=0;blockIndex<max;blockIndex++){
+        const idBlock=blocksId[blockIndex]||{},enBlock=blocksEn[blockIndex]||idBlock,type=idBlock.type||enBlock.type||'p';
+        if(type==='label'||type==='subheading'){
+          headingId=cleanArticleText(idBlock.text||enBlock.text||titleId);
+          headingEn=cleanArticleText(enBlock.text||idBlock.text||titleEn);
+          headingTarget=sectionDomId(moduleId,topicIndex,blockIndex);headingOrder=blockIndex;
+          continue;
+        }
+        let textId='',textEn='',rows=null;
+        if(type==='table'){textId=tablePlainText(idBlock.rows||enBlock.rows);textEn=tablePlainText(enBlock.rows||idBlock.rows);rows=idBlock.rows||enBlock.rows||[]}
+        else if(type==='image'){textId=idBlock.caption||enBlock.caption||'';textEn=enBlock.caption||idBlock.caption||''}
+        else{textId=idBlock.text||enBlock.text||'';textEn=enBlock.text||idBlock.text||''}
+        if(type==='step')stepNumber++;
+        addSection({blockIndex,blockType:type,headingId,headingEn,headingOrder,textId,textEn,rows,stepNumber:type==='step'?stepNumber:null,targetId:headingTarget||sectionDomId(moduleId,topicIndex,blockIndex)});
+      }
+    });
+  });
+  return sections;
+}
+function buildTfidfIndex(sections){
+  const docFreq=new Map();
+  sections.forEach(section=>new Set(section.tokens).forEach(token=>docFreq.set(token,(docFreq.get(token)||0)+1)));
+  const documentCount=Math.max(1,sections.length);
+  const idf=token=>Math.log((documentCount+1)/((docFreq.get(token)||0)+1))+1;
+  sections.forEach(section=>{
+    let norm=0;
+    section.vector=new Map();
+    const total=Math.max(1,[...section.tokenFreq.values()].reduce((a,b)=>a+b,0));
+    section.tokenFreq.forEach((count,token)=>{const weight=(count/total)*idf(token);section.vector.set(token,weight);norm+=weight*weight});
+    section.vectorNorm=Math.sqrt(norm)||1;
+  });
+  return{sections,docFreq,documentCount,idf};
+}
+async function buildKnowledgeBaseOnce(){
+  if(knowledgeBase)return knowledgeBase;
+  if(knowledgeBuildPromise)return knowledgeBuildPromise;
+  knowledgeBuildPromise=Promise.resolve().then(()=>{
+    const sections=createArticleSections(DATA);
+    knowledgeBase=buildTfidfIndex(sections);
+    knowledgeBase.articleCount=new Set(sections.map(section=>section.topicKey)).size;
+    knowledgeBase.headingCount=new Set(sections.map(section=>`${section.topicKey}|${section.heading}`)).size;
+    knowledgeReady=true;
+    return knowledgeBase;
+  }).catch(error=>{console.error('Knowledge index failed:',error);knowledgeReady=false;knowledgeBase={sections:[],docFreq:new Map(),documentCount:0,idf:()=>1,articleCount:0,headingCount:0};return knowledgeBase});
+  return knowledgeBuildPromise;
+}
+function tfidfCosine(queryTokens,section){
+  if(!knowledgeBase||!queryTokens.length)return 0;
+  const queryFreq=frequencyMap(queryTokens),total=queryTokens.length,queryVector=new Map();let queryNorm=0,dot=0;
+  queryFreq.forEach((count,token)=>{const weight=(count/total)*knowledgeBase.idf(token);queryVector.set(token,weight);queryNorm+=weight*weight});
+  queryNorm=Math.sqrt(queryNorm)||1;
+  queryVector.forEach((weight,token)=>{dot+=weight*(section.vector.get(token)||0)});
+  return dot/(queryNorm*section.vectorNorm);
+}
+function detectIntent(query){
+  const normalized=aiNormalize(query);
+  if(/\b(perbedaan|beda|bandingkan|dibandingkan|versus|vs)\b/.test(normalized))return'comparison';
+  if(/\b(cara|langkah|tahap|alur|proses|membuat|menambahkan|menggunakan|melakukan)\b/.test(normalized))return'tutorial';
+  if(/\b(mengapa|kenapa|gagal|error|masalah|kendala|tidak bisa|tidak dapat|salah)\b/.test(normalized))return'problem';
+  if(/\b(apa itu|arti|fungsi|kegunaan|jelaskan)\b/.test(normalized))return'explanation';
+  return'general';
+}
+function resolveConversationQuery(question){
+  const normalized=aiNormalize(question),messages=aiSession?.messages||[];
+  const priorAssistant=[...messages].reverse().find(message=>message.role==='assistant'&&message.sources?.length);
+  const priorUser=[...messages].reverse().find(message=>message.role==='user'&&message.text!==question);
+  const followUp=/^(lalu|kemudian|setelah itu|terus|jika|kalau|bagaimana jika|bagaimana dengan|apakah itu|yang tadi|hal tersebut)\b/.test(normalized)||/\b(itu|tersebut|tadi|nya)\b/.test(normalized);
+  if(!followUp||!priorAssistant)return question;
+  const source=priorAssistant.sources[0];
+  return[question,source.topicTitle,source.heading,priorUser?.text||''].filter(Boolean).join(' ');
+}
+function ambiguousClarification(question){
+  const normalized=aiNormalize(question),tokens=aiTokens(question),messages=aiSession?.messages||[];
+  const hasPriorSource=messages.some(message=>message.role==='assistant'&&message.sources?.length);
+  const generic=/^(bagaimana cara (menggunakan|memakainya|menggunakannya|melakukannya)|bagaimana caranya|cara pakainya|jelaskan ini|apa fungsinya|bagaimana prosesnya|how do i use it)$/i.test(normalized);
+  if(!generic&&tokens.length>1)return null;
+  if(hasPriorSource)return null;
+  const active=currentArticleContext();
+  let options=[];
+  if(active&&knowledgeBase){
+    options=[...new Set(knowledgeBase.sections.filter(section=>section.moduleId===active.moduleId&&section.topicIndex===active.topicIndex).map(section=>section.heading).filter(Boolean))].slice(0,4);
+  }
+  if(options.length<2&&knowledgeBase)options=[...new Set(knowledgeBase.sections.map(section=>section.topicTitle))].slice(0,4);
+  const optionText=options.length?`\n\nBeberapa pilihan:\n${options.map((item,index)=>`${index+1}. ${item}`).join('\n')}`:'';
+  return`Pertanyaan Anda masih cukup umum. Fitur atau proses mana yang dimaksud?${optionText}`;
+}
+// Hybrid retrieval: TF-IDF cosine, concept/synonym expansion, heading matching,
+ // keyword overlap, paragraph ranking, and character-trigram similarity.
+function retrieveKnowledge(question,{limit=7}={}){
+  if(!knowledgeBase?.sections?.length)return[];
+  const effectiveQuery=resolveConversationQuery(question),queryTokens=expandConceptTokens(effectiveQuery),queryNormalized=aiNormalize(effectiveQuery),queryTrigrams=charTrigrams(effectiveQuery),intent=detectIntent(question),active=currentArticleContext(),priorKeys=getPriorSourceKeys();
+  const ranked=knowledgeBase.sections.map(section=>{
+    const headingTokens=expandConceptTokens(`${section.heading} ${section.topicTitle} ${section.moduleName}`);
+    const bodyTokens=section.tokens;
+    const cosine=tfidfCosine(queryTokens,section);
+    const headingOverlap=overlapScore(queryTokens,headingTokens);
+    const keywordOverlap=overlapScore(queryTokens,bodyTokens);
+    const headingTrigram=setSimilarity(queryTrigrams,charTrigrams(`${section.heading} ${section.topicTitle}`));
+    const paragraphTrigram=setSimilarity(queryTrigrams,section.trigrams);
+    const exactPhrase=queryNormalized.length>3&&section.searchText.includes(queryNormalized)?1:0;
+    const density=queryTokens.length?queryTokens.filter(token=>section.searchText.includes(token)).length/queryTokens.length:0;
+    let score=cosine*.37+headingOverlap*.18+keywordOverlap*.14+headingTrigram*.10+paragraphTrigram*.08+exactPhrase*.08+density*.05;
+    if(active&&active.moduleId===section.moduleId&&active.topicIndex===section.topicIndex)score+=.07;
+    if(priorKeys.has(`${section.moduleId}|${section.topicIndex}|${section.heading}`))score+=.06;
+    if(intent==='tutorial'&&section.blockType==='step')score+=.055;
+    if(intent==='comparison'&&(section.blockType==='table'||section.heading!==section.topicTitle))score+=.025;
+    return{...section,score,metrics:{cosine,headingOverlap,keywordOverlap,headingTrigram,paragraphTrigram}};
+  }).filter(item=>item.score>0).sort((a,b)=>b.score-a.score);
+  const selected=[],perHeading=new Map();
+  for(const item of ranked){
+    const key=`${item.topicKey}|${item.heading}`,count=perHeading.get(key)||0;
+    if(count>=3)continue;
+    selected.push(item);perHeading.set(key,count+1);
+    if(selected.length>=limit)break;
+  }
+  return selected;
+}
+function confidenceFromResults(results){
+  if(!results.length)return{value:0,label:'Rendah',className:'low'};
+  const top=results[0].score,gap=top-(results[1]?.score||0),value=Math.max(0,Math.min(99,Math.round((top*.82+gap*.55)*100)));
+  if(value>=65)return{value,label:'Tinggi',className:'high'};
+  if(value>=38)return{value,label:'Sedang',className:'medium'};
+  return{value,label:'Rendah',className:'low'};
+}
+function compactSentence(text,max=235){const clean=cleanArticleText(text);return clean.length<=max?clean:clean.slice(0,max).replace(/\s+\S*$/,'')+'…'}
+function splitSentences(text){return(cleanArticleText(text).match(/[^.!?]+[.!?]?/g)||[]).map(cleanArticleText).filter(sentence=>sentence.length>18)}
+function uniqueSources(results,max=4){
+  const seen=new Set(),sources=[];
+  results.forEach(result=>{const key=`${result.topicKey}|${result.heading}`;if(seen.has(key)||sources.length>=max)return;seen.add(key);sources.push({moduleId:result.moduleId,module:result.moduleName,topicIndex:result.topicIndex,topicTitle:result.topicTitle,heading:result.heading,targetId:result.targetId,score:result.score,excerpt:compactSentence(result.text,260)})});
+  return sources;
+}
+function truncateWords(text,maxWords=250){const words=String(text).split(/\s+/);return words.length<=maxWords?text:words.slice(0,maxWords).join(' ')+'…'}
+function markdownCitation(sources){if(!sources.length)return'';return`\n\n**Sumber:**\n${sources.map(source=>`- Bagian "${source.heading}" — Artikel "${source.topicTitle}"`).join('\n')}`}
+function composeArticleAnswer(question,results){
+  if(!results.length||results[0].score<.115)return{text:NOT_FOUND_ANSWER,sources:[],evidence:[],confidence:{value:0,label:'Rendah',className:'low'}};
+  const intent=detectIntent(question),rawQueryTokens=expandConceptTokens(question);
+  let best=results[0];
+  if(intent==='problem'){
+    best=[...results].sort((a,b)=>overlapScore(rawQueryTokens,expandConceptTokens(`${b.heading} ${b.text}`))-overlapScore(rawQueryTokens,expandConceptTokens(`${a.heading} ${a.text}`))||b.score-a.score)[0]||best;
+  }
+  const sameTopic=results.filter(result=>result.topicKey===best.topicKey);
+  const sourceThreshold=Math.max(.13,results[0].score*.52);
+  const filteredSources=intent==='comparison'
+    ?results
+    :(intent==='tutorial'||intent==='problem')
+      ?results.filter(result=>result.topicKey===best.topicKey&&result.heading===best.heading)
+      :results.filter(result=>result.topicKey===best.topicKey&&result.score>=sourceThreshold);
+  const sourceCandidates=[best,...filteredSources.filter(result=>result.id!==best.id)];
+  const sources=uniqueSources(sourceCandidates.length?sourceCandidates:[best]),confidence=confidenceFromResults(results);
+  let answer='';
+  if(intent==='tutorial'){
+    const allTopicSections=knowledgeBase.sections.filter(item=>item.topicKey===best.topicKey);
+    let steps=allTopicSections.filter(item=>item.blockType==='step'&&item.heading===best.heading).sort((a,b)=>a.blockIndex-b.blockIndex).map(item=>cleanArticleText(item.text));
+    if(steps.length<2)steps=allTopicSections.filter(item=>item.blockType==='step').sort((a,b)=>a.blockIndex-b.blockIndex).map(item=>cleanArticleText(item.text));
+    if(steps.length<2)steps=sameTopic.flatMap(item=>splitSentences(item.text)).slice(0,6);
+    steps=[...new Set(steps)].slice(0,8);
+    if(steps.length)answer=`Berdasarkan bagian **"${best.heading}"** pada artikel **"${best.topicTitle}"**, langkah yang tersedia adalah:\n\n${steps.map((step,index)=>`${index+1}. ${compactSentence(step,330)}`).join('\n')}`;
+  }else if(intent==='comparison'){
+    const comparison=uniqueSources(results.filter(result=>result.score>=sourceThreshold),4);
+    answer=`Berikut perbandingan informasi yang ditemukan pada artikel:\n\n| Bagian | Informasi |\n|---|---|\n${comparison.map(source=>`| ${source.heading.replace(/\|/g,'/')} | ${compactSentence(source.excerpt,210).replace(/\|/g,'/')} |`).join('\n')}`;
+  }else if(intent==='problem'){
+    const focused=sameTopic.filter(item=>item.id===best.id||item.heading===best.heading||overlapScore(rawQueryTokens,expandConceptTokens(`${item.heading} ${item.text}`))>=.34);
+    const ordered=[best,...focused.filter(item=>item.id!==best.id)];
+    const points=[...new Set(ordered.slice(0,6).flatMap(item=>splitSentences(item.text)).map(sentence=>compactSentence(sentence,300)))].slice(0,6);
+    answer=`Informasi yang paling relevan terdapat pada bagian **"${best.heading}"** di artikel **"${best.topicTitle}"**:\n\n${points.map(point=>`- ${point}`).join('\n')}`;
+  }else{
+    const sentences=[...new Set(results.filter(result=>result.score>=sourceThreshold).slice(0,5).flatMap(item=>splitSentences(item.text)).map(sentence=>compactSentence(sentence,330)))].slice(0,5);
+    if(sentences.length===1)answer=`Menurut bagian **"${best.heading}"** pada artikel **"${best.topicTitle}"**:\n\n${sentences[0]}`;
+    else answer=`Menurut artikel **"${best.topicTitle}"**, informasi yang relevan adalah:\n\n${sentences.map(sentence=>`- ${sentence}`).join('\n')}`;
+  }
+  if(!answer.trim())return{text:NOT_FOUND_ANSWER,sources:[],evidence:[],confidence:{value:0,label:'Rendah',className:'low'}};
+  answer=truncateWords(answer,210)+markdownCitation(sources);
+  return{text:answer,sources,evidence:sources.slice(0,3).map(source=>({heading:source.heading,topicTitle:source.topicTitle,text:source.excerpt})),confidence};
+}
+async function buildAiAnswer(question){
+  await buildKnowledgeBaseOnce();
+  const clarification=ambiguousClarification(question);
+  if(clarification)return{text:clarification,sources:[],evidence:[],confidence:null,isClarification:true};
+  const results=retrieveKnowledge(question);
+  return composeArticleAnswer(question,results);
+}
+
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]))}
+function renderInlineMarkdown(value){return escapeHtml(value).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')}
+function renderMarkdown(markdown){
+  const lines=String(markdown??'').split('\n'),html=[];let listType=null,inCode=false,code=[];
+  const closeList=()=>{if(listType){html.push(`</${listType}>`);listType=null}};
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    if(line.trim().startsWith('```')){closeList();if(inCode){html.push(`<pre><code>${escapeHtml(code.join('\n'))}</code></pre>`);code=[];inCode=false}else inCode=true;continue}
+    if(inCode){code.push(line);continue}
+    if(/^\s*\|.*\|\s*$/.test(line)&&i+1<lines.length&&/^\s*\|?[\s:|-]+\|/.test(lines[i+1])){
+      closeList();const headers=line.trim().replace(/^\||\|$/g,'').split('|').map(cell=>cell.trim());i+=2;const rows=[];while(i<lines.length&&/^\s*\|.*\|\s*$/.test(lines[i])){rows.push(lines[i].trim().replace(/^\||\|$/g,'').split('|').map(cell=>cell.trim()));i++}i--;
+      html.push(`<table><thead><tr>${headers.map(header=>`<th>${renderInlineMarkdown(header)}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(cell=>`<td>${renderInlineMarkdown(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);continue;
+    }
+    const bullet=line.match(/^\s*[-•]\s+(.+)/),numbered=line.match(/^\s*\d+[.)]\s+(.+)/);
+    if(bullet){if(listType!=='ul'){closeList();html.push('<ul>');listType='ul'}html.push(`<li>${renderInlineMarkdown(bullet[1])}</li>`);continue}
+    if(numbered){if(listType!=='ol'){closeList();html.push('<ol>');listType='ol'}html.push(`<li>${renderInlineMarkdown(numbered[1])}</li>`);continue}
+    closeList();if(!line.trim()){continue}html.push(`<p>${renderInlineMarkdown(line)}</p>`);
+  }
+  closeList();if(inCode)html.push(`<pre><code>${escapeHtml(code.join('\n'))}</code></pre>`);
+  return html.join('');
+}
+function createSession(){return{id:'CHAT-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase(),startedAt:new Date().toISOString(),endedAt:null,language:'id',messages:[]}}
+function readChatSession(){try{const saved=JSON.parse(sessionStorage.getItem(CHAT_SESSION_KEY)||'null');return saved&&Array.isArray(saved.messages)?saved:null}catch(_){return null}}
+function persistChatSession(){try{sessionStorage.setItem(CHAT_SESSION_KEY,JSON.stringify(aiSession))}catch(error){console.warn('Chat history could not be saved:',error)}}
+function renderAssistantExtras(message,messageIndex){
+  const confidence=message.confidence;
+  const meta=confidence?`<div class="aiAnswerMeta"><span class="aiConfidence ${confidence.className}">${escapeHtml(chatText('confidence'))}: ${confidence.value}% • ${escapeHtml(confidence.label)}</span><div class="aiAnswerActions"><button class="aiAnswerAction" type="button" data-ai-copy="${messageIndex}">${escapeHtml(chatText('copy'))}</button><button class="aiAnswerAction" type="button" data-ai-regenerate="${messageIndex}">${escapeHtml(chatText('regenerate'))}</button></div></div>`:'';
+  const sources=message.sources?.length?`<div class="aiSourcesLabel">Sumber artikel</div><div class="aiSources">${message.sources.map((source,sourceIndex)=>`<button class="aiSource" type="button" data-ai-source-message="${messageIndex}" data-ai-source-index="${sourceIndex}"><strong>${escapeHtml(source.topicTitle)}</strong><em>Bagian "${escapeHtml(source.heading)}"</em><small>${escapeHtml(chatText('source'))}</small></button>`).join('')}</div>`:'';
+  const evidence=message.evidence?.length?`<details class="aiEvidence"><summary>${escapeHtml(chatText('evidence'))}</summary><div class="aiEvidenceList">${message.evidence.map(item=>`<div class="aiEvidenceItem"><strong>${escapeHtml(item.heading)}</strong><br>${escapeHtml(item.text)}</div>`).join('')}</div></details>`:'';
+  return meta+sources+evidence;
+}
+function renderChatMessages(){
+  if(!aiSession)aiSession=createSession();
+  const messages=aiSession.messages;
+  $('aiMessages').innerHTML=messages.length?messages.map((message,index)=>`<div class="aiMessage ${message.role==='user'?'user':'assistant'}">${message.role==='assistant'?'<div class="aiAvatar">✦</div>':''}<div class="aiBubble">${message.role==='assistant'?`<div class="aiMarkdown">${renderMarkdown(message.text)}</div>${renderAssistantExtras(message,index)}`:escapeHtml(message.text)}</div></div>`).join(''):`<div class="aiMessage assistant"><div class="aiAvatar">✦</div><div class="aiBubble"><div class="aiMarkdown">${renderMarkdown(chatText('welcome'))}</div></div></div>`;
+  $('aiMessages').querySelectorAll('[data-ai-source-message]').forEach(button=>button.onclick=()=>{const message=messages[Number(button.dataset.aiSourceMessage)],source=message?.sources?.[Number(button.dataset.aiSourceIndex)];if(source)openKnowledgeSource(source)});
+  $('aiMessages').querySelectorAll('[data-ai-copy]').forEach(button=>button.onclick=async()=>{const message=messages[Number(button.dataset.aiCopy)];if(!message)return;try{await navigator.clipboard.writeText(message.text);toastMsg('Jawaban berhasil disalin.')}catch(_){toastMsg('Jawaban tidak dapat disalin.')}});
+  $('aiMessages').querySelectorAll('[data-ai-regenerate]').forEach(button=>button.onclick=()=>regenerateAnswer(Number(button.dataset.aiRegenerate)));
+  $('aiMessages').scrollTop=$('aiMessages').scrollHeight;
+}
+function showTyping(){const row=document.createElement('div');row.className='aiMessage assistant';row.id='aiTypingRow';row.innerHTML='<div class="aiAvatar">✦</div><div class="aiBubble"><span class="aiTyping"><i></i><i></i><i></i></span></div>';$('aiMessages').appendChild(row);$('aiMessages').scrollTop=$('aiMessages').scrollHeight}
+function updateChatContext(){
+  if(!$('aiContext'))return;
+  const context=currentArticleContext(),stats=knowledgeBase?`${knowledgeBase.articleCount} artikel • ${knowledgeBase.headingCount} bagian`:'';
+  $('aiContext').innerHTML=context?`<strong>${escapeHtml(chatText('contextArticle'))}:</strong> ${escapeHtml(context.topicTitle)}${stats?` • ${escapeHtml(stats)}`:''}`:`<strong>${escapeHtml(chatText('contextAll'))}:</strong> ${escapeHtml(stats||chatText('indexing'))}`;
+  renderQuickPrompts();
+}
+function suggestedQuestions(){
+  const context=currentArticleContext();
+  if(!knowledgeBase)return[chatText('find'),'Bagaimana proses putaway?','Mengapa SKU tidak muncul?'];
+  let sections=context?knowledgeBase.sections.filter(section=>section.moduleId===context.moduleId&&section.topicIndex===context.topicIndex):knowledgeBase.sections;
+  const questions=[];
+  for(const section of sections){
+    const heading=section.heading,topic=section.topicTitle;
+    if(section.blockType==='step')questions.push(`Bagaimana langkah ${heading}?`);
+    else if(/fungsi|overview|ringkasan/i.test(heading))questions.push(`Apa fungsi ${topic}?`);
+    else questions.push(`Jelaskan bagian ${heading}.`);
+    if(questions.length>=3)break;
+  }
+  return questions.length?questions:[chatText('find'),'Bagaimana proses inbound?','Apa fungsi Stock Opname?'];
+}
+function renderQuickPrompts(){if(!$('aiQuickPrompts'))return;const prompts=suggestedQuestions();$('aiQuickPrompts').innerHTML=prompts.map(prompt=>`<button type="button" data-ai-prompt="${escapeHtml(prompt)}">${escapeHtml(prompt)}</button>`).join('');$('aiQuickPrompts').querySelectorAll('[data-ai-prompt]').forEach(button=>button.onclick=()=>sendAiQuestion(button.dataset.aiPrompt))}
+function localizeChat(){
+  if(!$('aiChatPanel'))return;
+  $('aiLauncherLabel').textContent=chatText('launcher');$('aiChatTitle').textContent=chatText('title');$('aiChatSubtitle').textContent=chatText('subtitle');$('aiInput').placeholder=chatText('placeholder');$('aiDisclaimer').textContent=chatText('disclaimer');$('aiEndBtn').textContent=chatText('end');$('surveyTitle').textContent=chatText('surveyTitle');$('surveySubtitle').textContent=chatText('surveySubtitle');$('surveyRatingLabel').textContent=chatText('rating');$('surveyHelpfulLabel').textContent=chatText('helpful');$('surveyResolvedLabel').textContent=chatText('resolved');$('helpfulYes').textContent=chatText('yes');$('helpfulNo').textContent=chatText('no');$('resolvedYes').textContent=chatText('resolvedYes');$('resolvedPartial').textContent=chatText('partial');$('resolvedNo').textContent=chatText('unresolved');$('surveyCommentLabel').textContent=chatText('comment');$('surveyBack').textContent=chatText('back');$('surveySubmit').textContent=chatText('submit');updateChatContext();renderChatMessages();
+}
 function openChat(){$('aiChatPanel').classList.add('show');$('aiChatLauncher').setAttribute('aria-expanded','true');setTimeout(()=>$('aiInput').focus(),50);updateChatContext()}
 function closeChat(){$('aiChatPanel').classList.remove('show');$('aiChatLauncher').setAttribute('aria-expanded','false')}
-function resetChat(){aiSession=createSession();aiSurveyPending=false;renderChatMessages();$('aiInput').value='';updateChatContext()}
-function showTyping(){const row=document.createElement('div');row.className='aiMessage assistant';row.id='aiTypingRow';row.innerHTML='<div class="aiAvatar">✦</div><div class="aiBubble"><span class="aiTyping"><i></i><i></i><i></i></span></div>';$('aiMessages').appendChild(row);$('aiMessages').scrollTop=$('aiMessages').scrollHeight}
-function sendAiQuestion(raw){const question=String(raw||'').trim();if(!question){toastMsg(chatText('needQuestion'));return}if(!aiSession)aiSession=createSession();aiSession.language=lang;aiSession.messages.push({role:'user',text:question,createdAt:new Date().toISOString()});$('aiInput').value='';renderChatMessages();showTyping();setTimeout(()=>{const answer=buildAiAnswer(question);aiSession.messages.push({role:'assistant',text:answer.text,sources:answer.sources,createdAt:new Date().toISOString()});renderChatMessages()},350)}
+function resetChat(){aiSession=createSession();aiSurveyPending=false;sessionStorage.removeItem(CHAT_SESSION_KEY);renderChatMessages();$('aiInput').value='';updateChatContext()}
+async function sendAiQuestion(raw){
+  const question=String(raw||'').trim();if(!question){toastMsg(chatText('needQuestion'));return}
+  if(!aiSession)aiSession=createSession();
+  aiSession.language='id';aiSession.messages.push({role:'user',text:question,createdAt:new Date().toISOString()});persistChatSession();$('aiInput').value='';renderChatMessages();showTyping();$('aiSendBtn').disabled=true;
+  try{const answer=await buildAiAnswer(question);aiSession.messages.push({role:'assistant',text:answer.text,sources:answer.sources||[],evidence:answer.evidence||[],confidence:answer.confidence||null,isClarification:!!answer.isClarification,createdAt:new Date().toISOString()})}
+  catch(error){console.error('Article-aware chatbot error:',error);aiSession.messages.push({role:'assistant',text:NOT_FOUND_ANSWER,sources:[],evidence:[],confidence:{value:0,label:'Rendah',className:'low'},createdAt:new Date().toISOString()})}
+  finally{$('aiSendBtn').disabled=false;persistChatSession();renderChatMessages()}
+}
+async function regenerateAnswer(messageIndex){
+  const assistant=aiSession?.messages?.[messageIndex];if(!assistant||assistant.role!=='assistant')return;
+  let userIndex=messageIndex-1;while(userIndex>=0&&aiSession.messages[userIndex].role!=='user')userIndex--;if(userIndex<0)return;
+  const question=aiSession.messages[userIndex].text;aiSession.messages.splice(messageIndex,1);renderChatMessages();showTyping();$('aiSendBtn').disabled=true;
+  try{const answer=await buildAiAnswer(question);aiSession.messages.splice(messageIndex,0,{role:'assistant',text:answer.text,sources:answer.sources||[],evidence:answer.evidence||[],confidence:answer.confidence||null,isClarification:!!answer.isClarification,createdAt:new Date().toISOString(),regenerated:true})}
+  catch(error){console.error(error);aiSession.messages.splice(messageIndex,0,{role:'assistant',text:NOT_FOUND_ANSWER,sources:[],evidence:[],confidence:{value:0,label:'Rendah',className:'low'},createdAt:new Date().toISOString()})}
+  finally{$('aiSendBtn').disabled=false;persistChatSession();renderChatMessages()}
+}
+function openKnowledgeSource(source){
+  openArticle(source.moduleId,Number(source.topicIndex));closeChat();
+  setTimeout(()=>{const target=document.getElementById(source.targetId)||document.getElementById('articleTitle');if(!target)return;target.scrollIntoView({behavior:'smooth',block:'center'});target.classList.remove('kcAiHighlight');void target.offsetWidth;target.classList.add('kcAiHighlight');setTimeout(()=>target.classList.remove('kcAiHighlight'),3900)},180);
+}
 function readFeedback(){try{const rows=JSON.parse(localStorage.getItem(FEEDBACK_STORE_KEY)||'[]');return Array.isArray(rows)?rows:[]}catch(_){return[]}}
-function saveFeedback(entry){const rows=readFeedback();rows.unshift(entry);localStorage.setItem(FEEDBACK_STORE_KEY,JSON.stringify(rows.slice(0,300)));try{const bc=new BroadcastChannel(FEEDBACK_CHANNEL);bc.postMessage({type:'feedback-saved',id:entry.id});bc.close()}catch(_){}}
-function openSurvey(){const questionCount=(aiSession?.messages||[]).filter(m=>m.role==='user').length;if(!questionCount){toastMsg(chatText('needConversation'));return}aiSession.endedAt=new Date().toISOString();aiSurveyPending=true;$('aiSurveyForm').reset();$('surveyRating').value='';document.querySelectorAll('.surveyStar').forEach(x=>x.classList.remove('active'));$('aiSurveyOverlay').classList.add('show')}
+function saveFeedback(entry){const rows=readFeedback();rows.unshift(entry);localStorage.setItem(FEEDBACK_STORE_KEY,JSON.stringify(rows.slice(0,300)));try{const channel=new BroadcastChannel(FEEDBACK_CHANNEL);channel.postMessage({type:'feedback-saved',id:entry.id});channel.close()}catch(_){}}
+function openSurvey(){const questionCount=(aiSession?.messages||[]).filter(message=>message.role==='user').length;if(!questionCount){toastMsg(chatText('needConversation'));return}aiSession.endedAt=new Date().toISOString();aiSurveyPending=true;$('aiSurveyForm').reset();$('surveyRating').value='';document.querySelectorAll('.surveyStar').forEach(star=>star.classList.remove('active'));$('aiSurveyOverlay').classList.add('show')}
 function closeSurvey(){$('aiSurveyOverlay').classList.remove('show');aiSurveyPending=false}
-function submitSurvey(e){e.preventDefault();const rating=Number($('surveyRating').value);if(!rating){toastMsg(lang==='id'?'Pilih nilai kepuasan.':'Select a satisfaction rating.');return}const helpful=new FormData(e.currentTarget).get('surveyHelpful');const resolution=new FormData(e.currentTarget).get('surveyResolution');if(!helpful||!resolution)return;const context=currentArticleContext();const questions=aiSession.messages.filter(m=>m.role==='user').map(m=>m.text);const entry={id:'FB-'+Date.now().toString(36).toUpperCase(),submittedAt:new Date().toISOString(),sessionId:aiSession.id,startedAt:aiSession.startedAt,endedAt:aiSession.endedAt||new Date().toISOString(),language:aiSession.language||lang,articleContext:context,rating,helpful,resolution,comment:$('surveyComment').value.trim(),questionCount:questions.length,lastQuestion:questions.at(-1)||'',messages:aiSession.messages};saveFeedback(entry);closeSurvey();closeChat();resetChat();toastMsg(chatText('thanks'))}
-function initChatbot(){aiSession=createSession();$('aiChatLauncher').onclick=()=>$('aiChatPanel').classList.contains('show')?closeChat():openChat();$('aiCloseBtn').onclick=closeChat;$('aiResetBtn').onclick=resetChat;$('aiComposer').onsubmit=e=>{e.preventDefault();sendAiQuestion($('aiInput').value)};$('aiInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAiQuestion(e.currentTarget.value)}};$('aiEndBtn').onclick=openSurvey;$('surveyClose').onclick=closeSurvey;$('surveyBack').onclick=closeSurvey;$('aiSurveyOverlay').onclick=e=>{if(e.target===$('aiSurveyOverlay'))closeSurvey()};$('aiSurveyForm').onsubmit=submitSurvey;document.querySelectorAll('.surveyStar').forEach(btn=>btn.onclick=()=>{const rating=Number(btn.dataset.rating);$('surveyRating').value=String(rating);document.querySelectorAll('.surveyStar').forEach(x=>x.classList.toggle('active',Number(x.dataset.rating)<=rating))});localizeChat();renderChatMessages()}
+function submitSurvey(event){
+  event.preventDefault();const rating=Number($('surveyRating').value);if(!rating){toastMsg('Pilih nilai kepuasan.');return}
+  const data=new FormData(event.currentTarget),helpful=data.get('surveyHelpful'),resolution=data.get('surveyResolution');if(!helpful||!resolution)return;
+  const context=currentArticleContext(),questions=aiSession.messages.filter(message=>message.role==='user').map(message=>message.text);
+  const entry={id:'FB-'+Date.now().toString(36).toUpperCase(),submittedAt:new Date().toISOString(),sessionId:aiSession.id,startedAt:aiSession.startedAt,endedAt:aiSession.endedAt||new Date().toISOString(),language:'id',articleContext:context,rating,helpful,resolution,comment:$('surveyComment').value.trim(),questionCount:questions.length,lastQuestion:questions.at(-1)||'',messages:aiSession.messages,knowledgeStats:knowledgeBase?{articleCount:knowledgeBase.articleCount,headingCount:knowledgeBase.headingCount}:null};
+  saveFeedback(entry);closeSurvey();closeChat();resetChat();toastMsg(chatText('thanks'));
+}
+async function initChatbot(){
+  aiSession=readChatSession()||createSession();
+  $('aiContext').innerHTML=`<span class="aiIndexing"><i class="aiIndexingSpinner"></i>${escapeHtml(chatText('indexing'))}</span>`;
+  await buildKnowledgeBaseOnce();
+  $('aiChatLauncher').onclick=()=>$('aiChatPanel').classList.contains('show')?closeChat():openChat();$('aiCloseBtn').onclick=closeChat;$('aiResetBtn').onclick=resetChat;
+  $('aiComposer').onsubmit=event=>{event.preventDefault();sendAiQuestion($('aiInput').value)};
+  $('aiInput').onkeydown=event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiQuestion(event.currentTarget.value)}};
+  $('aiEndBtn').onclick=openSurvey;$('surveyClose').onclick=closeSurvey;$('surveyBack').onclick=closeSurvey;$('aiSurveyOverlay').onclick=event=>{if(event.target===$('aiSurveyOverlay'))closeSurvey()};$('aiSurveyForm').onsubmit=submitSurvey;
+  document.querySelectorAll('.surveyStar').forEach(button=>button.onclick=()=>{const rating=Number(button.dataset.rating);$('surveyRating').value=String(rating);document.querySelectorAll('.surveyStar').forEach(star=>star.classList.toggle('active',Number(star.dataset.rating)<=rating))});
+  localizeChat();renderChatMessages();
+}
 
 document.querySelectorAll('[data-lang]').forEach(btn=>btn.onclick=()=>{lang=btn.dataset.lang;document.querySelectorAll('[data-lang]').forEach(x=>x.classList.toggle('active',x===btn));localize()});
 $('searchInput').oninput=e=>searchArticles(e.target.value);$('searchBtn').onclick=()=>searchArticles($('searchInput').value);$('searchInput').onkeydown=e=>{if(e.key==='Enter')searchArticles(e.target.value)};
@@ -616,5 +1017,5 @@ function openAdminWithPin(){const pin=window.prompt(lang==='id'?'Masukkan PIN Ad
 $('adminLogoTrigger').onclick=openAdminWithPin;$('adminLogoTrigger').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAdminWithPin()}};
 $('mobileMenu').onclick=()=>{$('mobileDrawer').classList.toggle('show');renderNav()};$('lightboxClose').onclick=()=>$('lightbox').classList.remove('show');$('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.remove('show')};document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('lightbox').classList.remove('show');$('mobileDrawer').classList.remove('show')}});
 window.KCStore.subscribe(()=>location.reload());
-initChatbot();localize();renderNav();const hash=location.hash.match(/^#([a-z]+)(?:-(\d+))?$/);if(hash){const m=DATA.find(x=>x.id===hash[1]);if(m){if(hash[2]!=null)openArticle(m.id,+hash[2]);else showModuleList(m)}}else showModuleList(activeModule);
+await initChatbot();localize();renderNav();const hash=location.hash.match(/^#([a-z]+)(?:-(\d+))?$/);if(hash){const m=DATA.find(x=>x.id===hash[1]);if(m){if(hash[2]!=null)openArticle(m.id,+hash[2]);else showModuleList(m)}}else showModuleList(activeModule);
 </script></body></html>
