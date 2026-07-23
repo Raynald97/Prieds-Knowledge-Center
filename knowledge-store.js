@@ -112,5 +112,42 @@
     window.addEventListener('storage',onStorage);
     return ()=>{window.removeEventListener('storage',onStorage);if(bc)bc.close();};
   }
+
+  function splitMasterGuide(state, moduleId, topicIndex, splitRules) {
+    if (!state || !state.data) return state;
+    const moduleObj = state.data.find(m => m.id === moduleId);
+    if (!moduleObj || !moduleObj.topics[topicIndex]) {
+      console.error("Master topic tidak ditemukan.");
+      return state;
+    }
+
+    const masterTopic = moduleObj.topics[topicIndex];
+    const newTopics = [];
+
+    splitRules.forEach(rule => {
+      const filteredId = rule.blockIndexes
+        .map(idx => masterTopic.blocks?.id?.[idx])
+        .filter(Boolean);
+
+      const filteredEn = rule.blockIndexes
+        .map(idx => masterTopic.blocks?.en?.[idx])
+        .filter(Boolean);
+
+      newTopics.push({
+        ...masterTopic,
+        title: rule.title,
+        tabMenu: rule.tabName,
+        blocks: {
+          id: filteredId,
+          en: filteredEn
+        }
+      });
+    });
+
+    // Gantikan topic lama dengan daftar topic baru hasil split
+    moduleObj.topics.splice(topicIndex, 1, ...newTopics);
+    return state;
+  }
+
   window.KCStore={load,save,reset,subscribe,slugify,derivePageMenu,normalizeState,clone};
 })();
