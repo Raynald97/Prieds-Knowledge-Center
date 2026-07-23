@@ -149,5 +149,5 @@
     return state;
   }
 
-  window.KCStore={load,save,reset,subscribe,slugify,derivePageMenu,normalizeState,clone};
+  window.KCStore={load,save,reset,subscribe,slugify,derivePageMenu,normalizeState,clone,splitMasterGuide};
 })();
