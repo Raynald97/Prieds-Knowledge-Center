@@ -178,8 +178,6 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 @keyframes aiSpin{to{transform:rotate(360deg)}}
 .kcAiHighlight{animation:kcAiPulse 3.6s ease-out;border-radius:5px}
 @keyframes kcAiPulse{0%,22%{background:#FFF0A8;box-shadow:0 0 0 6px rgba(255,214,64,.28)}100%{background:transparent;box-shadow:0 0 0 0 rgba(255,214,64,0)}}
-.kcTabFilterTarget{scroll-margin-top:18px;animation:kcTabFilterPulse 2.6s ease-out}
-@keyframes kcTabFilterPulse{0%,24%{background:#DDF5FB;box-shadow:0 0 0 6px rgba(40,184,226,.22)}100%{background:transparent;box-shadow:0 0 0 0 rgba(40,184,226,0)}}
 @media(max-width:700px){.aiAnswerActions{width:100%;margin-left:0}.aiAnswerAction{flex:1}.aiMarkdown table{font-size:9px}}
 
 </style></head><body>
@@ -378,9 +376,6 @@ let activeTopic=0;
 let openModuleId=activeModule.id;
 const openFaqCategories=new Set();
 const openTopicMenus=new Set();
-let activeNavTabKey='';
-let requestedNavTabKey='';
-let pendingTabFocus=null;
 let lastListMode={type:'module',module:activeModule,items:activeModule.topics.map((x,i)=>({m:activeModule,x,i}))};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -392,7 +387,23 @@ function getBlocks(topic){const seenText=new Set();return getRawBlocks(topic).fi
 function articleIntro(topic,blocks){const intro=preview(topic),key=normalize(intro).trim();return key&&blocks.some(block=>['p','step'].includes(block.type)&&normalize(block.text).trim()===key)?'':intro}
 function preview(topic){const b=getBlocks(topic).find(b=>['p','step'].includes(b.type)&&b.text&&b.text.length>28);return b?b.text:(lang==='id'?'Panduan penggunaan menu Prieds berdasarkan User Guide.':'Prieds menu guide based on the User Guide.')}
 function guideModuleKey(module){const value=normalize([module?.id,module?.name?.id,module?.name?.en].filter(Boolean).join(' '));if(value.includes('stock movement'))return'stock-movement';if(value.includes('inventory'))return'inventory';if(value.includes('integration'))return'integration';if(value.includes('purchase')||value.includes('purchasing'))return'purchase';if(value.includes('production'))return'production';if(value.includes('outbound'))return'outbound';if(value.includes('inbound'))return'inbound';if(value.includes('sales'))return'sales';if(value.includes('master'))return'master';return''}
-function pageFunction(topic,module){const moduleKey=guideModuleKey(module);if(!['inbound','outbound','purchase','sales','inventory','stock-movement','production','master','integration'].includes(moduleKey))return'';const searchable=normalize([topic?.title?.id,topic?.title?.en,topic?.pageMenu?.id,topic?.pageMenu?.en].filter(Boolean).join(' '));const rules=[
+const KC_MODULE_FUNCTION_KEY='PRIEDS_KC_MODULE_FUNCTIONS_V1';
+const KC_MODULE_FUNCTION_CHANNEL='PRIEDS_KC_MODULE_FUNCTIONS_CHANNEL';
+function readModuleFunctionOverrides(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(KC_MODULE_FUNCTION_KEY)||'{}');
+    return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{};
+  }catch(error){
+    console.warn('Fungsi halaman custom tidak dapat dibaca:',error);
+    return{};
+  }
+}
+function customModuleFunction(moduleKey){
+  const row=readModuleFunctionOverrides()[moduleKey];
+  const value=row&&typeof row==='object'?row[lang]:'';
+  return typeof value==='string'?value.trim():'';
+}
+function pageFunction(topic,module){const moduleKey=guideModuleKey(module);if(!['inbound','outbound','purchase','sales','inventory','stock-movement','production','master','integration'].includes(moduleKey))return'';const customPurpose=customModuleFunction(moduleKey);if(customPurpose)return customPurpose;const searchable=normalize([topic?.title?.id,topic?.title?.en,topic?.pageMenu?.id,topic?.pageMenu?.en].filter(Boolean).join(' '));const rules=[
  {module:'inbound',match:/inbound manual desktop/,id:'Halaman ini digunakan untuk mencatat penerimaan barang masuk secara manual melalui perangkat desktop.',en:'This page is used to record incoming-goods receipts manually from a desktop device.'},
  {module:'inbound',match:/inbound manual mobile/,id:'Halaman ini digunakan untuk mencatat penerimaan barang masuk secara manual melalui perangkat mobile.',en:'This page is used to record incoming-goods receipts manually from a mobile device.'},
  {module:'inbound',match:/generate qr|qr code/,id:'Halaman ini digunakan untuk menerima barang berdasarkan dokumen pembelian sekaligus membuat QR atau barcode stok yang diperlukan.',en:'This page is used to receive goods from a purchase document while generating the required stock QR codes or barcodes.'},
@@ -441,14 +452,7 @@ function pageFunction(topic,module){const moduleKey=guideModuleKey(module);if(![
  ];const matched=rules.find(rule=>(!rule.module||rule.module===moduleKey)&&rule.match.test(searchable));if(matched)return matched[lang];const defaults={inbound:{id:'Halaman ini digunakan untuk mendukung proses penerimaan barang masuk hingga siap ditempatkan ke lokasi penyimpanan.',en:'This page supports incoming-goods receiving until the stock is ready to be stored.'},outbound:{id:'Halaman ini digunakan untuk mendukung proses penyiapan dan pengiriman barang keluar dari gudang.',en:'This page supports the preparation and dispatch of outgoing goods from the warehouse.'},purchase:{id:'Halaman ini digunakan untuk mendukung proses pengadaan barang mulai dari permintaan hingga transaksi pembelian.',en:'This page supports procurement activities from requests through purchase transactions.'},sales:{id:'Halaman ini digunakan untuk mencatat dan mengelola transaksi penjualan customer.',en:'This page is used to record and manage customer sales transactions.'},inventory:{id:'Halaman ini digunakan untuk memantau dan menjaga akurasi data persediaan.',en:'This page is used to monitor and maintain inventory-data accuracy.'},'stock-movement':{id:'Halaman ini digunakan untuk mengelola perpindahan stok antar lokasi atau gudang secara terkontrol.',en:'This page is used to manage controlled stock movement between locations or warehouses.'},production:{id:'Halaman ini digunakan untuk mengatur dan menjalankan proses produksi atau assembly beserta perubahan stoknya.',en:'This page is used to configure and perform production or assembly processes and their stock changes.'},master:{id:'Halaman ini digunakan untuk membuat dan memelihara data master yang dipakai oleh proses operasional Prieds.',en:'This page is used to create and maintain master data used by Prieds operational processes.'},integration:{id:'Halaman ini digunakan untuk menghubungkan, menyinkronkan, dan memantau pertukaran data Prieds dengan sistem eksternal.',en:'This page is used to connect, synchronize, and monitor data exchange between Prieds and external systems.'}};return defaults[moduleKey]?.[lang]||''}
 function toastMsg(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>$('toast').classList.remove('show'),1800)}
 function localize(){document.documentElement.lang=lang;document.querySelectorAll('[data-ui]').forEach(el=>el.textContent=t(el.dataset.ui));$('searchInput').placeholder=t('placeholder');$('articleSearchInput').placeholder=t('placeholder');renderNav();if($('articleView').classList.contains('show'))renderArticle();else rerenderLastList();localizeChat()}
-function navTabStateKey(moduleId,topicIndex,tabIndex=0){return`${moduleId}::${topicIndex}::${tabIndex}`}
-function topicNavButton(m,x,i,label,tabIndex=0){
-  const text=label||x.title?.[lang]||x.title?.id||x.title?.en||'Menu';
-  const tabKey=navTabStateKey(m.id,i,tabIndex);
-  const articleActive=m.id===activeModule.id&&i===activeTopic&&$('articleView').classList.contains('show');
-  const active=articleActive&&(activeNavTabKey?activeNavTabKey===tabKey:tabIndex===0);
-  return `<button class="${active?'active':''}" data-topic-module="${m.id}" data-topic-index="${i}" data-topic-tab-index="${tabIndex}" data-topic-tab-key="${esc(tabKey)}">${esc(text)}</button>`;
-}
+function topicNavButton(m,x,i,label){const text=label||x.title?.[lang]||x.title?.id||x.title?.en||'Menu';return `<button class="${m.id===activeModule.id&&i===activeTopic&&$('articleView').classList.contains('show')?'active':''}" data-topic-module="${m.id}" data-topic-index="${i}">${esc(text)}</button>`}
 function localizedMenuValue(value,fallback){
   if(value&&typeof value==='object')return{id:value.id||value.en||fallback,en:value.en||value.id||fallback};
   if(typeof value==='string'&&value.trim())return{id:value.trim(),en:value.trim()};
@@ -463,13 +467,16 @@ function cleanMenuName(value){
 function normalizeMenuKey(value){
   return cleanMenuName(value)
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'')
     .replace(/point of sales\s*\(pos\)/g,'pos')
     .replace(/point of sales/g,'pos')
     .replace(/\bsales order\b/g,'so')
     .replace(/[^a-z0-9]+/g,' ')
     .trim();
+}
+function firstTabName(value){
+  const clean=cleanMenuName(value);
+  if(!clean)return'Menu';
+  return cleanMenuName(clean.split(/\s+&\s+/)[0]);
 }
 function canonicalMenuName(moduleId,value){
   const clean=cleanMenuName(value);
@@ -479,55 +486,35 @@ function canonicalMenuName(moduleId,value){
   if(moduleId==='sales'&&/^so report$/i.test(clean))return'Sales Order Report';
   return clean;
 }
-function moduleMenuKeys(module){
-  return new Set([
-    module?.id,
-    module?.name?.id,
-    module?.name?.en,
-    String(module?.name?.id||'').split(/\s+/)[0],
-    String(module?.name?.en||'').split(/\s+/)[0]
-  ].map(normalizeMenuKey).filter(Boolean));
-}
-function isGenericPageMenu(module,value){
-  const key=normalizeMenuKey(value);
-  if(!key)return true;
-  if(['general','menu','main menu','page menu','module','all menu','all menus'].includes(key))return true;
-  if(moduleMenuKeys(module).has(key))return true;
-  return false;
-}
-function titleDerivedMenu(module,topic,useLang){
-  const fallback=topic?.title?.[useLang]||topic?.title?.id||topic?.title?.en||'Menu';
-  let value=canonicalMenuName(module?.id,fallback);
-  value=value
-    .replace(/\s*[\-(]\s*(desktop|mobile|web|app)\s*\)?$/i,'')
-    .replace(/\s+(desktop|mobile|web|app)$/i,'')
-    .trim();
-  return value||fallback;
+function titleMenuCandidate(module,topic){
+  const id=canonicalMenuName(module?.id,firstTabName(topic?.title?.id||topic?.title?.en||'Menu'));
+  const en=canonicalMenuName(module?.id,firstTabName(topic?.title?.en||topic?.title?.id||'Menu'));
+  return{id,en};
 }
 function topicMenuMeta(module,topic,index=0){
   const fallbackId=topic?.title?.id||topic?.title?.en||'Menu';
   const fallbackEn=topic?.title?.en||topic?.title?.id||'Menu';
   const explicit=localizedMenuValue(topic?.pageMenu,fallbackId);
-  const derived={
-    id:titleDerivedMenu(module,topic,'id'),
-    en:titleDerivedMenu(module,topic,'en')
+  const raw={
+    id:canonicalMenuName(module?.id,explicit.id),
+    en:canonicalMenuName(module?.id,explicit.en)
   };
-  const selected={
-    id:isGenericPageMenu(module,explicit.id)?derived.id:canonicalMenuName(module?.id,explicit.id),
-    en:isGenericPageMenu(module,explicit.en)?derived.en:canonicalMenuName(module?.id,explicit.en)
-  };
+  const fromTitle=titleMenuCandidate(module,topic);
 
-  /* Keep report and RFID pages as separate Level-2 menus when their title is more specific. */
-  const titleHasReport=/\breport\b/i.test(derived.id)||/\breport\b/i.test(derived.en);
-  const selectedHasReport=/\breport\b/i.test(selected.id)||/\breport\b/i.test(selected.en);
-  const titleHasRFID=/\brfid\b/i.test(derived.id)||/\brfid\b/i.test(derived.en);
-  const selectedHasRFID=/\brfid\b/i.test(selected.id)||/\brfid\b/i.test(selected.en);
-  if((titleHasReport&&!selectedHasReport)||(titleHasRFID&&!selectedHasRFID)){
-    selected.id=derived.id;
-    selected.en=derived.en;
-  }
+  const rawHasReport=/\breport\b/i.test(raw.id)||/\breport\b/i.test(raw.en);
+  const titleHasReport=/\breport\b/i.test(fromTitle.id)||/\breport\b/i.test(fromTitle.en);
+  const rawHasRFID=/\brfid\b/i.test(raw.id)||/\brfid\b/i.test(raw.en);
+  const titleHasRFID=/\brfid\b/i.test(fromTitle.id)||/\brfid\b/i.test(fromTitle.en);
 
+  /*
+   * A report/RFID guide must not inherit the non-report/non-RFID menu name.
+   * This prevents duplicate Layer-2 entries such as:
+   * Sales Order + Sales Order, or POS + POS.
+   */
+  const useTitle=(titleHasReport&&!rawHasReport)||(titleHasRFID&&!rawHasRFID);
+  const selected=useTitle?fromTitle:raw;
   const stableKey=normalizeMenuKey(selected.id||selected.en)||`menu-${index}`;
+
   return{id:selected.id,en:selected.en,key:stableKey};
 }
 function topicMenuStateKey(moduleId,menuKey){return`${moduleId}::${menuKey}`}
@@ -537,111 +524,59 @@ function cleanTabName(value){
     .replace(/^[\s:–—-]+|[\s:;,.–—-]+$/g,'')
     .trim();
 }
-function splitTabCandidate(value){
-  const clean=cleanTabName(value);
-  if(!clean)return[];
-  const parts=clean.split(/\s+(?:&|dan|and)\s+/i).map(cleanTabName).filter(Boolean);
-  if(parts.length>1&&parts.length<=4&&parts.every(x=>x.length<=55))return parts;
-  return[clean];
-}
-function isGenericTabLabel(value){
-  const key=normalizeMenuKey(value);
-  if(!key)return true;
-  return /^(langkah langkah dan hasil|langkah langkah|langkah dan hasil|langkah|steps and results|steps|hasil|result|results|catatan|notes|note|fungsi halaman|page function|informasi faq|faq information|informasi|information|jawaban|answer|panduan|guide|overview|deskripsi|description)$/.test(key);
-}
-function uniqueTabNames(values){
-  const out=[];
-  values.flatMap(splitTabCandidate).forEach(name=>{
-    const clean=cleanTabName(name);
-    const key=normalizeMenuKey(clean);
-    if(clean&&!isGenericTabLabel(clean)&&!out.some(item=>normalizeMenuKey(item)===key))out.push(clean);
-  });
-  return out;
-}
 function explicitTabNames(topic,useLang){
   const value=topic?.tabMenu||topic?.tabMenus||topic?.tabs;
   if(!value)return[];
   const localized=value&&typeof value==='object'&&!Array.isArray(value)&&(value.id!==undefined||value.en!==undefined)?(value[useLang]??value.id??value.en):value;
   const rows=Array.isArray(localized)?localized:[localized];
-  return uniqueTabNames(rows.map(item=>{
+  return rows.map(item=>{
     if(item&&typeof item==='object')return item[useLang]||item.id||item.en||item.name||'';
     return item;
-  }));
-}
-function navTopicRawBlocks(topic,useLang){
-  const blocks=topic?.blocks?.[useLang]?.length?topic.blocks[useLang]:(topic?.blocks?.id||topic?.blocks?.en||[]);
-  return Array.isArray(blocks)?blocks:[];
-}
-function structuralTabNames(topic,useLang){
-  const candidates=[];
-  navTopicRawBlocks(topic,useLang).forEach(block=>{
-    if(!block)return;
-    if((block.type==='subheading'||block.type==='label')&&block.text)candidates.push(block.text);
-  });
-  return uniqueTabNames(candidates);
+  }).map(cleanTabName).filter(Boolean);
 }
 function extractTabNamesFromText(text){
   const names=[];
-  const source=String(text||'');
   const patterns=[
-    /\b(?:pilih|buka|klik|akses|masuk(?:lah)?\s+ke|menuju)\s+(?:menu\s+)?tab\s+["“'‘]?([^"”'’.,;:]+?)["”'’]?(?=\s+(?:untuk|kemudian|lalu|agar|dan\s+klik)\b|[.,;:]|$)/gi,
-    /\b(?:pada|di|melalui)\s+tab\s+["“'‘]?([^"”'’.,;:]+?)["”'’]?(?=\s+(?:untuk|kemudian|lalu|agar|dan\s+klik)\b|[.,;:]|$)/gi,
-    /\b(?:select|open|choose|click|access|go\s+to|navigate\s+to)\s+(?:the\s+)?["“'‘]?([^"”'’.,;:]+?)["”'’]?\s+tab\b/gi,
-    /\btab(?:\s+(?:ke-?\s*\d+|pertama|kedua|ketiga|keempat|kelima|keenam|ketujuh|kedelapan|kesembilan|kesepuluh|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth))?\s*["“'‘]([^"”'’]+)["”'’]/gi
+    /\btab(?:\s+(?:ke-?\s*\d+|pertama|kedua|ketiga|keempat|kelima|keenam|ketujuh|kedelapan|kesembilan|kesepuluh|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth))?\s*["“'‘]([^"”'’]+)["”'’]/gi,
+    /\b(?:tab menu|menu tab)\s*[:\-]?\s*["“'‘]?([A-Z][A-Za-z0-9/&()+\-\s]{2,60})["”'’]?(?=[,.;]|$)/g
   ];
   patterns.forEach(pattern=>{
     let match;
-    while((match=pattern.exec(source))!==null)names.push(match[1]);
+    while((match=pattern.exec(String(text||'')))!==null){
+      const name=cleanTabName(match[1]);
+      if(name&&!names.some(existing=>existing.toLowerCase()===name.toLowerCase()))names.push(name);
+    }
   });
-  return uniqueTabNames(names);
+  return names;
 }
 function topicBlockTexts(topic,useLang){
-  const texts=navTopicRawBlocks(topic,useLang).filter(block=>block&&block.text).map(block=>block.text);
+  const blockRows=topic?.blocks?.[useLang]?.length?topic.blocks[useLang]:(topic?.blocks?.id||topic?.blocks?.en||[]);
+  const texts=Array.isArray(blockRows)?blockRows.filter(block=>block&&block.text).map(block=>block.text):[];
   const stepRows=topic?.steps?.[useLang]?.length?topic.steps[useLang]:(topic?.steps?.id||topic?.steps?.en||[]);
   if(Array.isArray(stepRows))texts.push(...stepRows);
   return texts;
 }
-function titleTabRemainder(module,topic,useLang){
-  const title=cleanTabName(topic?.title?.[useLang]||topic?.title?.id||topic?.title?.en||'');
-  const menu=cleanTabName(topicMenuMeta(module,topic).id&&useLang==='id'?topicMenuMeta(module,topic).id:topicMenuMeta(module,topic).en);
-  if(!title||!menu)return[];
-  const titleKey=normalizeMenuKey(title),menuKey=normalizeMenuKey(menu);
-  if(titleKey===menuKey)return[];
-  const lowerTitle=title.toLowerCase(),lowerMenu=menu.toLowerCase();
-  if(lowerTitle.startsWith(lowerMenu)){
-    const rest=cleanTabName(title.slice(menu.length));
-    if(rest)return uniqueTabNames([rest]);
-  }
-  const device=title.match(/\b(desktop|mobile|web|app)\s*$/i);
-  return device?uniqueTabNames([device[1]]):[];
-}
 function topicTabNames(module,topic,useLang=lang){
   const explicit=explicitTabNames(topic,useLang);
   if(explicit.length)return explicit;
-
-  const structural=structuralTabNames(topic,useLang);
-  if(structural.length)return structural;
-
   const extracted=[];
-  topicBlockTexts(topic,useLang).forEach(text=>extracted.push(...extractTabNamesFromText(text)));
-  const cleanedExtracted=uniqueTabNames(extracted);
-  if(cleanedExtracted.length)return cleanedExtracted;
-
+  topicBlockTexts(topic,useLang).forEach(text=>{
+    extractTabNamesFromText(text).forEach(name=>{
+      if(!extracted.some(existing=>existing.toLowerCase()===name.toLowerCase()))extracted.push(name);
+    });
+  });
+  if(extracted.length)return extracted;
   const otherLang=useLang==='id'?'en':'id';
-  const otherStructural=structuralTabNames(topic,otherLang);
-  if(otherStructural.length)return otherStructural;
-  const otherExtracted=[];
-  topicBlockTexts(topic,otherLang).forEach(text=>otherExtracted.push(...extractTabNamesFromText(text)));
-  const cleanedOther=uniqueTabNames(otherExtracted);
-  if(cleanedOther.length)return cleanedOther;
-
-  const remainder=titleTabRemainder(module,topic,useLang);
-  if(remainder.length)return remainder;
-
+  topicBlockTexts(topic,otherLang).forEach(text=>{
+    extractTabNamesFromText(text).forEach(name=>{
+      if(!extracted.some(existing=>existing.toLowerCase()===name.toLowerCase()))extracted.push(name);
+    });
+  });
+  if(extracted.length)return extracted;
   return[topic?.title?.[useLang]||topic?.title?.id||topic?.title?.en||'Menu'];
 }
-function topicTabNavButtons(module,topic,index){
-  return topicTabNames(module,topic,lang).map((label,tabIndex)=>topicNavButton(module,topic,index,label,tabIndex)).join('');
+function topicTabMenuLabel(module,topic){
+  return topicTabNames(module,topic,lang).join(' & ');
 }
 function moduleMenuGroups(m){
   const groups=[];
@@ -661,7 +596,7 @@ function moduleTopicsHtml(m){
   if(m.id==='faq')return faqCategoryGroups(m).map(group=>`<div class="faqCategoryGroup ${openFaqCategories.has(group.key)?'open':''}"><button class="faqCategoryToggle" data-faq-category="${esc(group.key)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span><span class="faqCategoryCount">${group.items.length}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicNavButton(m,x,i)).join('')}</div></div>`).join('');
   return moduleMenuGroups(m).map(group=>{
     const stateKey=topicMenuStateKey(m.id,group.key);
-    return`<div class="faqCategoryGroup ${openTopicMenus.has(stateKey)?'open':''}"><button class="faqCategoryToggle" data-topic-menu="${esc(stateKey)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicTabNavButtons(m,x,i)).join('')}</div></div>`;
+    return`<div class="faqCategoryGroup ${openTopicMenus.has(stateKey)?'open':''}"><button class="faqCategoryToggle" data-topic-menu="${esc(stateKey)}"><span class="faqCategoryChev">›</span><span class="faqCategoryName">${esc(group.name[lang])}</span></button><div class="faqCategoryLinks">${group.items.map(({x,i})=>topicNavButton(m,x,i,topicTabMenuLabel(m,x))).join('')}</div></div>`;
   }).join('');
 }
 function navHtml(){return DATA.map(m=>`<div class="moduleGroup ${m.id===openModuleId?'open':''}" data-group="${m.id}"><button class="moduleToggle" data-module="${m.id}"><span class="chev">›</span><span class="moduleName">${esc(m.name[lang])}</span></button><div class="topicLinks">${moduleTopicsHtml(m)}</div></div>`).join('')}
@@ -669,7 +604,7 @@ function bindNav(root){
   root.querySelectorAll('[data-module]').forEach(btn=>btn.onclick=()=>{const m=DATA.find(x=>x.id===btn.dataset.module);if(!m)return;if(openModuleId===m.id){openModuleId=null;renderNav();return}openModuleId=m.id;activeModule=m;activeTopic=0;showModuleList(m)});
   root.querySelectorAll('[data-faq-category]').forEach(btn=>btn.onclick=()=>{const key=btn.dataset.faqCategory;if(openFaqCategories.has(key))openFaqCategories.delete(key);else openFaqCategories.add(key);renderNav()});
   root.querySelectorAll('[data-topic-menu]').forEach(btn=>btn.onclick=()=>{const key=btn.dataset.topicMenu;if(openTopicMenus.has(key))openTopicMenus.delete(key);else openTopicMenus.add(key);renderNav()});
-  root.querySelectorAll('[data-topic-module]').forEach(btn=>btn.onclick=()=>{const topicIndex=+btn.dataset.topicIndex,tabIndex=Number(btn.dataset.topicTabIndex||0);requestedNavTabKey=btn.dataset.topicTabKey||'';pendingTabFocus={moduleId:btn.dataset.topicModule,topicIndex,tabIndex};openArticle(btn.dataset.topicModule,topicIndex);$('mobileDrawer').classList.remove('show')});
+  root.querySelectorAll('[data-topic-module]').forEach(btn=>btn.onclick=()=>{openArticle(btn.dataset.topicModule,+btn.dataset.topicIndex);$('mobileDrawer').classList.remove('show')});
 }
 function renderNav(){$('leftNav').innerHTML=navHtml();$('mobileNav').innerHTML=navHtml();bindNav($('leftNav'));bindNav($('mobileNav'))}
 function showList(){ $('listView').classList.remove('hide');$('articleView').classList.remove('show');window.scrollTo({top:0,behavior:'smooth'});if(typeof updateChatContext==='function')updateChatContext() }
@@ -678,98 +613,12 @@ function articleCard(r){const meta=topicMeta(r.x);return `<button class="article
 function bindCards(){$('articleList').querySelectorAll('[data-open-module]').forEach(btn=>btn.onclick=()=>openArticle(btn.dataset.openModule,+btn.dataset.openIndex))}
 function showModuleList(m){activeModule=m;activeTopic=0;openModuleId=m.id;lastListMode={type:'module',module:m,items:m.topics.map((x,i)=>({m,x,i}))};showList();renderNav();renderModuleList(m);history.replaceState(null,'','#'+m.id)}
 function renderModuleList(m){$('breadcrumb').innerHTML=`${t('home')} / ${esc(m.name[lang])}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">▣</div><div><strong>${esc(m.name[lang])}</strong><small>${m.topics.length} ${t('articles')}</small></div></div>`;$('articleList').innerHTML=m.topics.length?m.topics.map((x,i)=>articleCard({m,x,i})).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
-function tabFilterEntries(){
-  const entries=[];
-  DATA.forEach(m=>{
-    if(m.id==='faq')return;
-    m.topics.forEach((x,i)=>{
-      const idTabs=topicTabNames(m,x,'id');
-      const enTabs=topicTabNames(m,x,'en');
-      const count=Math.max(idTabs.length,enTabs.length,1);
-      for(let tabIndex=0;tabIndex<count;tabIndex++){
-        const labels=uniqueTabNames([idTabs[tabIndex]||'',enTabs[tabIndex]||'']);
-        if(!labels.length)continue;
-        entries.push({m,x,i,tabIndex,labels,keys:labels.map(normalizeMenuKey).filter(Boolean)});
-      }
-    });
-  });
-  return entries;
-}
-function resolveTabFilter(q){
-  const key=normalizeMenuKey(q);
-  if(!key)return null;
-  const entries=tabFilterEntries();
-  const chooseUnique=rows=>{
-    const unique=[];
-    rows.forEach(row=>{if(!unique.some(x=>x.m.id===row.m.id&&x.i===row.i&&x.tabIndex===row.tabIndex))unique.push(row)});
-    if(unique.length===1)return unique[0];
-    const active=unique.filter(row=>row.m.id===activeModule.id);
-    return active.length===1?active[0]:null;
-  };
-  const exact=chooseUnique(entries.filter(row=>row.keys.includes(key)));
-  if(exact)return exact;
-  if(key.length<4)return null;
-  const prefix=chooseUnique(entries.filter(row=>row.keys.some(tabKey=>tabKey.startsWith(key))));
-  if(prefix)return prefix;
-  const partial=chooseUnique(entries.filter(row=>row.keys.some(tabKey=>tabKey.includes(key))));
-  return partial;
-}
-function openFilteredTab(match){
-  if(!match)return false;
-  requestedNavTabKey=navTabStateKey(match.m.id,match.i,match.tabIndex);
-  pendingTabFocus={moduleId:match.m.id,topicIndex:match.i,tabIndex:match.tabIndex};
-  openArticle(match.m.id,match.i);
-  return true;
-}
-function searchArticles(q){
-  q=q.trim();
-  if(!q){showModuleList(activeModule);return}
-  const directTab=resolveTabFilter(q);
-  if(directTab&&openFilteredTab(directTab))return;
-  const nq=normalize(q),items=[];
-  DATA.forEach(m=>m.topics.forEach((x,i)=>{
-    const blocks=getBlocks(x),menu=topicMenuMeta(m,x,i);
-    const tabLabels=[...topicTabNames(m,x,'id'),...topicTabNames(m,x,'en')];
-    const hay=[m.name.id,m.name.en,m.desc.id,m.desc.en,menu.id,menu.en,x.title.id,x.title.en,...tabLabels,...blocks.filter(b=>b.text).map(b=>b.text)].join(' ');
-    if(normalize(hay).includes(nq))items.push({m,x,i});
-  }));
-  lastListMode={type:'search',query:q,items};
-  showList();
-  $('breadcrumb').innerHTML=`${t('home')} / ${t('results')}`;
-  $('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">⌕</div><div><strong>${t('results')}</strong><small>${items.length} ${t('articles')} • “${esc(q)}”</small></div></div>`;
-  $('articleList').innerHTML=items.length?items.map(articleCard).join(''):`<div class="empty">${t('empty')}</div>`;
-  bindCards();
-}
+function searchArticles(q){q=q.trim();if(!q){showModuleList(activeModule);return}const nq=normalize(q),items=[];DATA.forEach(m=>m.topics.forEach((x,i)=>{const blocks=getBlocks(x);const hay=[m.name[lang],m.desc[lang],x.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join(' ');if(normalize(hay).includes(nq))items.push({m,x,i})}));lastListMode={type:'search',query:q,items};showList();$('breadcrumb').innerHTML=`${t('home')} / ${t('results')}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">⌕</div><div><strong>${t('results')}</strong><small>${items.length} ${t('articles')} • “${esc(q)}”</small></div></div>`;$('articleList').innerHTML=items.length?items.map(articleCard).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
 function rerenderLastList(){if(lastListMode.type==='search')searchArticles(lastListMode.query);else renderModuleList(lastListMode.module||activeModule)}
 function normalize(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ')}
-function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;activeNavTabKey=requestedNavTabKey||navTabStateKey(activeModule.id,activeTopic,0);requestedNavTabKey='';if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}else{const menu=topicMenuMeta(activeModule,activeModule.topics[activeTopic],activeTopic);if(menu)openTopicMenus.add(topicMenuStateKey(activeModule.id,menu.key))}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
+function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}else{const menu=topicMenuMeta(activeModule,activeModule.topics[activeTopic],activeTopic);if(menu)openTopicMenus.add(topicMenuStateKey(activeModule.id,menu.key))}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
 function sectionDomId(moduleId,topicIndex,blockIndex){return`kc-section-${String(moduleId||'module').replace(/[^a-z0-9_-]/gi,'-')}-${topicIndex}-${blockIndex}`}
-function filteredTabTarget(topic,tabIndex){
-  const labels=topicTabNames(activeModule,topic,lang);
-  const fallbackLabels=topicTabNames(activeModule,topic,lang==='id'?'en':'id');
-  const label=labels[tabIndex]||fallbackLabels[tabIndex]||'';
-  const key=normalizeMenuKey(label);
-  if(key){
-    const blocks=getBlocks(topic);
-    let blockIndex=blocks.findIndex(block=>(block.type==='subheading'||block.type==='label')&&normalizeMenuKey(block.text)===key);
-    if(blockIndex<0)blockIndex=blocks.findIndex(block=>block.text&&normalizeMenuKey(block.text).includes(key));
-    if(blockIndex>=0)return document.getElementById(sectionDomId(activeModule.id,activeTopic,blockIndex));
-  }
-  return $('articleTitle');
-}
-function focusPendingTab(){
-  const request=pendingTabFocus;
-  if(!request||request.moduleId!==activeModule.id||request.topicIndex!==activeTopic)return;
-  pendingTabFocus=null;
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const target=filteredTabTarget(activeModule.topics[activeTopic],request.tabIndex);
-    if(!target)return;
-    target.scrollIntoView({behavior:'smooth',block:'start'});
-    target.classList.add('kcTabFilterTarget');
-    window.setTimeout(()=>target.classList.remove('kcTabFilterTarget'),2700);
-  }));
-}
-function renderArticle(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic),purpose=pageFunction(topic,activeModule),intro=articleIntro(topic,blocks);$('breadcrumb').innerHTML=`<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`;$('crumbHome').onclick=()=>showModuleList(activeModule);$('crumbModule').onclick=()=>showModuleList(activeModule);$('articleTitle').textContent=topic.title[lang];$('articleTitle').dataset.kcSection='article-title';$('articlePurpose').hidden=!purpose;$('articlePurposeLabel').textContent=lang==='id'?'Fungsi Halaman':'Page Function';$('articlePurposeText').textContent=purpose;{const meta=topicMeta(topic);$('articleSource').textContent=(topic.source||'Prieds')+' • '+meta.editor+' • '+fmtDate(meta.updatedAt);}$('articleIntro').textContent=intro;$('articleIntro').hidden=!intro;let step=0,html='';blocks.forEach((b,blockIndex)=>{const sid=sectionDomId(activeModule.id,activeTopic,blockIndex);if(b.type==='label')html+=`<div class="docLabel" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</div>`;else if(b.type==='subheading')html+=`<h2 id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</h2>`;else if(b.type==='step')html+=`<div class="stepCard" id="${sid}" data-kc-section="${blockIndex}"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`;else if(b.type==='p')html+=`<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</p>`;else if(b.type==='image'){const src=ASSETS[b.asset];if(src)html+=`<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${b.asset}"><img loading="lazy" src="${src}" alt="${esc(b.caption||topic.title[lang])}"></button>${b.caption?`<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>`:''}</figure>`}else if(b.type==='table')html+=`<div class="docTableWrap" id="${sid}" data-kc-section="${blockIndex}"><table class="docTable">${b.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`});$('docContent').innerHTML=html||`<div class="empty">${t('empty')}</div>`;$('docContent').querySelectorAll('[data-asset]').forEach(btn=>btn.onclick=()=>openLightbox(ASSETS[btn.dataset.asset]));focusPendingTab();if(typeof updateChatContext==='function')updateChatContext()}
+function renderArticle(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic),purpose=pageFunction(topic,activeModule),intro=articleIntro(topic,blocks);$('breadcrumb').innerHTML=`<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`;$('crumbHome').onclick=()=>showModuleList(activeModule);$('crumbModule').onclick=()=>showModuleList(activeModule);$('articleTitle').textContent=topic.title[lang];$('articleTitle').dataset.kcSection='article-title';$('articlePurpose').hidden=!purpose;$('articlePurposeLabel').textContent=lang==='id'?'Fungsi Halaman':'Page Function';$('articlePurposeText').textContent=purpose;{const meta=topicMeta(topic);$('articleSource').textContent=(topic.source||'Prieds')+' • '+meta.editor+' • '+fmtDate(meta.updatedAt);}$('articleIntro').textContent=intro;$('articleIntro').hidden=!intro;let step=0,html='';blocks.forEach((b,blockIndex)=>{const sid=sectionDomId(activeModule.id,activeTopic,blockIndex);if(b.type==='label')html+=`<div class="docLabel" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</div>`;else if(b.type==='subheading')html+=`<h2 id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</h2>`;else if(b.type==='step')html+=`<div class="stepCard" id="${sid}" data-kc-section="${blockIndex}"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`;else if(b.type==='p')html+=`<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</p>`;else if(b.type==='image'){const src=ASSETS[b.asset];if(src)html+=`<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${b.asset}"><img loading="lazy" src="${src}" alt="${esc(b.caption||topic.title[lang])}"></button>${b.caption?`<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>`:''}</figure>`}else if(b.type==='table')html+=`<div class="docTableWrap" id="${sid}" data-kc-section="${blockIndex}"><table class="docTable">${b.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`});$('docContent').innerHTML=html||`<div class="empty">${t('empty')}</div>`;$('docContent').querySelectorAll('[data-asset]').forEach(btn=>btn.onclick=()=>openLightbox(ASSETS[btn.dataset.asset]));if(typeof updateChatContext==='function')updateChatContext()}
 function openLightbox(src){$('lightboxImg').src=src;$('lightbox').classList.add('show')}
 function copyGuide(){const topic=activeModule.topics[activeTopic],blocks=getBlocks(topic);const text=[topic.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join('\n');navigator.clipboard.writeText(text).then(()=>toastMsg(t('copied')))}
 function syncSearch(source,target){target.value=source.value;searchArticles(source.value)}
@@ -1240,9 +1089,21 @@ document.querySelectorAll('[data-lang]').forEach(btn=>btn.onclick=()=>{lang=btn.
 $('searchInput').oninput=e=>searchArticles(e.target.value);$('searchBtn').onclick=()=>searchArticles($('searchInput').value);$('searchInput').onkeydown=e=>{if(e.key==='Enter')searchArticles(e.target.value)};
 $('articleSearchInput').oninput=e=>{$('searchInput').value=e.target.value;searchArticles(e.target.value)};$('articleSearchBtn').onclick=()=>{$('searchInput').value=$('articleSearchInput').value;searchArticles($('articleSearchInput').value)};
 $('backBtn').onclick=()=>{showList();rerenderLastList();renderNav()};$('copyBtn').onclick=copyGuide;
-function openAdminWithPin(){const pin=window.prompt(lang==='id'?'Masukkan PIN Admin':'Enter Admin PIN');if(pin===null)return;if(pin==='1234'){location.href='master.html';return}toastMsg(lang==='id'?'PIN Admin salah.':'Incorrect Admin PIN.')}
+function openAdminWithPin(){const pin=window.prompt(lang==='id'?'Masukkan PIN Admin':'Enter Admin PIN');if(pin===null)return;if(pin==='1234'){location.href='master.html#kc-functions';return}toastMsg(lang==='id'?'PIN Admin salah.':'Incorrect Admin PIN.')}
 $('adminLogoTrigger').onclick=openAdminWithPin;$('adminLogoTrigger').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAdminWithPin()}};
 $('mobileMenu').onclick=()=>{$('mobileDrawer').classList.toggle('show');renderNav()};$('lightboxClose').onclick=()=>$('lightbox').classList.remove('show');$('lightbox').onclick=e=>{if(e.target===$('lightbox'))$('lightbox').classList.remove('show')};document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('lightbox').classList.remove('show');$('mobileDrawer').classList.remove('show')}});
+async function refreshModuleFunctionContent(){
+  if($('articleView')?.classList.contains('show'))renderArticle();
+  knowledgeBase=null;knowledgeBuildPromise=null;knowledgeReady=false;
+  await buildKnowledgeBaseOnce();
+  updateChatContext();
+}
+window.addEventListener('storage',event=>{if(event.key===KC_MODULE_FUNCTION_KEY)refreshModuleFunctionContent()});
+let kcModuleFunctionChannel=null;
+try{
+  kcModuleFunctionChannel=new BroadcastChannel(KC_MODULE_FUNCTION_CHANNEL);
+  kcModuleFunctionChannel.onmessage=event=>{if(event.data?.type==='module-function-updated')refreshModuleFunctionContent()};
+}catch(error){console.warn('Sinkronisasi langsung fungsi halaman tidak tersedia:',error)}
 window.KCStore.subscribe(()=>location.reload());
 await initChatbot();localize();renderNav();const hash=location.hash.match(/^#([a-z]+)(?:-(\d+))?$/);if(hash){const m=DATA.find(x=>x.id===hash[1]);if(m){if(hash[2]!=null)openArticle(m.id,+hash[2]);else showModuleList(m)}}else showModuleList(activeModule);
 </script></body></html>
