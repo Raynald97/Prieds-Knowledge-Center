@@ -1536,7 +1536,7 @@
     document.querySelectorAll('.tab').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
     function emptyBlock(type = 'step') { return { uid: uid(), type, textId: '', textEn: '', asset: '', captionId: '', captionEn: '', rowsId: null, rowsEn: null, scale: '' } }
     function existingToDraft(topic) { const idb = topic.blocks?.id || [], enb = topic.blocks?.en || [], max = Math.max(idb.length, enb.length), out = []; for (let i = 0; i < max; i++) { const a = idb[i] || {}, b = enb[i] || {}; if (a.type === 'image' || b.type === 'image') { out.push({ uid: uid(), type: 'image', asset: a.asset || b.asset || '', captionId: a.caption || '', captionEn: b.caption || '', scale: a.scale || b.scale || '' }); } else if (a.type === 'table' || b.type === 'table') { out.push({ uid: uid(), type: 'table', rowsId: clone(a.rows || []), rowsEn: clone(b.rows || a.rows || []), textId: '', textEn: '' }); } else { out.push({ uid: uid(), type: a.type || b.type || 'step', textId: a.text || '', textEn: b.text || '', asset: '', captionId: '', captionEn: '' }); } } return out.length ? out : [emptyBlock()] }
-    function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if (b.type === 'image') { if (b.asset) { id.push({ type: 'image', asset: b.asset, caption: b.captionId || '', scale: b.scale || '' }); en.push({ type: 'image', asset: b.asset, caption: b.captionEn || '', scale: b.scale || '' }); } } else if (b.type === 'table') { id.push({ type: 'table', rows: clone(b.rowsId || []) }); en.push({ type: 'table', rows: clone(b.rowsEn || b.rowsId || []) }); } else { id.push({ type: b.type, text: b.textId || '' }); en.push({ type: b.type, text: b.textEn || b.textId || '' }); } }); return { id, en } }
+    function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if (b.type === 'image') { if (b.asset) { id.push({ type: 'image', asset: b.asset, caption: b.captionId || '', scale: b.scale || '' }); en.push({ type: 'image', asset: b.asset, caption: b.captionEn || '', scale: b.scale || '' }); } } else if (b.type === 'table') { id.push({ type: 'table', rows: clone(b.rowsId || []) }); en.push({ type: 'table', rows: clone(b.rowsEn || b.rowsId || []) }); } else { id.push({ type: b.type, text: b.textId || '' }); en.push({ type: b.type, text: b.textEn || b.textId || '' }); } }); return { id, en } } 
     function contentTypeOptions(selected) {
       const options = [
         ['label', 'Label'],
@@ -1546,30 +1546,7 @@
       ];
       return options.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
     }
-    function renderBuilder() { 
-      const assets = allAssets(); 
-      $('contentBuilder').innerHTML = draftBlocks.map((b, i) => { 
-        let body = ''; 
-        if (b.type === 'image') { 
-          let imgSrc = assets[b.asset] || b.asset;
-          // Otomatis tambahkan path jika tidak ada ekstensi file
-          if (imgSrc && !imgSrc.includes('.') && !imgSrc.startsWith('data:') && !imgSrc.startsWith('http')) {
-              imgSrc = `assets/${imgSrc}.png`; 
-          }
-          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"></div>${imgSrc ? `<img class="blockImage" src="${imgSrc}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
-        } else if (b.type === 'table') { 
-          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Table</span><span class="status">${(b.rowsId || []).length} rows</span></div><div class="helper">Table content is preserved exactly as displayed in the Knowledge Center index.</div>`; 
-        } else { 
-          const supportedType = ['label', 'subheading', 'p', 'step'].includes(b.type) ? b.type : 'step'; 
-          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><select data-type="${b.uid}" aria-label="Content type">${contentTypeOptions(supportedType)}</select></div><div class="blockFields"><textarea data-field="textId" data-uid="${b.uid}" placeholder="Bahasa Indonesia">${esc(b.textId || '')}</textarea><textarea data-field="textEn" data-uid="${b.uid}" placeholder="English">${esc(b.textEn || '')}</textarea></div>`; 
-        } 
-        return `<div class="block" draggable="true" data-block="${b.uid}"><div class="drag">⋮⋮</div><div class="blockBody">${body}</div><button class="deleteBlock" data-delete="${b.uid}">🗑</button></div>`;
-      }).join(''); 
-      bindBuilder();
-    }
-    function bindBuilder() { $('contentBuilder').querySelectorAll('[data-field]').forEach(el => el.oninput = () => { const b = draftBlocks.find(x => x.uid === el.dataset.uid); if (b) b[el.dataset.field] = el.value }); $('contentBuilder').querySelectorAll('[data-type]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.type); if (b) b.type = el.value }); $('contentBuilder').querySelectorAll('[data-delete]').forEach(el => el.onclick = () => { draftBlocks = draftBlocks.filter(x => x.uid !== el.dataset.delete); renderBuilder() }); $('contentBuilder').querySelectorAll('[data-file-text]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.fileText); if (b) { b.asset = el.value.trim(); renderBuilder(); } }); $('contentBuilder').querySelectorAll('[data-block]').forEach(el => { el.ondragstart = () => dragUid = el.dataset.block; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const target = el.dataset.block; if (!dragUid || dragUid === target) return; const from = draftBlocks.findIndex(x => x.uid === dragUid), to = draftBlocks.findIndex(x => x.uid === target); const [m] = draftBlocks.splice(from, 1); draftBlocks.splice(to, 0, m); renderBuilder() } }) }
-    $('addStep').onclick = () => { draftBlocks.push(emptyBlock('step')); renderBuilder() }; $('addHeading').onclick = () => { draftBlocks.push(emptyBlock('label')); renderBuilder() }; $('addImage').onclick = () => { draftBlocks.push(emptyBlock('image')); renderBuilder() }; $('deleteAll').onclick = () => confirmModal('Delete all content blocks?', () => { draftBlocks = []; renderBuilder() });
-    $('mainMenu').onchange = () => { $('pageMenu').innerHTML = pageOptions($('mainMenu').value, false, true); $('newPageMenu').style.display = 'none' }; $('pageMenu').onchange = () => $('newPageMenu').style.display = $('pageMenu').value === '__new__' ? 'block' : 'none';
+    
     function resetCreate() { editing = null; $('titleId').value = ''; $('titleEn').value = ''; $('editor').value = ''; $('purposeId').value = ''; $('purposeEn').value = ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; $('submitGuide').textContent = 'Submit Guide'; $('cancelEdit').style.display = 'none'; $('createSubmitBar').classList.remove('editCtaFixed'); draftBlocks = [emptyBlock('step')]; renderBuilder(); $('pageMenu').innerHTML = pageOptions($('mainMenu').value, false, true); $('newPageMenu').style.display = 'none' }
     const TITLE_COMMON = { id: "buat membuat pembuatan tambah menambah menambahkan ubah mengubah edit hapus menghapus lihat melihat proses panduan cara penggunaan konfigurasi pengaturan daftar laporan data produk barang customer pelanggan supplier pemasok promo point poin voucher storage lokasi gudang inbound outbound purchase pembelian sales penjualan inventory stok stock movement transfer production produksi approval document dokumen dashboard integration integrasi tools alat sync sinkronisasi accurate jurnal manual mobile desktop report app aplikasi order request fulfillment return invoice payment barcode generator management master setup create new direct quality control qc putaway picking picklist packing loading dispatch assembly material usage scan rfid fefo sloc antar dengan dari ke untuk berdasarkan per".split(" "), en: "create creating add adding new edit update delete remove view process guide how use usage configure configuration setup setting list report data product item goods customer supplier promotion promo point voucher storage location warehouse inbound outbound purchase purchasing sales inventory stock movement transfer production approval document dashboard integration tools sync synchronization accurate journal manual mobile desktop report app application order request fulfillment return invoice payment barcode generator management master direct quality control qc putaway picking picklist packing loading dispatch assembly material usage scan rfid fefo sloc between with from to for by".split(" ") };
     function titleTokens(value) { return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-z0-9]+/g) || [] }
@@ -1709,6 +1686,37 @@
     };
   }
 
+    function renderBuilder() { 
+      const assets = allAssets(); 
+      $('contentBuilder').innerHTML = draftBlocks.map((b, i) => { 
+        let body = ''; 
+        if (b.type === 'image') { 
+          let imgSrc = assets[b.asset] || b.asset;
+          // Otomatis tambahkan path jika tidak ada ekstensi file
+          if (imgSrc && !imgSrc.includes('.') && !imgSrc.startsWith('data:') && !imgSrc.startsWith('http')) {
+              imgSrc = `assets/${imgSrc}.png`; 
+          }
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"><input type="number" data-scale="${b.uid}" value="${esc(b.scale || '')}" placeholder="Scale %" min="1" max="100" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Scale (1-100%)"></div>${imgSrc ? `<img class="blockImage" src="${imgSrc}" style="${b.scale ? `width: ${b.scale}%; height: auto;` : ''}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
+        } else if (b.type === 'table') { 
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Table</span><span class="status">${(b.rowsId || []).length} rows</span></div><div class="helper">Table content is preserved exactly as displayed in the Knowledge Center index.</div>`; 
+        } else { 
+          const supportedType = ['label', 'subheading', 'p', 'step'].includes(b.type) ? b.type : 'step'; 
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><select data-type="${b.uid}" aria-label="Content type">${contentTypeOptions(supportedType)}</select></div><div class="blockFields"><textarea data-field="textId" data-uid="${b.uid}" placeholder="Bahasa Indonesia">${esc(b.textId || '')}</textarea><textarea data-field="textEn" data-uid="${b.uid}" placeholder="English">${esc(b.textEn || '')}</textarea></div>`; 
+        } 
+        return `<div class="block" draggable="true" data-block="${b.uid}"><div class="drag">⋮⋮</div><div class="blockBody">${body}</div><button class="deleteBlock" data-delete="${b.uid}">🗑</button></div>`;
+      }).join(''); 
+      bindBuilder();
+    }
+
+    function bindBuilder() { 
+      $('contentBuilder').querySelectorAll('[data-field]').forEach(el => el.oninput = () => { const b = draftBlocks.find(x => x.uid === el.dataset.uid); if (b) b[el.dataset.field] = el.value }); 
+      $('contentBuilder').querySelectorAll('[data-type]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.type); if (b) b.type = el.value }); 
+      $('contentBuilder').querySelectorAll('[data-delete]').forEach(el => el.onclick = () => { draftBlocks = draftBlocks.filter(x => x.uid !== el.dataset.delete); renderBuilder() }); 
+      $('contentBuilder').querySelectorAll('[data-file-text]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.fileText); if (b) { b.asset = el.value.trim(); renderBuilder(); } }); 
+      $('contentBuilder').querySelectorAll('[data-scale]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.scale); if (b) { b.scale = el.value.trim(); renderBuilder(); } }); 
+      $('contentBuilder').querySelectorAll('[data-block]').forEach(el => { el.ondragstart = () => dragUid = el.dataset.block; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const target = el.dataset.block; if (!dragUid || dragUid === target) return; const from = draftBlocks.findIndex(x => x.uid === dragUid), to = draftBlocks.findIndex(x => x.uid === target); const [m] = draftBlocks.splice(from, 1); draftBlocks.splice(to, 0, m); renderBuilder() } }) 
+    }
+    
     function renderAll() { initSelects(); renderGuideList(); renderArrangement(); renderFeedbackReport() }
     window.KCStore.subscribe(() => location.reload()); initSelects(); resetCreate(); renderGuideList(); renderArrangement(); initFeedbackReport(); renderFeedbackReport();
   </script>
