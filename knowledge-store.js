@@ -62,24 +62,41 @@
     return state;
   }
 
-  function openDb(){
-    if(dbPromise) return dbPromise;
-    dbPromise=new Promise((resolve,reject)=>{
-      if(!('indexedDB' in window)){reject(new Error('IndexedDB unavailable'));return;}
-      const request=indexedDB.open(DB_NAME,DB_VERSION);
-      request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);};
-      request.onsuccess=()=>resolve(request.result);
-      request.onerror=()=>reject(request.error||new Error('Unable to open IndexedDB'));
-    });
-    return dbPromise;
+  let firebaseDb = null;
+  async function initFirebase() {
+    if (firebaseDb) return firebaseDb;
+    // Import Firebase SDK dari CDN
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+    const { getDatabase, ref, get, set } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js");
+    
+    // GANTI DENGAN FIREBASE CONFIG ANDA
+    const firebaseConfig = {
+      apiKey: "AIzaSyDJA9ygiUbD81d3kXmH5Cn3w0ZmsxdvRKY",
+      authDomain: "prds-management.firebaseapp.com",
+      databaseURL: "https://prds-management-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "prds-management",
+      storageBucket: "prds-management.firebasestorage.app",
+      messagingSenderId: "971549464000",
+      appId: "1:971549464000:web:d05730bd0f4fd2a250a425",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    firebaseDb = getDatabase(app);
+    window._fbTools = { ref, get, set };
+    return firebaseDb;
   }
+
   async function idbGet(){
-    const db=await openDb();
-    return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly');const req=tx.objectStore(STORE).get(KEY);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>reject(req.error);});
+    const db = await initFirebase();
+    const { ref, get } = window._fbTools;
+    const snapshot = await get(ref(db, 'prieds_kc_state'));
+    return snapshot.exists() ? snapshot.val() : null;
   }
+
   async function idbPut(value){
-    const db=await openDb();
-    return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(value,KEY);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});
+    const db = await initFirebase();
+    const { ref, set } = window._fbTools;
+    await set(ref(db, 'prieds_kc_state'), value);
   }
   function fallbackGet(){try{const x=localStorage.getItem(FALLBACK_KEY);return x?JSON.parse(x):null;}catch(_){return null;}}
   function fallbackPut(value){try{localStorage.setItem(FALLBACK_KEY,JSON.stringify(value));return true;}catch(_){return false;}}
