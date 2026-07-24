@@ -642,13 +642,17 @@ function renderArticle() {
     else if (b.type === 'step') html += `<div class="stepCard" id="${sid}" data-kc-section="${blockIndex}"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`; 
     else if (b.type === 'p') html += `<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</p>`; 
     else if (b.type === 'image') { 
-      const src = ASSETS[b.asset] || b.asset; 
-      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${b.asset}"><img loading="lazy" src="${src}" alt="${esc(b.caption || topic.title[lang])}"></button>${b.caption ? `<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>` : ''}</figure>` 
+      let src = ASSETS[b.asset] || b.asset; 
+      // Otomatis tambahkan path assets/ dan .png jika tidak ada ekstensi file
+      if (src && !src.includes('.') && !src.startsWith('data:') && !src.startsWith('http')) {
+          src = `assets/${src}.png`;
+      }
+      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${src}"><img loading="lazy" src="${src}" alt="${esc(b.caption || topic.title[lang])}"></button>${b.caption ? `<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>` : ''}</figure>` 
     } 
     else if (b.type === 'table') html += `<div class="docTableWrap" id="${sid}" data-kc-section="${blockIndex}"><table class="docTable">${b.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>` 
   }); 
   $('docContent').innerHTML = html || `<div class="empty">${t('empty')}</div>`; 
-  $('docContent').querySelectorAll('[data-asset]').forEach(btn => btn.onclick = () => openLightbox(ASSETS[btn.dataset.asset] || btn.dataset.asset)); 
+  $('docContent').querySelectorAll('[data-asset]').forEach(btn => btn.onclick = () => openLightbox(btn.dataset.asset)); 
   if (typeof updateChatContext === 'function') updateChatContext() 
 }
 function openLightbox(src){$('lightboxImg').src=src;$('lightbox').classList.add('show')}
