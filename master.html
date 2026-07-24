@@ -1546,10 +1546,27 @@
       ];
       return options.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
     }
-    function renderBuilder() { const assets = allAssets(); $('contentBuilder').innerHTML = draftBlocks.map((b, i) => { let body = ''; if (b.type === 'image') { 
-  const imgSrc = assets[b.asset] || b.asset;
-  body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path gambar, misal: assets/image_5d499f.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"></div>${imgSrc ? `<img class="blockImage" src="${imgSrc}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
-} else if (b.type === 'table') { body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Table</span><span class="status">${(b.rowsId || []).length} rows</span></div><div class="helper">Table content is preserved exactly as displayed in the Knowledge Center index.</div>`; } else { const supportedType = ['label', 'subheading', 'p', 'step'].includes(b.type) ? b.type : 'step'; body = `<div class="blockHead"><strong>Content ${i + 1}</strong><select data-type="${b.uid}" aria-label="Content type">${contentTypeOptions(supportedType)}</select></div><div class="blockFields"><textarea data-field="textId" data-uid="${b.uid}" placeholder="Bahasa Indonesia">${esc(b.textId || '')}</textarea><textarea data-field="textEn" data-uid="${b.uid}" placeholder="English">${esc(b.textEn || '')}</textarea></div>`; } return `<div class="block" draggable="true" data-block="${b.uid}"><div class="drag">⋮⋮</div><div class="blockBody">${body}</div><button class="deleteBlock" data-delete="${b.uid}">🗑</button></div>` }).join(''); bindBuilder() }
+    function renderBuilder() { 
+      const assets = allAssets(); 
+      $('contentBuilder').innerHTML = draftBlocks.map((b, i) => { 
+        let body = ''; 
+        if (b.type === 'image') { 
+          let imgSrc = assets[b.asset] || b.asset;
+          // Otomatis tambahkan path jika tidak ada ekstensi file
+          if (imgSrc && !imgSrc.includes('.') && !imgSrc.startsWith('data:') && !imgSrc.startsWith('http')) {
+              imgSrc = `assets/${imgSrc}.png`; 
+          }
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"></div>${imgSrc ? `<img class="blockImage" src="${imgSrc}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
+        } else if (b.type === 'table') { 
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Table</span><span class="status">${(b.rowsId || []).length} rows</span></div><div class="helper">Table content is preserved exactly as displayed in the Knowledge Center index.</div>`; 
+        } else { 
+          const supportedType = ['label', 'subheading', 'p', 'step'].includes(b.type) ? b.type : 'step'; 
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><select data-type="${b.uid}" aria-label="Content type">${contentTypeOptions(supportedType)}</select></div><div class="blockFields"><textarea data-field="textId" data-uid="${b.uid}" placeholder="Bahasa Indonesia">${esc(b.textId || '')}</textarea><textarea data-field="textEn" data-uid="${b.uid}" placeholder="English">${esc(b.textEn || '')}</textarea></div>`; 
+        } 
+        return `<div class="block" draggable="true" data-block="${b.uid}"><div class="drag">⋮⋮</div><div class="blockBody">${body}</div><button class="deleteBlock" data-delete="${b.uid}">🗑</button></div>`;
+      }).join(''); 
+      bindBuilder();
+    }
     function bindBuilder() { $('contentBuilder').querySelectorAll('[data-field]').forEach(el => el.oninput = () => { const b = draftBlocks.find(x => x.uid === el.dataset.uid); if (b) b[el.dataset.field] = el.value }); $('contentBuilder').querySelectorAll('[data-type]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.type); if (b) b.type = el.value }); $('contentBuilder').querySelectorAll('[data-delete]').forEach(el => el.onclick = () => { draftBlocks = draftBlocks.filter(x => x.uid !== el.dataset.delete); renderBuilder() }); $('contentBuilder').querySelectorAll('[data-file-text]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.fileText); if (b) { b.asset = el.value.trim(); renderBuilder(); } }); $('contentBuilder').querySelectorAll('[data-block]').forEach(el => { el.ondragstart = () => dragUid = el.dataset.block; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const target = el.dataset.block; if (!dragUid || dragUid === target) return; const from = draftBlocks.findIndex(x => x.uid === dragUid), to = draftBlocks.findIndex(x => x.uid === target); const [m] = draftBlocks.splice(from, 1); draftBlocks.splice(to, 0, m); renderBuilder() } }) }
     $('addStep').onclick = () => { draftBlocks.push(emptyBlock('step')); renderBuilder() }; $('addHeading').onclick = () => { draftBlocks.push(emptyBlock('label')); renderBuilder() }; $('addImage').onclick = () => { draftBlocks.push(emptyBlock('image')); renderBuilder() }; $('deleteAll').onclick = () => confirmModal('Delete all content blocks?', () => { draftBlocks = []; renderBuilder() });
     $('mainMenu').onchange = () => { $('pageMenu').innerHTML = pageOptions($('mainMenu').value, false, true); $('newPageMenu').style.display = 'none' }; $('pageMenu').onchange = () => $('newPageMenu').style.display = $('pageMenu').value === '__new__' ? 'block' : 'none';
