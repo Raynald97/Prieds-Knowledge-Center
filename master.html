@@ -1763,6 +1763,10 @@ function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if
       $('contentBuilder').querySelectorAll('[data-block]').forEach(el => { el.ondragstart = () => dragUid = el.dataset.block; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const target = el.dataset.block; if (!dragUid || dragUid === target) return; const from = draftBlocks.findIndex(x => x.uid === dragUid), to = draftBlocks.findIndex(x => x.uid === target); const [m] = draftBlocks.splice(from, 1); draftBlocks.splice(to, 0, m); renderBuilder() } }) 
     }
 
+    $('addHeading').onclick = () => { draftBlocks.push(emptyBlock('label')); renderBuilder() };
+    $('addImage').onclick = () => { draftBlocks.push(emptyBlock('image')); renderBuilder() };
+    $('addStep').onclick = () => { draftBlocks.push(emptyBlock('step')); renderBuilder() };
+
     function renderAll() { initSelects(); renderGuideList(); renderArrangement(); renderFeedbackReport() }
     window.KCStore.subscribe(() => location.reload()); initSelects(); resetCreate(); renderGuideList(); renderArrangement(); initFeedbackReport(); renderFeedbackReport();
   </script>
