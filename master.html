@@ -347,27 +347,18 @@
       margin-top: 18px
     }
 
-    .submitBar.editCtaFixed {
-      position: fixed;
-      right: 28px;
-      bottom: 24px;
-      z-index: 75;
-      margin: 0;
-      padding: 10px;
-      background: rgba(255, 255, 255, .98);
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      box-shadow: 0 12px 30px rgba(25, 67, 82, .22);
-      gap: 8px
+    .cancelFillBtn {
+      border: 1px solid #BBD5DE;
+      background: var(--soft);
+      color: #187B99;
+      border-radius: 7px;
+      padding: 9px 13px;
+      font-weight: 700
     }
 
-    @media(max-width:700px) {
-      .submitBar.editCtaFixed {
-        right: 14px;
-        bottom: 14px;
-        left: 14px;
-        justify-content: flex-end
-      }
+    .cancelFillBtn:hover {
+      background: #DDF4FB;
+      border-color: var(--primary)
     }
 
     .filters {
@@ -1361,7 +1352,7 @@
           <div class="contentBuilder" id="contentBuilder"></div>
           <div class="helper">Drag content blocks to change their order. Uploaded files support JPG, JPEG, PNG, and
             WEBP.</div>
-          <div class="submitBar" id="createSubmitBar"><button class="ghostBtn" id="cancelEdit"
+          <div class="submitBar" id="createSubmitBar"><button class="cancelFillBtn" id="cancelEdit"
               style="display:none">Cancel</button><button class="primaryBtn" id="submitGuide">Submit Guide</button>
           </div>
         </div>
@@ -1586,7 +1577,7 @@
     function closeGuideActionMenus(except = null) { document.querySelectorAll('.actionMenu.open').forEach(menu => { if (menu !== except) { menu.classList.remove('open'); const trigger = menu.querySelector('.actionMenuBtn'), dropdown = menu.querySelector('.actionDropdown'); if (trigger) trigger.setAttribute('aria-expanded', 'false'); if (dropdown) { dropdown.style.left = ''; dropdown.style.top = '' } } }) }
     function toggleActionMenu(button, event) { event.stopPropagation(); const menu = button.closest('.actionMenu'), willOpen = !menu.classList.contains('open'); closeGuideActionMenus(menu); menu.classList.toggle('open', willOpen); button.setAttribute('aria-expanded', String(willOpen)); if (willOpen) positionActionDropdown(menu) }
     function bindListActions() { const rows = $('guideRows'); rows.querySelectorAll('[data-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); rows.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.edit.split('|'); editGuide(mid, id) }); rows.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, idx] = b.dataset.preview.split('|'); window.open(`index.html#${mid}-${idx}`, '_blank') }); rows.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.remove.split('|'); const a = allArticles().find(x => x.module.id === mid && x.topic.id === id); confirmModal(`Delete “${a?.topic.title.id || 'this guide'}”? It will also disappear from index.html.`, async () => { const m = state.data.find(x => x.id === mid); m.topics = m.topics.filter(x => x.id !== id); await persist(); successModal('Guide successfully deleted and synchronized with the Knowledge Center.') }) }); rows.querySelectorAll('[data-split]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.split.split('|'); openSplitModal(mid, id); }); if (!document.body.dataset.guideActionOutsideBound) { document.addEventListener('click', () => closeGuideActionMenus()); window.addEventListener('resize', () => closeGuideActionMenus()); window.addEventListener('scroll', () => closeGuideActionMenus(), true); document.body.dataset.guideActionOutsideBound = 'true' } }
-    function editGuide(mid, id) { const m = state.data.find(x => x.id === mid), t = m?.topics.find(x => x.id === id); if (!t) return; editing = { moduleId: mid, topicId: id }; $('mainMenu').value = mid; $('pageMenu').innerHTML = pageOptions(mid, false, true); const pm = pageName(t); if (![...$('pageMenu').options].some(o => o.value === pm)) $('pageMenu').insertAdjacentHTML('afterbegin', `<option value="${esc(pm)}">${esc(pm)}</option>`); $('pageMenu').value = pm; $('titleId').value = t.title.id; $('titleEn').value = t.title.en; $('editor').value = t.editor || ''; $('purposeId').value = t.purpose?.id || ''; $('purposeEn').value = t.purpose?.en || ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; draftBlocks = existingToDraft(t); renderBuilder(); $('submitGuide').textContent = 'Update Guide'; $('cancelEdit').style.display = 'inline-flex'; $('createSubmitBar').classList.add('editCtaFixed'); switchTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+    function editGuide(mid, id) { const m = state.data.find(x => x.id === mid), t = m?.topics.find(x => x.id === id); if (!t) return; editing = { moduleId: mid, topicId: id }; $('mainMenu').value = mid; $('pageMenu').innerHTML = pageOptions(mid, false, true); const pm = pageName(t); if (![...$('pageMenu').options].some(o => o.value === pm)) $('pageMenu').insertAdjacentHTML('afterbegin', `<option value="${esc(pm)}">${esc(pm)}</option>`); $('pageMenu').value = pm; $('titleId').value = t.title.id; $('titleEn').value = t.title.en; $('editor').value = t.editor || ''; $('purposeId').value = t.purpose?.id || ''; $('purposeEn').value = t.purpose?.en || ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; draftBlocks = existingToDraft(t); renderBuilder(); $('submitGuide').textContent = 'Update Guide'; $('cancelEdit').style.display = 'inline-flex'; $('createSubmitBar').classList.remove('editCtaFixed'); switchTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
     ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1 }); function openFilterDrawer() { $('filterDrawerOverlay').classList.add('show') } function closeFilterDrawer() { $('filterDrawerOverlay').classList.remove('show') } $('applyFilter').onclick = () => { guidePage = 1; renderGuideList() }; $('moreFilter').onclick = openFilterDrawer; $('closeFilterDrawer').onclick = closeFilterDrawer; $('filterDrawerOverlay').onclick = e => { if (e.target === $('filterDrawerOverlay')) closeFilterDrawer() }; $('applyMoreFilter').onclick = () => { guidePage = 1; renderGuideList(); closeFilterDrawer() }; $('resetFilter').onclick = () => { ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach(id => $(id).value = ''); $('filterMain').value = ''; $('filterPage').innerHTML = pageOptions('', true); $('filterEditor').value = ''; guidePage = 1; renderGuideList() }; $('filterTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { guidePage = 1; renderGuideList() } });
     function groups() { const map = new Map(); allArticles().forEach(x => { const key = x.module.id + '||' + pageName(x.topic); if (!map.has(key)) map.set(key, { module: x.module, page: pageName(x.topic), items: [] }); map.get(key).items.push(x) }); return [...map.values()] }
     function renderArrangement() { const main = $('arrMain').value, page = $('arrPage').value; const gs = groups().filter(g => (!main || g.module.id === main) && (!page || g.page === page)); const totalPages = Math.max(1, Math.ceil(gs.length / PAGE_SIZE)); arrangementPage = Math.min(arrangementPage, totalPages); const pageGroups = gs.slice((arrangementPage - 1) * PAGE_SIZE, arrangementPage * PAGE_SIZE); $('arrRows').innerHTML = gs.length ? pageGroups.map(g => `<tr><td>${esc(g.module.name.id)}</td><td>${esc(g.page)}</td><td>${g.items.length}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-arr-menu="${g.module.id}|${esc(g.page)}">⋮</button><div class="actionDropdown"><button type="button" data-setup="${g.module.id}|${esc(g.page)}">Setup</button></div></div></td></tr>`).join('') : `<tr><td colspan="4" class="empty">No arrangement group found.</td></tr>`; renderPagination('arrPagination', arrangementPage, totalPages, gs.length, next => { arrangementPage = next; renderArrangement() }); $('arrRows').querySelectorAll('[data-arr-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); $('arrRows').querySelectorAll('[data-setup]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const p = b.dataset.setup.split('|'); openArrangement(p[0], p.slice(1).join('|')) }) }
