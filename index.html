@@ -643,11 +643,11 @@ function renderArticle() {
     else if (b.type === 'p') html += `<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</p>`; 
     else if (b.type === 'image') { 
       let src = ASSETS[b.asset] || b.asset; 
-      // Otomatis tambahkan path assets/ dan .png jika tidak ada ekstensi file
       if (src && !src.includes('.') && !src.startsWith('data:') && !src.startsWith('http')) {
           src = `assets/${src}.png`;
       }
-      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${src}"><img loading="lazy" src="${src}" alt="${esc(b.caption || topic.title[lang])}"></button>${b.caption ? `<figcaption class="mediaCaption">${esc(b.caption)}</figcaption>` : ''}</figure>` 
+      const scaleStyle = b.scale ? `width: ${b.scale}%; height: auto; margin: 0 auto; display: block;` : '';
+      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${src}" style="background: transparent; text-align: center;"><img loading="lazy" src="${src}" alt="${esc(b.caption || topic.title[lang])}" style="${scaleStyle}"></button>${b.caption ? `<figcaption class="mediaCaption" style="${b.scale ? 'text-align: center;' : ''}">${esc(b.caption)}</figcaption>` : ''}</figure>` 
     } 
     else if (b.type === 'table') html += `<div class="docTableWrap" id="${sid}" data-kc-section="${blockIndex}"><table class="docTable">${b.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>` 
   }); 
