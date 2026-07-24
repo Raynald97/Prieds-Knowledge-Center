@@ -364,7 +364,7 @@ if(!storedFaq){DATA=[...DATA,FAQ_MODULE];faqDataChanged=true}else{
   });
   FAQ_MODULE.topics.forEach(topic=>{const faqId=(topic.source||'').split('•').pop().trim();if(!storedFaqIds.has(faqId)){storedFaq.topics.push(topic);faqDataChanged=true}})
 }
-if(faqDataChanged){__kcState.data=DATA;await window.KCStore.save(__kcState)}
+if(faqDataChanged){__kcState.data=DATA;}
 let ASSETS={...window.KC_DEFAULT_ASSETS,...(__kcState.assets||{})};
 const UI={
  id:{tocTitle:'Table of Content',findTitle:'Temukan artikel sesuai kebutuhan Anda',search:'Search',back:'Kembali ke daftar artikel',copy:'Salin panduan',footer:'Prieds Knowledge Center • Panduan resmi WMS Lite dan WMS Lite RFID',placeholder:'Contoh: Product Management',articles:'Artikel dalam menu ini',created:'Diperbarui dari User Guide • Editor: Prieds Learning Center',empty:'Tidak ada artikel yang sesuai.',results:'Hasil pencarian',home:'Knowledge Center',copied:'Panduan berhasil disalin.',login:'Fitur login dapat dihubungkan pada environment production.'},
