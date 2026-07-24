@@ -646,8 +646,15 @@ function renderArticle() {
       if (src && !src.includes('.') && !src.startsWith('data:') && !src.startsWith('http')) {
           src = `assets/${src}.png`;
       }
-      const scaleStyle = b.scale ? `width: ${b.scale}%; height: auto; margin: 0 auto; display: block;` : '';
-      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${src}" style="background: transparent; text-align: center;"><img loading="lazy" src="${src}" alt="${esc(b.caption || topic.title[lang])}" style="${scaleStyle}"></button>${b.caption ? `<figcaption class="mediaCaption" style="${b.scale ? 'text-align: center;' : ''}">${esc(b.caption)}</figcaption>` : ''}</figure>` 
+      const align = b.align || 'center';
+      let marginStyle = '0 auto';
+      if (align === 'left') marginStyle = '0 auto 0 0';
+      else if (align === 'right') marginStyle = '0 0 0 auto';
+      
+      const imgStyle = `display: block; margin: ${marginStyle}; ${b.scale ? `width: ${b.scale}%; height: auto;` : ''}`;
+      const captionStyle = `text-align: ${align};`;
+      
+      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${src}" style="background: transparent;"><img loading="lazy" src="${src}" alt="${esc(b.caption || topic.title[lang])}" style="${imgStyle}"></button>${b.caption ? `<figcaption class="mediaCaption" style="${captionStyle}">${esc(b.caption)}</figcaption>` : ''}</figure>` 
     } 
     else if (b.type === 'table') html += `<div class="docTableWrap" id="${sid}" data-kc-section="${blockIndex}"><table class="docTable">${b.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>` 
   }); 
