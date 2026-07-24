@@ -347,6 +347,20 @@
       margin-top: 18px
     }
 
+    .cancelFillBtn {
+      border: 1px solid #BBD5DE;
+      background: var(--soft);
+      color: #187B99;
+      border-radius: 7px;
+      padding: 9px 13px;
+      font-weight: 700
+    }
+
+    .cancelFillBtn:hover {
+      background: #DDF4FB;
+      border-color: var(--primary)
+    }
+
     .submitBar.editCtaFixed {
       position: fixed;
       right: 28px;
@@ -1361,7 +1375,7 @@
           <div class="contentBuilder" id="contentBuilder"></div>
           <div class="helper">Drag content blocks to change their order. Uploaded files support JPG, JPEG, PNG, and
             WEBP.</div>
-          <div class="submitBar" id="createSubmitBar"><button class="ghostBtn" id="cancelEdit"
+          <div class="submitBar" id="createSubmitBar"><button class="cancelFillBtn" id="cancelEdit"
               style="display:none">Cancel</button><button class="primaryBtn" id="submitGuide">Submit Guide</button>
           </div>
         </div>
