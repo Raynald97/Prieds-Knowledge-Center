@@ -1573,6 +1573,11 @@ function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if
       if (selectedMain === '__new__' && !newMainName) { toast('New Main Menu is required.'); return }
       if (!pm) { toast('Page Menu is required.'); return }
       if (!validateTitles(true)) { toast('Please correct the title error before submitting.'); return }
+      
+      // --- TAMBAHKAN BARIS INI ---
+      state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+      // ---------------------------
+
       let m = state.data.find(x => x.id === selectedMain), newModule = null;
       if (selectedMain === '__new__') {
         const duplicate = state.data.find(x => String(x.name?.id || '').trim().toLowerCase() === newMainName.toLowerCase());
@@ -1641,7 +1646,22 @@ function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if
     function positionActionDropdown(menu) { const trigger = menu.querySelector('.actionMenuBtn'), dropdown = menu.querySelector('.actionDropdown'); if (!trigger || !dropdown) return; const triggerRect = trigger.getBoundingClientRect(), dropdownRect = dropdown.getBoundingClientRect(), gap = 5, pad = 8; let left = triggerRect.right - dropdownRect.width; let top = triggerRect.bottom + gap; if (left < pad) left = pad; if (left + dropdownRect.width > window.innerWidth - pad) left = window.innerWidth - dropdownRect.width - pad; if (top + dropdownRect.height > window.innerHeight - pad && triggerRect.top - dropdownRect.height - gap >= pad) top = triggerRect.top - dropdownRect.height - gap; top = Math.max(pad, Math.min(top, window.innerHeight - dropdownRect.height - pad)); dropdown.style.left = `${Math.round(left)}px`; dropdown.style.top = `${Math.round(top)}px` }
     function closeGuideActionMenus(except = null) { document.querySelectorAll('.actionMenu.open').forEach(menu => { if (menu !== except) { menu.classList.remove('open'); const trigger = menu.querySelector('.actionMenuBtn'), dropdown = menu.querySelector('.actionDropdown'); if (trigger) trigger.setAttribute('aria-expanded', 'false'); if (dropdown) { dropdown.style.left = ''; dropdown.style.top = '' } } }) }
     function toggleActionMenu(button, event) { event.stopPropagation(); const menu = button.closest('.actionMenu'), willOpen = !menu.classList.contains('open'); closeGuideActionMenus(menu); menu.classList.toggle('open', willOpen); button.setAttribute('aria-expanded', String(willOpen)); if (willOpen) positionActionDropdown(menu) }
-    function bindListActions() { const rows = $('guideRows'); rows.querySelectorAll('[data-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); rows.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.edit.split('|'); editGuide(mid, id) }); rows.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, idx] = b.dataset.preview.split('|'); window.open(`index.html#${mid}-${idx}`, '_blank') }); rows.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.remove.split('|'); const a = allArticles().find(x => x.module.id === mid && x.topic.id === id); confirmModal(`Delete “${a?.topic.title.id || 'this guide'}”? It will also disappear from index.html.`, async () => { const m = state.data.find(x => x.id === mid); m.topics = m.topics.filter(x => x.id !== id); await persist(); successModal('Guide successfully deleted and synchronized with the Knowledge Center.') }) }); rows.querySelectorAll('[data-split]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.split.split('|'); openSplitModal(mid, id); }); if (!document.body.dataset.guideActionOutsideBound) { document.addEventListener('click', () => closeGuideActionMenus()); window.addEventListener('resize', () => closeGuideActionMenus()); window.addEventListener('scroll', () => closeGuideActionMenus(), true); document.body.dataset.guideActionOutsideBound = 'true' } }
+    function bindListActions() { const rows = $('guideRows'); rows.querySelectorAll('[data-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); rows.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.edit.split('|'); editGuide(mid, id) }); rows.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, idx] = b.dataset.preview.split('|'); window.open(`index.html#${mid}-${idx}`, '_blank') }); rows.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => { 
+      closeGuideActionMenus(); 
+      const [mid, id] = b.dataset.remove.split('|'); 
+      const a = allArticles().find(x => x.module.id === mid && x.topic.id === id); 
+      confirmModal(`Delete “${a?.topic.title.id || 'this guide'}”? It will also disappear from index.html.`, async () => { 
+        
+        // --- TAMBAHKAN BARIS INI ---
+        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        // ---------------------------
+
+        const m = state.data.find(x => x.id === mid); 
+        m.topics = m.topics.filter(x => x.id !== id); 
+        await persist(); 
+        successModal('Guide successfully deleted and synchronized with the Knowledge Center.') 
+      }) 
+    }); rows.querySelectorAll('[data-split]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.split.split('|'); openSplitModal(mid, id); }); if (!document.body.dataset.guideActionOutsideBound) { document.addEventListener('click', () => closeGuideActionMenus()); window.addEventListener('resize', () => closeGuideActionMenus()); window.addEventListener('scroll', () => closeGuideActionMenus(), true); document.body.dataset.guideActionOutsideBound = 'true' } }
     function editGuide(mid, id) { const m = state.data.find(x => x.id === mid), t = m?.topics.find(x => x.id === id); if (!t) return; editing = { moduleId: mid, topicId: id }; $('mainMenu').value = mid; $('newMainMenu').value = ''; $('newMainMenu').style.display = 'none'; $('pageMenu').innerHTML = pageOptions(mid, false, true); const pm = pageName(t); if (![...$('pageMenu').options].some(o => o.value === pm)) $('pageMenu').insertAdjacentHTML('afterbegin', `<option value="${esc(pm)}">${esc(pm)}</option>`); $('pageMenu').value = pm; $('newPageMenu').value = ''; syncNewPageMenuField(); $('titleId').value = t.title.id; $('titleEn').value = t.title.en; let tmId = '', tmEn = ''; if (t.tabMenu) { if (typeof t.tabMenu === 'string') { tmId = t.tabMenu; tmEn = t.tabMenu; } else { tmId = t.tabMenu.id || ''; tmEn = t.tabMenu.en || tmId; } } $('tabMenuId').value = tmId; $('tabMenuEn').value = tmEn; $('editor').value = t.editor || ''; $('purposeId').value = t.purpose?.id || ''; $('purposeEn').value = t.purpose?.en || ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; draftBlocks = existingToDraft(t); renderBuilder(); $('submitGuide').textContent = 'Update Guide'; $('cancelEdit').style.display = 'inline-flex'; $('createSubmitBar').classList.add('editCtaFixed'); switchTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
     ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1 }); function openFilterDrawer() { $('filterDrawerOverlay').classList.add('show') } function closeFilterDrawer() { $('filterDrawerOverlay').classList.remove('show') } $('applyFilter').onclick = () => { guidePage = 1; renderGuideList() }; $('moreFilter').onclick = openFilterDrawer; $('closeFilterDrawer').onclick = closeFilterDrawer; $('filterDrawerOverlay').onclick = e => { if (e.target === $('filterDrawerOverlay')) closeFilterDrawer() }; $('applyMoreFilter').onclick = () => { guidePage = 1; renderGuideList(); closeFilterDrawer() }; $('resetFilter').onclick = () => { ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach(id => $(id).value = ''); $('filterMain').value = ''; $('filterPage').innerHTML = pageOptions('', true); $('filterEditor').value = ''; guidePage = 1; renderGuideList() }; $('filterTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { guidePage = 1; renderGuideList() } });
     function groups() { const map = new Map(); allArticles().forEach(x => { const key = x.module.id + '||' + pageName(x.topic); if (!map.has(key)) map.set(key, { module: x.module, page: pageName(x.topic), items: [] }); map.get(key).items.push(x) }); return [...map.values()] }
@@ -1649,7 +1669,17 @@ function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if
     $('arrSearch').onclick = () => { arrangementPage = 1; renderArrangement() };
     function openArrangement(mid, page) { const g = groups().find(x => x.module.id === mid && x.page === page); if (!g) return; arrangementContext = { mid, page, ids: g.items.map(x => x.topic.id), drag: null }; const cards = g.items.map(x => `<div class="sortItem" draggable="true" data-sort="${x.topic.id}"><div class="sortHead"><span class="sortHandle">⋮⋮</span><span>${esc(x.topic.title.id)}</span><span style="margin-left:auto;background:#EAF9FD;color:#087C9D;padding:5px 8px;border-radius:5px">${esc(page)}</span></div><div class="sortInfo">${(x.topic.blocks?.id || []).filter(b => b.type === 'step').length} Step Content • ${esc(x.topic.editor || '—')}</div></div>`).join(''); showModal(`<div class="modalHeader"><h2>Setup Content</h2><button class="closeModal" data-close>×</button></div><p class="helper">Drag and drop the cards to change the guide sequence in index.html.</p><div class="sortable" id="sortable">${cards}</div><div class="submitBar"><button class="primaryBtn" id="saveArrangement">Save Arrangement</button></div>`); bindSort(); $('saveArrangement').onclick = saveArrangement }
     function bindSort() { $('sortable').querySelectorAll('[data-sort]').forEach(el => { el.ondragstart = () => arrangementContext.drag = el.dataset.sort; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const from = arrangementContext.ids.indexOf(arrangementContext.drag), to = arrangementContext.ids.indexOf(el.dataset.sort); if (from < 0 || to < 0 || from === to) return; const [v] = arrangementContext.ids.splice(from, 1); arrangementContext.ids.splice(to, 0, v); const nodes = [...$('sortable').children], node = nodes.find(n => n.dataset.sort === v), target = [...$('sortable').children].find(n => n.dataset.sort === el.dataset.sort); $('sortable').insertBefore(node, from < to ? target.nextSibling : target) } }) }
-    async function saveArrangement() { const m = state.data.find(x => x.id === arrangementContext.mid), set = new Set(arrangementContext.ids), ordered = arrangementContext.ids.map(id => m.topics.find(t => t.id === id)), i = 0; m.topics = m.topics.map(t => set.has(t.id) ? ordered[i++] : t); await persist(); hideModal(); successModal('Arrangement has been successfully updated and synchronized with the Knowledge Center.') }
+    async function saveArrangement() { 
+      // --- TAMBAHKAN BARIS INI ---
+      state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+      // ---------------------------
+
+      const m = state.data.find(x => x.id === arrangementContext.mid), set = new Set(arrangementContext.ids), ordered = arrangementContext.ids.map(id => m.topics.find(t => t.id === id)), i = 0; 
+      m.topics = m.topics.map(t => set.has(t.id) ? ordered[i++] : t); 
+      await persist(); 
+      hideModal(); 
+      successModal('Arrangement has been successfully updated and synchronized with the Knowledge Center.') 
+    }
     function showModal(html, small = false) { $('modalBox').className = 'modal' + (small ? ' small' : ''); $('modalBox').innerHTML = html; $('modalOverlay').classList.add('show'); $('modalBox').querySelectorAll('[data-close]').forEach(x => x.onclick = hideModal) } function hideModal() { $('modalOverlay').classList.remove('show') }
     function successModal(message) { showModal(`<button class="closeModal" style="float:right" data-close>×</button><div class="successIcon">✓</div><h2>Success</h2><p>${esc(message)}</p><div class="modalActions"><button class="primaryBtn" data-close>Close</button></div>`, true) }
     function confirmModal(message, onYes) { showModal(`<div class="confirmIcon">?</div><h2>Are you sure?</h2><p>${esc(message)}</p><div class="modalActions"><button class="ghostBtn" data-close>No</button><button class="primaryBtn" id="confirmYes">Yes</button></div>`, true); $('confirmYes').onclick = async () => { hideModal(); await onYes() } }
@@ -1710,6 +1740,7 @@ function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if
       if (remainIdx.length === 0) return toast('Tidak bisa memindahkan semua block. Sisakan minimal 1 block untuk guide asli!');
 
       // Format splitRules sesuai yang diminta knowledge-store.js
+      // Format splitRules sesuai yang diminta knowledge-store.js
       const splitRules = [
         {
           title: { id: t.title.id, en: t.title.en }, // Guide Asli
@@ -1722,6 +1753,10 @@ function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if
           blockIndexes: selectedIdx
         }
       ];
+
+      // --- TAMBAHKAN BARIS INI ---
+      state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+      // ---------------------------
 
       // Eksekusi fungsi split dari store
       state = window.KCStore.splitMasterGuide(state, mid, topicIndex, splitRules);
