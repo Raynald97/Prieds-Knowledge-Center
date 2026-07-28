@@ -71,13 +71,13 @@
     
     // GANTI DENGAN FIREBASE CONFIG ANDA
     const firebaseConfig = {
-      apiKey: "AIzaSyDJA9ygiUbD81d3kXmH5Cn3w0ZmsxdvRKY",
-      authDomain: "prds-management.firebaseapp.com",
-      databaseURL: "https://prds-management-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "prds-management",
-      storageBucket: "prds-management.firebasestorage.app",
-      messagingSenderId: "971549464000",
-      appId: "1:971549464000:web:d05730bd0f4fd2a250a425",
+      apiKey: "AIzaSyA_HUqsuf1Exp0tiWQZ1HZ17C4SVDt8fEo",
+      authDomain: "prieds-user-guide.firebaseapp.com",
+      databaseURL: "https://prieds-user-guide-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "prieds-user-guide",
+      storageBucket: "prieds-user-guide.firebasestorage.app",
+      messagingSenderId: "1021947629732",
+      appId: "1:1021947629732:web:099b5b55ecbbcc13f7d631",
     };
 
     const app = initializeApp(firebaseConfig);
