@@ -1369,13 +1369,37 @@
             <div class="field full"><label>Fungsi Halaman — Bahasa Indonesia (Opsional)</label><textarea id="purposeId" placeholder="Contoh: Halaman ini digunakan untuk mengelola..."></textarea></div>
             <div class="field full"><label>Page Purpose — English (Optional)</label><textarea id="purposeEn" placeholder="Example: This page is used to manage..."></textarea></div>
           </div>
+          
+          <!-- UI Config Table Pindah ke Sini -->
+          <div class="sectionRow" style="margin-top: 24px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="toggleConfigTable" style="width: 16px; height: 16px; cursor: pointer;">
+                <label for="toggleConfigTable" style="font-size: 14px; font-weight: 700; cursor: pointer; color: #087FA4;">Tampilkan Tabel Konfigurasi (Config Table)</label>
+            </div>
+          </div>
+          <div id="configTableWrapper" style="display: none; background: #EAF9FD; border: 1px solid var(--primary); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+            <div class="helper" style="margin-bottom: 12px; margin-top: 0; color: #187B99;">Gunakan pemisah tanda " | " (pipa) untuk setiap kolom. Baris pertama otomatis menjadi Header.</div>
+            <div class="formGrid">
+                <div class="field full">
+                    <label style="color: #087FA4;">Tabel Konfigurasi — Bahasa Indonesia</label>
+                    <textarea id="configTableId" style="min-height: 100px; font-family: monospace; border-color: #BBD5DE;">Config Name | Description | Affected Page | Add On
+ | | | </textarea>
+                </div>
+                <div class="field full">
+                    <label style="color: #087FA4;">Tabel Konfigurasi — English</label>
+                    <textarea id="configTableEn" style="min-height: 100px; font-family: monospace; border-color: #BBD5DE;">Config Name | Description | Affected Page | Add On
+ | | | </textarea>
+                </div>
+            </div>
+          </div>
+
           <div class="sectionRow">
             <h2>Content</h2>
             <div class="btnRow">
               <button class="dangerBtn" id="deleteAll">Delete All</button>
               <button class="ghostBtn" id="addHeading">+ Label</button>
               <button class="ghostBtn" id="addImage">+ Image</button>
-              <button class="ghostBtn" id="addTable">+ Table</button> <!-- Tombol baru ditambahkan di sini -->
+              <!-- Tombol addTable sudah tidak digunakan lagi di sini -->
               <button class="primaryBtn" id="addStep">+ Step</button>
             </div>
           </div>
@@ -1545,9 +1569,78 @@
     function refreshEditors() { const editors = [...new Set(allArticles().map(x => String(x.topic.editor || '').trim()).filter(Boolean))].sort(); $('filterEditor').innerHTML = '<option value="">All Editor</option>' + editors.map(x => `<option>${esc(x)}</option>`).join('') }
     function switchTab(name) { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name)); document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + name)); if (name === 'list') renderGuideList(); if (name === 'arrange') renderArrangement(); if (name === 'feedback') renderFeedbackReport() }
     document.querySelectorAll('.tab').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+    $('toggleConfigTable').addEventListener('change', (e) => {
+        $('configTableWrapper').style.display = e.target.checked ? 'block' : 'none';
+    });
     function emptyBlock(type = 'step') { return { uid: uid(), type, textId: '', textEn: '', asset: '', captionId: '', captionEn: '', rowsId: null, rowsEn: null, scale: '', align: 'center' } }
-function existingToDraft(topic) { const idb = topic.blocks?.id || [], enb = topic.blocks?.en || [], max = Math.max(idb.length, enb.length), out = []; for (let i = 0; i < max; i++) { const a = idb[i] || {}, b = enb[i] || {}; if (a.type === 'image' || b.type === 'image') { out.push({ uid: uid(), type: 'image', asset: a.asset || b.asset || '', captionId: a.caption || '', captionEn: b.caption || '', scale: a.scale || b.scale || '', align: a.align || b.align || 'center' }); } else if (a.type === 'table' || b.type === 'table') { out.push({ uid: uid(), type: 'table', rowsId: clone(a.rows || []), rowsEn: clone(b.rows || a.rows || []), textId: '', textEn: '' }); } else { out.push({ uid: uid(), type: a.type || b.type || 'step', textId: a.text || '', textEn: b.text || '', asset: '', captionId: '', captionEn: '' }); } } return out.length ? out : [emptyBlock()] }
-function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if (b.type === 'image') { if (b.asset) { id.push({ type: 'image', asset: b.asset, caption: b.captionId || '', scale: b.scale || '', align: b.align || 'center' }); en.push({ type: 'image', asset: b.asset, caption: b.captionEn || '', scale: b.scale || '', align: b.align || 'center' }); } } else if (b.type === 'table') { id.push({ type: 'table', rows: clone(b.rowsId || []) }); en.push({ type: 'table', rows: clone(b.rowsEn || b.rowsId || []) }); } else { id.push({ type: b.type, text: b.textId || '' }); en.push({ type: b.type, text: b.textEn || b.textId || '' }); } }); return { id, en } }
+    function existingToDraft(topic) { 
+      const idb = clone(topic.blocks?.id || []);
+      const enb = clone(topic.blocks?.en || []);
+      let hasConfig = false;
+
+      // Cek apakah block pertama merupakan Config Table
+      if (idb[0]?.isConfigTable || (idb[0]?.type === 'table' && idb[0].rows?.[0]?.[0] === 'Config Name')) {
+        hasConfig = true;
+        const extractedId = idb.shift();
+        $('configTableId').value = extractedId.rows.map(r => r.join(' | ')).join('\n');
+      } else {
+        $('configTableId').value = "Config Name | Description | Affected Page | Add On\n | | | ";
+      }
+
+      if (enb[0]?.isConfigTable || (enb[0]?.type === 'table' && enb[0].rows?.[0]?.[0] === 'Config Name')) {
+        hasConfig = true;
+        const extractedEn = enb.shift();
+        $('configTableEn').value = extractedEn.rows.map(r => r.join(' | ')).join('\n');
+      } else {
+        $('configTableEn').value = "Config Name | Description | Affected Page | Add On\n | | | ";
+      }
+
+      // Tampilkan/Sembunyikan UI Config Table
+      if (hasConfig) {
+        $('toggleConfigTable').checked = true;
+        $('configTableWrapper').style.display = 'block';
+      } else {
+        $('toggleConfigTable').checked = false;
+        $('configTableWrapper').style.display = 'none';
+      }
+
+      const max = Math.max(idb.length, enb.length);
+      const out = []; 
+      for (let i = 0; i < max; i++) { 
+        const a = idb[i] || {}, b = enb[i] || {}; 
+        if (a.type === 'image' || b.type === 'image') { out.push({ uid: uid(), type: 'image', asset: a.asset || b.asset || '', captionId: a.caption || '', captionEn: b.caption || '', scale: a.scale || b.scale || '', align: a.align || b.align || 'center' }); } 
+        else if (a.type === 'table' || b.type === 'table') { out.push({ uid: uid(), type: 'table', rowsId: clone(a.rows || []), rowsEn: clone(b.rows || a.rows || []), textId: '', textEn: '' }); } 
+        else { out.push({ uid: uid(), type: a.type || b.type || 'step', textId: a.text || '', textEn: b.text || '', asset: '', captionId: '', captionEn: '' }); } 
+      } 
+      return out.length ? out : [emptyBlock()] 
+    }
+    function draftToBlocks() { 
+      const id = [], en = []; 
+      
+      // Masukkan Config Table di index paling pertama jika opsi dicentang
+      if ($('toggleConfigTable').checked) {
+          const rowsId = $('configTableId').value.split('\n').filter(r=>r.trim()).map(row => row.split('|').map(c => c.trim()));
+          const rowsEn = $('configTableEn').value.split('\n').filter(r=>r.trim()).map(row => row.split('|').map(c => c.trim()));
+          id.push({ type: 'table', isConfigTable: true, rows: rowsId });
+          en.push({ type: 'table', isConfigTable: true, rows: rowsEn });
+      }
+
+      draftBlocks.forEach(b => { 
+        if (b.type === 'image') { 
+          if (b.asset) { 
+            id.push({ type: 'image', asset: b.asset, caption: b.captionId || '', scale: b.scale || '', align: b.align || 'center' }); 
+            en.push({ type: 'image', asset: b.asset, caption: b.captionEn || '', scale: b.scale || '', align: b.align || 'center' }); 
+          } 
+        } else if (b.type === 'table') { 
+          id.push({ type: 'table', rows: clone(b.rowsId || []) }); 
+          en.push({ type: 'table', rows: clone(b.rowsEn || b.rowsId || []) }); 
+        } else { 
+          id.push({ type: b.type, text: b.textId || '' }); 
+          en.push({ type: b.type, text: b.textEn || b.textId || '' }); 
+        } 
+      }); 
+      return { id, en } 
+    }
     function contentTypeOptions(selected) {
       const options = [
         ['label', 'Label'],
@@ -1558,7 +1651,17 @@ function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if
       return options.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
     }
     
-    function resetCreate() { editing = null; $('mainMenu').value = state.data[0]?.id || '__new__'; $('newMainMenu').value = ''; $('newPageMenu').value = ''; $('titleId').value = ''; $('titleEn').value = ''; $('tabMenuId').value = ''; $('tabMenuEn').value = ''; $('editor').value = ''; $('purposeId').value = ''; $('purposeEn').value = ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; $('submitGuide').textContent = 'Submit Guide'; $('cancelEdit').style.display = 'none'; $('createSubmitBar').classList.remove('editCtaFixed'); draftBlocks = [emptyBlock('step')]; renderBuilder(); syncCreateMenuFields() }
+    function resetCreate() { 
+      editing = null; $('mainMenu').value = state.data[0]?.id || '__new__'; $('newMainMenu').value = ''; $('newPageMenu').value = ''; $('titleId').value = ''; $('titleEn').value = ''; $('tabMenuId').value = ''; $('tabMenuEn').value = ''; $('editor').value = ''; $('purposeId').value = ''; $('purposeEn').value = ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; $('submitGuide').textContent = 'Submit Guide'; $('cancelEdit').style.display = 'none'; $('createSubmitBar').classList.remove('editCtaFixed'); 
+      
+      // Reset status Config Table saat membuat dokumen baru
+      $('toggleConfigTable').checked = false;
+      $('configTableWrapper').style.display = 'none';
+      $('configTableId').value = "Config Name | Description | Affected Page | Add On\n | | | ";
+      $('configTableEn').value = "Config Name | Description | Affected Page | Add On\n | | | ";
+
+      draftBlocks = [emptyBlock('step')]; renderBuilder(); syncCreateMenuFields() 
+    }
     const TITLE_COMMON = { id: "buat membuat pembuatan tambah menambah menambahkan ubah mengubah edit hapus menghapus lihat melihat proses panduan cara penggunaan konfigurasi pengaturan daftar laporan data produk barang customer pelanggan supplier pemasok promo point poin voucher storage lokasi gudang inbound outbound purchase pembelian sales penjualan inventory stok stock movement transfer production produksi approval document dokumen dashboard integration integrasi tools alat sync sinkronisasi accurate jurnal manual mobile desktop report app aplikasi order request fulfillment return invoice payment barcode generator management master setup create new direct quality control qc putaway picking picklist packing loading dispatch assembly material usage scan rfid fefo sloc antar dengan dari ke untuk berdasarkan per".split(" "), en: "create creating add adding new edit update delete remove view process guide how use usage configure configuration setup setting list report data product item goods customer supplier promotion promo point voucher storage location warehouse inbound outbound purchase purchasing sales inventory stock movement transfer production approval document dashboard integration tools sync synchronization accurate journal manual mobile desktop report app application order request fulfillment return invoice payment barcode generator management master direct quality control qc putaway picking picklist packing loading dispatch assembly material usage scan rfid fefo sloc between with from to for by".split(" ") };
     function titleTokens(value) { return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-z0-9]+/g) || [] }
     function titleVocabulary(lang) { const words = new Set(TITLE_COMMON[lang]); state.data.forEach(m => { titleTokens(m.name?.[lang] || m.name?.id).forEach(w => words.add(w)); m.topics.forEach(t => { titleTokens(t.title?.[lang] || t.title?.id).forEach(w => words.add(w)); titleTokens(pageName(t, lang)).forEach(w => words.add(w)) }) }); return words }
@@ -1827,18 +1930,6 @@ function draftToBlocks() { const id = [], en = []; draftBlocks.forEach(b => { if
     $('addHeading').onclick = () => { draftBlocks.push(emptyBlock('label')); renderBuilder() };
     $('addImage').onclick = () => { draftBlocks.push(emptyBlock('image')); renderBuilder() };
     $('addStep').onclick = () => { draftBlocks.push(emptyBlock('step')); renderBuilder() };
-    
-    // Blok baru ditambahkan di sini
-    $('addTable').onclick = () => { 
-      draftBlocks.push({
-        uid: uid(), 
-        type: 'table', 
-        rowsId: [['Config Name', 'Description', 'Affected Page', 'Add On'], ['','','','']], 
-        rowsEn: [['Config Name', 'Description', 'Affected Page', 'Add On'], ['','','','']]
-      }); 
-      renderBuilder(); 
-    };
-
     function renderAll() { initSelects(); renderGuideList(); renderArrangement(); renderFeedbackReport() }
     window.KCStore.subscribe(() => location.reload()); initSelects(); resetCreate(); renderGuideList(); renderArrangement(); initFeedbackReport(); renderFeedbackReport();
   </script>
