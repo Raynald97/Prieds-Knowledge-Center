@@ -1395,6 +1395,32 @@
 
           <div class="sectionRow">
             <h2>Content</h2>
+            
+            <!-- Tambahan UI Auto Translate -->
+            <div style="display: flex; gap: 8px; align-items: center; margin-left: auto; margin-right: 16px;">
+                <!-- 1 Selector Bahasa -->
+                <select id="targetLang" style="padding: 7px; border-radius: 5px; border: 1px solid #B6C1C6; font-size: 12px; font-weight: 700; color: #087FA4;">
+                    <option value="en">English</option>
+                    <option value="zh-CN">Mandarin</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ar">Arabic</option>
+                </select>
+                
+                <!-- 1 Button Translate -->
+                <button class="primaryBtn" id="autoTranslateBtn" type="button" style="background: #18A66A; border-color: #18A66A;">✨ Auto Translate</button>
+            </div>
+            <!-- ------------------------- -->
+
+            <div class="btnRow">
+              <button class="dangerBtn" id="deleteAll">Delete All</button>
+              <button class="ghostBtn" id="addHeading">+ Label</button>
+              <button class="ghostBtn" id="addImage">+ Image</button>
+              <!-- (Tombol + Table mungkin ada di sini tergantung kodemu) -->
+              <button class="primaryBtn" id="addStep">+ Step</button>
+            </div>
+          </div>
+            <!-- ------------------------- -->
+
             <div class="btnRow">
               <button class="dangerBtn" id="deleteAll">Delete All</button>
               <button class="ghostBtn" id="addHeading">+ Label</button>
@@ -1873,6 +1899,20 @@
     };
   }
 
+    async function translateText(text, targetLang) {
+        if (!text || text.trim() === '') return '';
+        try {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=id&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            // Google Translate mengembalikan array of arrays, kita perlu menggabungkannya
+            return data[0].map(item => item[0]).join('');
+        } catch (err) {
+            console.error("Translation error:", err);
+            return text; // Kembalikan teks asli jika gagal
+        }
+    }
+
     function renderBuilder() { 
       const assets = allAssets(); 
       $('contentBuilder').innerHTML = draftBlocks.map((b, i) => { 
@@ -1898,7 +1938,13 @@
             </div>`; 
         } else {
           const supportedType = ['label', 'subheading', 'p', 'step'].includes(b.type) ? b.type : 'step'; 
-          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><select data-type="${b.uid}" aria-label="Content type">${contentTypeOptions(supportedType)}</select></div><div class="blockFields"><textarea data-field="textId" data-uid="${b.uid}" placeholder="Bahasa Indonesia">${esc(b.textId || '')}</textarea><textarea data-field="textEn" data-uid="${b.uid}" placeholder="English">${esc(b.textEn || '')}</textarea></div>`; 
+          
+          // --- TAMBAHAN: Ambil nama bahasa yang sedang dipilih di dropdown ---
+          const targetLangSelect = $('targetLang');
+          const targetLangLabel = targetLangSelect ? targetLangSelect.options[targetLangSelect.selectedIndex].text : 'English';
+          // ------------------------------------------------------------------
+
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><select data-type="${b.uid}" aria-label="Content type">${contentTypeOptions(supportedType)}</select></div><div class="blockFields"><textarea data-field="textId" data-uid="${b.uid}" placeholder="Bahasa Indonesia">${esc(b.textId || '')}</textarea><textarea data-field="textEn" data-uid="${b.uid}" placeholder="Translation (${targetLangLabel})">${esc(b.textEn || '')}</textarea></div>`; 
         } 
         return `<div class="block" draggable="true" data-block="${b.uid}"><div class="drag">⋮⋮</div><div class="blockBody">${body}</div><button class="deleteBlock" data-delete="${b.uid}">🗑</button></div>`;
       }).join(''); 
@@ -1930,6 +1976,72 @@
     $('addHeading').onclick = () => { draftBlocks.push(emptyBlock('label')); renderBuilder() };
     $('addImage').onclick = () => { draftBlocks.push(emptyBlock('image')); renderBuilder() };
     $('addStep').onclick = () => { draftBlocks.push(emptyBlock('step')); renderBuilder() };
+    $('autoTranslateBtn').onclick = async () => {
+        const targetLang = $('targetLang').value;
+        const btn = $('autoTranslateBtn');
+        
+        // Ubah state tombol menjadi loading
+        btn.disabled = true;
+        btn.textContent = 'Translating...';
+
+        // 1. Translate Page Purpose (Fungsi Halaman) jika ada
+        const purposeId = $('purposeId').value;
+        if (purposeId) {
+            $('purposeEn').value = await translateText(purposeId, targetLang);
+        }
+
+        // 2. Translate Config Table jika sedang aktif
+        if ($('toggleConfigTable').checked) {
+            const configTableId = $('configTableId').value;
+            if (configTableId) {
+                // Pisahkan per baris dan per kolom, translate tiap cell
+                const rows = configTableId.split('\n');
+                const translatedRows = [];
+                for (let row of rows) {
+                    if (!row.trim()) continue;
+                    const cells = row.split('|');
+                    const translatedCells = [];
+                    for (let cell of cells) {
+                        translatedCells.push(await translateText(cell.trim(), targetLang));
+                    }
+                    translatedRows.push(translatedCells.join(' | '));
+                }
+                $('configTableEn').value = translatedRows.join('\n');
+            }
+        }
+
+        // 3. Translate seluruh Block di Content
+        for (let b of draftBlocks) {
+            if (['label', 'subheading', 'p', 'step'].includes(b.type)) {
+                if (b.textId) b.textEn = await translateText(b.textId, targetLang);
+            } else if (b.type === 'image') {
+                if (b.captionId) b.captionEn = await translateText(b.captionId, targetLang);
+            } else if (b.type === 'table') {
+                if (b.rowsId && b.rowsId.length) {
+                    const newRowsEn = [];
+                    for (let row of b.rowsId) {
+                        const newRow = [];
+                        for (let cell of row) {
+                            newRow.push(await translateText(cell, targetLang));
+                        }
+                        newRowsEn.push(newRow);
+                    }
+                    b.rowsEn = newRowsEn;
+                }
+            }
+        }
+        
+        // Render ulang UI agar hasil translate muncul
+        renderBuilder();
+        
+        // Kembalikan state tombol
+        btn.disabled = false;
+        btn.textContent = '✨ Auto Translate';
+        toast('Translate completed!');
+    };
+    
+    // Render ulang saat bahasa diganti agar placeholder berubah
+    $('targetLang').addEventListener('change', renderBuilder);
     function renderAll() { initSelects(); renderGuideList(); renderArrangement(); renderFeedbackReport() }
     window.KCStore.subscribe(() => location.reload()); initSelects(); resetCreate(); renderGuideList(); renderArrangement(); initFeedbackReport(); renderFeedbackReport();
   </script>
