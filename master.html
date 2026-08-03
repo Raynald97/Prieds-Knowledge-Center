@@ -1775,11 +1775,11 @@
       return normalizeGuideSearch(values.join(' '));
     }
     function renderPagination(containerId, currentPage, totalPages, totalRows, onChange) { const el = $(containerId); if (!el) return; if (!totalRows) { el.innerHTML = ''; return } el.innerHTML = `<button class="pageBtn" type="button" data-page="${currentPage - 1}" ${currentPage <= 1 ? 'disabled' : ''}>‹ Previous</button><span class="paginationInfo">Page ${currentPage} of ${totalPages} • ${totalRows} result${totalRows === 1 ? '' : 's'}</span><button class="pageBtn" type="button" data-page="${currentPage + 1}" ${currentPage >= totalPages ? 'disabled' : ''}>Next ›</button>`; el.querySelectorAll('[data-page]').forEach(btn => btn.onclick = () => { const next = Number(btn.dataset.page); if (next >= 1 && next <= totalPages) onChange(next) }) }
-    function renderGuideList() { const f = filters(); const query = normalizeGuideSearch(f.title); const rows = allArticles().filter(x => (!query || guideSearchText(x).includes(query)) && inRange(x.topic.createdAt, f.cf, f.ct) && inRange(x.topic.updatedAt, f.uf, f.ut) && (!f.main || x.module.id === f.main) && (!f.page || pageName(x.topic) === f.page) && (!f.editor || (x.topic.editor || '') === f.editor)); const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE)); guidePage = Math.min(guidePage, totalPages); const pageRows = rows.slice((guidePage - 1) * PAGE_SIZE, guidePage * PAGE_SIZE); $('guideRows').innerHTML = rows.length ? pageRows.map(x => `<tr><td>${fmt(x.topic.createdAt)}<div class="muted">Updated: ${fmt(x.topic.updatedAt)}</div></td><td>${esc(x.module.name.id)}</td><td>${esc(pageName(x.topic))}</td><td><strong>${esc(x.topic.title.id)}</strong><div class="muted">${esc(x.topic.title.en)}</div></td><td>${esc(x.topic.editor || '—')}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-menu="${x.module.id}|${x.topic.id}">⋮</button><div class="actionDropdown"><button type="button" data-edit="${x.module.id}|${x.topic.id}">Edit</button><button type="button" data-preview="${x.module.id}|${x.ti}">Preview</button><button type="button" data-split="${x.module.id}|${x.topic.id}">Split Guide</button><button type="button" data-remove="${x.module.id}|${x.topic.id}">Delete</button></div></div></td></tr>`).join('') : `<tr><td colspan="6" class="empty">No guides match the selected filters.</td></tr>`; $('listSummary').innerHTML = `<span>${pageRows.length} guides shown</span><span>${allArticles().length} total guides</span>`; renderPagination('listPagination', guidePage, totalPages, rows.length, next => { guidePage = next; renderGuideList() }); bindListActions() }
+    function renderGuideList() { const f = filters(); const query = normalizeGuideSearch(f.title); const rows = allArticles().filter(x => (!query || guideSearchText(x).includes(query)) && inRange(x.topic.createdAt, f.cf, f.ct) && inRange(x.topic.updatedAt, f.uf, f.ut) && (!f.main || x.module.id === f.main) && (!f.page || pageName(x.topic) === f.page) && (!f.editor || (x.topic.editor || '') === f.editor)); const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE)); guidePage = Math.min(guidePage, totalPages); const pageRows = rows.slice((guidePage - 1) * PAGE_SIZE, guidePage * PAGE_SIZE); $('guideRows').innerHTML = rows.length ? pageRows.map(x => `<tr><td>${fmt(x.topic.createdAt)}<div class="muted">Updated: ${fmt(x.topic.updatedAt)}</div></td><td>${esc(x.module.name.id)}</td><td>${esc(pageName(x.topic))}</td><td><strong>${esc(x.topic.title.id)}</strong><div class="muted">${esc(x.topic.title.en)}</div></td><td>${esc(x.topic.editor || '—')}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-menu="${x.module.id}|${x.topic.id}">⋮</button><div class="actionDropdown"><button type="button" data-edit="${x.module.id}|${x.topic.id}">Edit</button><button type="button"data-duplicate="${x.module.id}|${x.topic.id}">Duplicate</button><button type="button" data-preview="${x.module.id}|${x.ti}">Preview</button><button type="button" data-split="${x.module.id}|${x.topic.id}">Split Guide</button><button type="button" data-remove="${x.module.id}|${x.topic.id}">Delete</button></div></div></td></tr>`).join('') : `<tr><td colspan="6" class="empty">No guides match the selected filters.</td></tr>`; $('listSummary').innerHTML = `<span>${pageRows.length} guides shown</span><span>${allArticles().length} total guides</span>`; renderPagination('listPagination', guidePage, totalPages, rows.length, next => { guidePage = next; renderGuideList() }); bindListActions() }
     function positionActionDropdown(menu) { const trigger = menu.querySelector('.actionMenuBtn'), dropdown = menu.querySelector('.actionDropdown'); if (!trigger || !dropdown) return; const triggerRect = trigger.getBoundingClientRect(), dropdownRect = dropdown.getBoundingClientRect(), gap = 5, pad = 8; let left = triggerRect.right - dropdownRect.width; let top = triggerRect.bottom + gap; if (left < pad) left = pad; if (left + dropdownRect.width > window.innerWidth - pad) left = window.innerWidth - dropdownRect.width - pad; if (top + dropdownRect.height > window.innerHeight - pad && triggerRect.top - dropdownRect.height - gap >= pad) top = triggerRect.top - dropdownRect.height - gap; top = Math.max(pad, Math.min(top, window.innerHeight - dropdownRect.height - pad)); dropdown.style.left = `${Math.round(left)}px`; dropdown.style.top = `${Math.round(top)}px` }
     function closeGuideActionMenus(except = null) { document.querySelectorAll('.actionMenu.open').forEach(menu => { if (menu !== except) { menu.classList.remove('open'); const trigger = menu.querySelector('.actionMenuBtn'), dropdown = menu.querySelector('.actionDropdown'); if (trigger) trigger.setAttribute('aria-expanded', 'false'); if (dropdown) { dropdown.style.left = ''; dropdown.style.top = '' } } }) }
     function toggleActionMenu(button, event) { event.stopPropagation(); const menu = button.closest('.actionMenu'), willOpen = !menu.classList.contains('open'); closeGuideActionMenus(menu); menu.classList.toggle('open', willOpen); button.setAttribute('aria-expanded', String(willOpen)); if (willOpen) positionActionDropdown(menu) }
-    function bindListActions() { const rows = $('guideRows'); rows.querySelectorAll('[data-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); rows.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.edit.split('|'); editGuide(mid, id) }); rows.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, idx] = b.dataset.preview.split('|'); window.open(`index.html#${mid}-${idx}`, '_blank') }); rows.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => { 
+    function bindListActions() { const rows = $('guideRows'); rows.querySelectorAll('[data-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); rows.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.edit.split('|'); editGuide(mid, id) }); rows.querySelectorAll('[data-duplicate]').forEach(b => {b.onclick = () => {closeGuideActionMenus(); const [mid, id] = b.dataset.duplicate.split('|'); duplicateGuide(mid, id) }); rows.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, idx] = b.dataset.preview.split('|'); window.open(`index.html#${mid}-${idx}`, '_blank') }); rows.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => { 
       closeGuideActionMenus(); 
       const [mid, id] = b.dataset.remove.split('|'); 
       const a = allArticles().find(x => x.module.id === mid && x.topic.id === id); 
@@ -1795,6 +1795,105 @@
         successModal('Guide successfully deleted and synchronized with the Knowledge Center.') 
       }) 
     }); rows.querySelectorAll('[data-split]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.split.split('|'); openSplitModal(mid, id); }); if (!document.body.dataset.guideActionOutsideBound) { document.addEventListener('click', () => closeGuideActionMenus()); window.addEventListener('resize', () => closeGuideActionMenus()); window.addEventListener('scroll', () => closeGuideActionMenus(), true); document.body.dataset.guideActionOutsideBound = 'true' } }
+    function duplicateTitle(baseTitle, lang) {const original = String(baseTitle || (lang === 'id' ? 'Panduan' : 'Guide')).trim(); const label = lang === 'id' ? 'Salinan': 'Copy'; const usedTitles = new Set(allArticles().map(x => String(x.topic.title?.[lang] || '').trim().toLowerCase())); let number = 1; let candidate = `${original} (${label})`; while (usedTitles.has(candidate.toLowerCase())) {number += 1; candidate = `${original} (${label} ${number})`;} return candidate;}
+    function duplicateGuide(mid, id) {
+      const current = allArticles().find(
+        x => x.module.id === mid && x.topic.id === id
+      );
+    
+      if (!current) {
+        toast('Guide not found.');
+        return;
+      }
+    
+      confirmModal(
+        `Duplicate “${current.topic.title.id}”? ` +
+        `The copy will be created in the same Main Menu and Page Menu.`,
+    
+        async () => {
+          // Ambil versi data terbaru sebelum melakukan perubahan.
+          state = await window.KCStore.load(
+            window.KC_DEFAULT_DATA
+          );
+    
+          const m = state.data.find(
+            x => x.id === mid
+          );
+    
+          const sourceIndex =
+            m?.topics.findIndex(x => x.id === id) ?? -1;
+    
+          const sourceTopic =
+            sourceIndex >= 0
+              ? m.topics[sourceIndex]
+              : null;
+    
+          if (!m || !sourceTopic) {
+            toast('Guide not found.');
+            return;
+          }
+    
+          // Deep clone agar perubahan salinan tidak memengaruhi guide asli.
+          const copiedTopic = clone(sourceTopic);
+    
+          const stamp = new Date().toISOString();
+    
+          // Buat judul ID dan English yang unik.
+          const titleId = duplicateTitle(
+            sourceTopic.title?.id,
+            'id'
+          );
+    
+          const titleEn = duplicateTitle(
+            sourceTopic.title?.en ||
+            sourceTopic.title?.id,
+            'en'
+          );
+    
+          // Ambil seluruh ID yang telah digunakan.
+          const usedIds = new Set(
+            allArticles().map(x => x.topic.id)
+          );
+    
+          let copiedId = `${sourceTopic.id}-copy`;
+          let number = 2;
+    
+          // Pastikan ID hasil duplicate tidak sama.
+          while (usedIds.has(copiedId)) {
+            copiedId =
+              `${sourceTopic.id}-copy-${number++}`;
+          }
+    
+          // Hanya data identitas dan waktu yang diubah.
+          Object.assign(copiedTopic, {
+            id: copiedId,
+    
+            title: {
+              id: titleId,
+              en: titleEn
+            },
+    
+            createdAt: stamp,
+            updatedAt: stamp
+          });
+    
+          // Letakkan duplicate tepat setelah guide asli.
+          m.topics.splice(
+            sourceIndex + 1,
+            0,
+            copiedTopic
+          );
+    
+          // Simpan ke storage existing.
+          await persist();
+    
+          successModal(
+            `Guide “${sourceTopic.title.id}” ` +
+            `successfully duplicated as “${titleId}”.`
+          );
+        }
+      );
+    }
     function editGuide(mid, id) { const m = state.data.find(x => x.id === mid), t = m?.topics.find(x => x.id === id); if (!t) return; editing = { moduleId: mid, topicId: id }; $('mainMenu').value = mid; $('newMainMenu').value = ''; $('newMainMenu').style.display = 'none'; $('pageMenu').innerHTML = pageOptions(mid, false, true); const pm = pageName(t); if (![...$('pageMenu').options].some(o => o.value === pm)) $('pageMenu').insertAdjacentHTML('afterbegin', `<option value="${esc(pm)}">${esc(pm)}</option>`); $('pageMenu').value = pm; $('newPageMenu').value = ''; syncNewPageMenuField(); $('titleId').value = t.title.id; $('titleEn').value = t.title.en; let tmId = '', tmEn = ''; if (t.tabMenu) { if (typeof t.tabMenu === 'string') { tmId = t.tabMenu; tmEn = t.tabMenu; } else { tmId = t.tabMenu.id || ''; tmEn = t.tabMenu.en || tmId; } } $('tabMenuId').value = tmId; $('tabMenuEn').value = tmEn; $('editor').value = t.editor || ''; $('purposeId').value = t.purpose?.id || ''; $('purposeEn').value = t.purpose?.en || ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; draftBlocks = existingToDraft(t); renderBuilder(); $('submitGuide').textContent = 'Update Guide'; $('cancelEdit').style.display = 'inline-flex'; $('createSubmitBar').classList.add('editCtaFixed'); switchTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
     ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1 }); function openFilterDrawer() { $('filterDrawerOverlay').classList.add('show') } function closeFilterDrawer() { $('filterDrawerOverlay').classList.remove('show') } $('applyFilter').onclick = () => { guidePage = 1; renderGuideList() }; $('moreFilter').onclick = openFilterDrawer; $('closeFilterDrawer').onclick = closeFilterDrawer; $('filterDrawerOverlay').onclick = e => { if (e.target === $('filterDrawerOverlay')) closeFilterDrawer() }; $('applyMoreFilter').onclick = () => { guidePage = 1; renderGuideList(); closeFilterDrawer() }; $('resetFilter').onclick = () => { ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach(id => $(id).value = ''); $('filterMain').value = ''; $('filterPage').innerHTML = pageOptions('', true); $('filterEditor').value = ''; guidePage = 1; renderGuideList() }; $('filterTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { guidePage = 1; renderGuideList() } });
     function groups() { const map = new Map(); allArticles().forEach(x => { const key = x.module.id + '||' + pageName(x.topic); if (!map.has(key)) map.set(key, { module: x.module, page: pageName(x.topic), items: [] }); map.get(key).items.push(x) }); return [...map.values()] }
