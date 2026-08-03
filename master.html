@@ -1312,6 +1312,313 @@
         font-size: 16px
       }
     }
+
+
+    /* Guide List — Import Excel */
+    .importExcelBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-color: var(--primary);
+      color: #087FA4;
+      font-weight: 750;
+      white-space: nowrap
+    }
+
+    .importExcelBtn:hover {
+      background: #EEF9FC
+    }
+
+    .importModalOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 180;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(18, 31, 37, .56)
+    }
+
+    .importModalOverlay.show {
+      display: flex
+    }
+
+    .importModal {
+      position: relative;
+      width: min(1480px, 98vw);
+      min-height: 390px;
+      max-height: 92vh;
+      overflow: auto;
+      padding: 62px 42px 36px;
+      border-radius: 7px;
+      background: #fff;
+      box-shadow: 0 22px 64px rgba(0, 0, 0, .28)
+    }
+
+    .importModalClose {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: #E8E8E8;
+      color: #D45212;
+      font-size: 34px;
+      font-weight: 300;
+      line-height: 1
+    }
+
+    .importModalToolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 28px
+    }
+
+    .importChooseBtn,
+    .importTemplateBtn,
+    .importSaveBtn {
+      min-height: 45px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 700
+    }
+
+    .importChooseBtn {
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 3px 8px rgba(40, 184, 226, .25);
+      cursor: pointer
+    }
+
+    .importChooseBtn:hover {
+      background: var(--primary-dark)
+    }
+
+    .importTemplateBtn {
+      border: 2px solid var(--primary);
+      background: #fff;
+      color: #14A9D4
+    }
+
+    .importTemplateBtn:hover {
+      background: #EEF9FC
+    }
+
+    .importSaveBtn {
+      border: 1px solid #BFC5C8;
+      background: #DCDCDC;
+      color: #9B9B9B
+    }
+
+    .importSaveBtn:not(:disabled) {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff
+    }
+
+    .importSaveBtn:not(:disabled):hover {
+      background: var(--primary-dark)
+    }
+
+    .importSaveBtn:disabled {
+      cursor: not-allowed
+    }
+
+    .importEmptyState {
+      min-height: 215px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 38px;
+      padding: 30px;
+      color: #666
+    }
+
+    .importEmptyIcon {
+      position: relative;
+      width: 116px;
+      height: 104px;
+      flex: 0 0 auto
+    }
+
+    .importEmptyIcon::before {
+      content: '';
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 0;
+      height: 28px;
+      border-radius: 12px 12px 0 0;
+      background: var(--primary)
+    }
+
+    .importEmptyIcon::after {
+      content: '';
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 35px;
+      bottom: 0;
+      border-radius: 0 0 12px 12px;
+      background: linear-gradient(90deg, var(--primary) 0 28%, transparent 28% 36%, var(--primary) 36% 64%, transparent 64% 72%, var(--primary) 72% 100%)
+    }
+
+    .importEmptyCopy h2 {
+      margin: 0 0 18px;
+      color: #666;
+      font-size: clamp(24px, 2.3vw, 34px);
+      font-weight: 450
+    }
+
+    .importEmptyCopy p {
+      margin: 0;
+      color: #777;
+      font-size: clamp(16px, 1.6vw, 22px)
+    }
+
+    .importFileSummary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border: 1px solid #CDE3EA;
+      border-radius: 7px;
+      background: #F5FBFD
+    }
+
+    .importFileSummary strong {
+      display: block;
+      color: #176F8A;
+      font-size: 13px
+    }
+
+    .importFileSummary span {
+      display: block;
+      margin-top: 3px;
+      color: #67777E;
+      font-size: 11px
+    }
+
+    .importStats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .importStats b {
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: #E7F8FC;
+      color: #087C9E;
+      font-size: 10px
+    }
+
+    .importPreviewTable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px
+    }
+
+    .importPreviewTable th {
+      padding: 10px 11px;
+      background: #2187A5;
+      color: #fff;
+      text-align: left;
+      white-space: nowrap
+    }
+
+    .importPreviewTable td {
+      padding: 10px 11px;
+      border-bottom: 1px solid #E4EBEE;
+      vertical-align: top
+    }
+
+    .importPreviewTable tr:nth-child(even) {
+      background: #F8FAFB
+    }
+
+    .importStatus {
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800
+    }
+
+    .importStatus.new {
+      background: #E6F8EF;
+      color: #11835A
+    }
+
+    .importStatus.update {
+      background: #FFF5D9;
+      color: #8C6810
+    }
+
+    .importStatus.error {
+      background: #FFF0ED;
+      color: #C14A35
+    }
+
+    .importErrorBox {
+      margin-bottom: 14px;
+      padding: 11px 13px;
+      border: 1px solid #F0B8AE;
+      border-radius: 7px;
+      background: #FFF6F4;
+      color: #B84834;
+      font-size: 12px;
+      line-height: 1.55
+    }
+
+    .importLoading {
+      min-height: 215px;
+      display: grid;
+      place-items: center;
+      color: #60737B;
+      font-size: 14px
+    }
+
+    @media(max-width:720px) {
+      .importModal {
+        padding: 70px 18px 24px
+      }
+
+      .importModalToolbar {
+        align-items: stretch;
+        flex-direction: column
+      }
+
+      .importChooseBtn,
+      .importTemplateBtn,
+      .importSaveBtn {
+        width: 100%
+      }
+
+      .importEmptyState {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px
+      }
+    }
+
   </style>
 </head>
 
@@ -1442,7 +1749,8 @@
           <div class="listFilterBar">
             <div class="field"><label>Title</label><input id="filterTitle" placeholder="Search title"></div>
             <div class="listFilterActions"><button class="primaryBtn" id="applyFilter">Search</button><button
-                class="ghostBtn" id="moreFilter">More Filter</button></div>
+                class="ghostBtn" id="moreFilter">More Filter</button><button class="ghostBtn importExcelBtn"
+                id="openImportExcel" type="button"><span aria-hidden="true">↥</span> Import Excel</button></div>
           </div>
         </div>
         <div class="card">
@@ -1569,12 +1877,35 @@
           class="primaryBtn" id="applyMoreFilter">Apply Filter</button></div>
     </aside>
   </div>
+
+  <div class="importModalOverlay" id="importModalOverlay" aria-hidden="true">
+    <div class="importModal" role="dialog" aria-modal="true" aria-label="Import Guide List from Excel">
+      <button class="importModalClose" id="closeImportExcel" type="button" aria-label="Close import modal">×</button>
+      <div class="importModalToolbar">
+        <label class="importChooseBtn" for="importExcelFile"><span aria-hidden="true">☁</span> Choose a File</label>
+        <input id="importExcelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+        <button class="importTemplateBtn" id="downloadImportTemplate" type="button"><span aria-hidden="true">↧</span> Download Template</button>
+        <button class="importSaveBtn" id="saveGuideImport" type="button" disabled><span aria-hidden="true">➤</span> Save Import</button>
+      </div>
+      <div id="importExcelBody">
+        <div class="importEmptyState">
+          <div class="importEmptyIcon" aria-hidden="true"></div>
+          <div class="importEmptyCopy">
+            <h2>Ooops, haven't input your data!</h2>
+            <p>There is no data about transaction yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modalOverlay" id="modalOverlay">
     <div class="modal" id="modalBox"></div>
   </div>
   <div class="toast" id="toast"></div>
   <script src="knowledge-data.js"></script>
   <script src="knowledge-store.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script type="module">
     let state = await window.KCStore.load(window.KC_DEFAULT_DATA); let pendingAssets = {}; let draftBlocks = []; let editing = null; let dragUid = null; let arrangementContext = null; const PAGE_SIZE = 10; let guidePage = 1; let arrangementPage = 1;
     const $ = id => document.getElementById(id); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const clone = x => JSON.parse(JSON.stringify(x)); const fmt = v => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v)); const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -1896,6 +2227,434 @@
     }
     function editGuide(mid, id) { const m = state.data.find(x => x.id === mid), t = m?.topics.find(x => x.id === id); if (!t) return; editing = { moduleId: mid, topicId: id }; $('mainMenu').value = mid; $('newMainMenu').value = ''; $('newMainMenu').style.display = 'none'; $('pageMenu').innerHTML = pageOptions(mid, false, true); const pm = pageName(t); if (![...$('pageMenu').options].some(o => o.value === pm)) $('pageMenu').insertAdjacentHTML('afterbegin', `<option value="${esc(pm)}">${esc(pm)}</option>`); $('pageMenu').value = pm; $('newPageMenu').value = ''; syncNewPageMenuField(); $('titleId').value = t.title.id; $('titleEn').value = t.title.en; let tmId = '', tmEn = ''; if (t.tabMenu) { if (typeof t.tabMenu === 'string') { tmId = t.tabMenu; tmEn = t.tabMenu; } else { tmId = t.tabMenu.id || ''; tmEn = t.tabMenu.en || tmId; } } $('tabMenuId').value = tmId; $('tabMenuEn').value = tmEn; $('editor').value = t.editor || ''; $('purposeId').value = t.purpose?.id || ''; $('purposeEn').value = t.purpose?.en || ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; draftBlocks = existingToDraft(t); renderBuilder(); $('submitGuide').textContent = 'Update Guide'; $('cancelEdit').style.display = 'inline-flex'; $('createSubmitBar').classList.add('editCtaFixed'); switchTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
     ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1 }); function openFilterDrawer() { $('filterDrawerOverlay').classList.add('show') } function closeFilterDrawer() { $('filterDrawerOverlay').classList.remove('show') } $('applyFilter').onclick = () => { guidePage = 1; renderGuideList() }; $('moreFilter').onclick = openFilterDrawer; $('closeFilterDrawer').onclick = closeFilterDrawer; $('filterDrawerOverlay').onclick = e => { if (e.target === $('filterDrawerOverlay')) closeFilterDrawer() }; $('applyMoreFilter').onclick = () => { guidePage = 1; renderGuideList(); closeFilterDrawer() }; $('resetFilter').onclick = () => { ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach(id => $(id).value = ''); $('filterMain').value = ''; $('filterPage').innerHTML = pageOptions('', true); $('filterEditor').value = ''; guidePage = 1; renderGuideList() }; $('filterTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { guidePage = 1; renderGuideList() } });
+
+
+    // Guide List — Import Excel
+    let importExcelDraft = null;
+
+    function importEmptyHtml() {
+      return `<div class="importEmptyState"><div class="importEmptyIcon" aria-hidden="true"></div><div class="importEmptyCopy"><h2>Ooops, haven't input your data!</h2><p>There is no data about transaction yet</p></div></div>`;
+    }
+
+    function openImportExcelModal() {
+      importExcelDraft = null;
+      $('importExcelFile').value = '';
+      $('saveGuideImport').disabled = true;
+      $('saveGuideImport').innerHTML = '<span aria-hidden="true">➤</span> Save Import';
+      $('importExcelBody').innerHTML = importEmptyHtml();
+      $('importModalOverlay').classList.add('show');
+      $('importModalOverlay').setAttribute('aria-hidden', 'false');
+    }
+
+    function closeImportExcelModal() {
+      $('importModalOverlay').classList.remove('show');
+      $('importModalOverlay').setAttribute('aria-hidden', 'true');
+    }
+
+    function normalizeImportHeader(value) {
+      return String(value ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    }
+
+    function excelCellText(cell) {
+      const value = cell?.value;
+      if (value === null || value === undefined) return '';
+      if (value instanceof Date) return value.toISOString();
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+      if (Array.isArray(value.richText)) return value.richText.map(part => part.text || '').join('');
+      if (value.hyperlink) return String(value.hyperlink || value.text || '');
+      if (value.formula) {
+        const imageMatch = String(value.formula).match(/IMAGE\s*\(\s*["']([^"']+)["']/i);
+        if (imageMatch) return imageMatch[1];
+      }
+      if (value.text !== undefined) return String(value.text ?? '');
+      if (value.result !== undefined && value.result !== null) return String(value.result);
+      return String(value);
+    }
+
+    function findImportColumn(headers, aliases) {
+      const wanted = aliases.map(normalizeImportHeader);
+      const exact = headers.findIndex(header => wanted.includes(header));
+      if (exact >= 0) return exact + 1;
+      const partial = headers.findIndex(header => header && wanted.some(alias => header.includes(alias) || alias.includes(header)));
+      return partial >= 0 ? partial + 1 : 0;
+    }
+
+    function importImageRow(image) {
+      const range = image?.range;
+      if (!range) return 0;
+      if (typeof range === 'string') {
+        const match = range.match(/[A-Z]+(\d+)/i);
+        return match ? Number(match[1]) : 0;
+      }
+      const tl = range.tl || range;
+      if (Number.isFinite(tl.nativeRow)) return Math.floor(tl.nativeRow) + 1;
+      if (Number.isFinite(tl.row)) return Math.floor(tl.row) + 1;
+      return 0;
+    }
+
+    function bytesToBase64(bytes) {
+      const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < source.length; i += chunk) {
+        binary += String.fromCharCode(...source.subarray(i, i + chunk));
+      }
+      return btoa(binary);
+    }
+
+    function excelMediaToDataUrl(media) {
+      if (!media) return '';
+      const extension = String(media.extension || media.type || media.name?.split('.').pop() || 'png').toLowerCase().replace('jpg', 'jpeg');
+      const mime = extension === 'svg' ? 'image/svg+xml' : `image/${extension}`;
+      if (media.base64) return String(media.base64).startsWith('data:') ? String(media.base64) : `data:${mime};base64,${media.base64}`;
+      if (media.buffer) return `data:${mime};base64,${bytesToBase64(media.buffer)}`;
+      return '';
+    }
+
+    function embeddedImagesByRow(workbook, worksheet) {
+      const byRow = new Map();
+      const drawings = typeof worksheet.getImages === 'function' ? worksheet.getImages() : [];
+      const mediaList = workbook.model?.media || [];
+      drawings.forEach(drawing => {
+        const rowNumber = importImageRow(drawing);
+        if (!rowNumber) return;
+        const media = mediaList.find(item => item.index === drawing.imageId || item.index === drawing.imageId + 1)
+          || mediaList[drawing.imageId]
+          || mediaList[Math.max(0, drawing.imageId - 1)]
+          || (typeof workbook.getImage === 'function' ? workbook.getImage(drawing.imageId) : null);
+        const dataUrl = excelMediaToDataUrl(media);
+        if (!dataUrl) return;
+        if (!byRow.has(rowNumber)) byRow.set(rowNumber, []);
+        byRow.get(rowNumber).push(dataUrl);
+      });
+      return byRow;
+    }
+
+    function splitImportedDescription(value) {
+      const text = String(value || '').trim();
+      if (!text) return { purpose: '', content: '' };
+      const marker = /(?:^|\n)\s*DESKRIPSI\s*:\s*/i.exec(text);
+      if (!marker) return { purpose: '', content: text };
+      const before = text.slice(0, marker.index).trim();
+      const afterStart = marker.index + marker[0].length;
+      const after = text.slice(afterStart);
+      const nextSection = /\n\s*(?=(?:✅|LANGKAH(?:-LANGKAH)?\s+DAN\s+HASIL\s*:|[A-Z]\.\s*FLOW\s+PROCESS))/i.exec(after);
+      const purpose = (nextSection ? after.slice(0, nextSection.index) : after).trim();
+      const remainder = (nextSection ? after.slice(nextSection.index) : '').trim();
+      return { purpose, content: [before, remainder].filter(Boolean).join('\n\n') };
+    }
+
+    function importStatusForGuide(guide) {
+      const module = state.data.find(item => item.id === guide.moduleIdHint || String(item.name?.id || '').trim().toLowerCase() === guide.moduleName.toLowerCase());
+      if (!module) return 'new';
+      const existing = module.topics.find(topic => pageName(topic).trim().toLowerCase() === guide.pageName.toLowerCase()
+        && String(topic.title?.id || '').trim().toLowerCase() === guide.titleId.toLowerCase());
+      return existing ? 'update' : 'new';
+    }
+
+    function renderImportPreview() {
+      if (!importExcelDraft) {
+        $('importExcelBody').innerHTML = importEmptyHtml();
+        $('saveGuideImport').disabled = true;
+        return;
+      }
+      const guides = importExcelDraft.guides;
+      const errorHtml = importExcelDraft.errors.length
+        ? `<div class="importErrorBox"><strong>Import validation:</strong><br>${importExcelDraft.errors.map(esc).join('<br>')}</div>`
+        : '';
+      const rows = guides.map((guide, index) => {
+        const status = importStatusForGuide(guide);
+        guide.importStatus = status;
+        return `<tr><td>${index + 1}</td><td>${esc(guide.moduleName)}</td><td>${esc(guide.pageName)}</td><td><strong>${esc(guide.titleId)}</strong><div class="muted">${esc(guide.titleEn)}</div></td><td>${guide.sourceRowCount}</td><td>${guide.imageCount}</td><td><span class="importStatus ${status}">${status === 'update' ? 'Will Update' : 'New Guide'}</span></td></tr>`;
+      }).join('');
+      $('importExcelBody').innerHTML = `${errorHtml}<div class="importFileSummary"><div><strong>${esc(importExcelDraft.fileName)}</strong><span>Sheet: ${esc(importExcelDraft.sheetName)} • Header row ${importExcelDraft.headerRow}</span></div><div class="importStats"><b>${guides.length} guide(s)</b><b>${importExcelDraft.dataRowCount} data row(s)</b><b>${importExcelDraft.imageCount} image(s)</b></div></div><div class="tableWrap"><table class="importPreviewTable"><thead><tr><th>No.</th><th>Main Menu</th><th>Page Menu</th><th>Guide Title</th><th>Rows</th><th>Images</th><th>Import Result</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">No valid guide data found.</td></tr>'}</tbody></table></div>`;
+      $('saveGuideImport').disabled = Boolean(importExcelDraft.errors.length || !guides.length);
+    }
+
+    async function parseGuideImportFile(file) {
+      if (!window.ExcelJS) throw new Error('Excel reader library failed to load. Refresh the page and try again.');
+      if (!file || !/\.xlsx$/i.test(file.name)) throw new Error('Please select an Excel .xlsx file.');
+      const workbook = new window.ExcelJS.Workbook();
+      await workbook.xlsx.load(await file.arrayBuffer());
+      if (!workbook.worksheets.length) throw new Error('The Excel file does not contain a worksheet.');
+
+      let worksheet = null;
+      let headerRow = 0;
+      let headers = [];
+      for (const candidateSheet of workbook.worksheets) {
+        for (let rowNumber = 1; rowNumber <= Math.min(12, candidateSheet.rowCount || 12); rowNumber++) {
+          const row = candidateSheet.getRow(rowNumber);
+          const current = [];
+          for (let column = 1; column <= Math.max(candidateSheet.columnCount || 4, 4); column++) current.push(normalizeImportHeader(excelCellText(row.getCell(column))));
+          const hasModule = current.some(value => ['module name', 'main menu', 'module'].includes(value));
+          const hasPage = current.some(value => ['page name', 'page menu', 'page'].includes(value));
+          const hasDescription = current.some(value => ['step by step description', 'step description', 'description', 'content'].includes(value));
+          const hasImage = current.some(value => ['image', 'attachment', 'screenshot'].includes(value));
+          if (hasModule && hasPage && hasDescription && hasImage) {
+            worksheet = candidateSheet;
+            headerRow = rowNumber;
+            headers = current;
+            break;
+          }
+        }
+        if (worksheet) break;
+      }
+      if (!worksheet || !headerRow) throw new Error('Template columns were not found. Required columns: Module Name, Page Name, Step by Step Description, and Image.');
+
+      const columns = {
+        module: findImportColumn(headers, ['module name', 'main menu', 'module']),
+        page: findImportColumn(headers, ['page name', 'page menu', 'page']),
+        description: findImportColumn(headers, ['step by step description', 'step description', 'description', 'content']),
+        image: findImportColumn(headers, ['image', 'attachment', 'screenshot']),
+        titleId: findImportColumn(headers, ['title bahasa indonesia', 'title id', 'guide title id']),
+        titleEn: findImportColumn(headers, ['title english', 'title en', 'guide title en']),
+        descriptionEn: findImportColumn(headers, ['step by step description english', 'step description english', 'description english', 'content english']),
+        editor: findImportColumn(headers, ['editor', 'pic']),
+        purposeId: findImportColumn(headers, ['fungsi halaman bahasa indonesia', 'page purpose id', 'purpose id']),
+        purposeEn: findImportColumn(headers, ['page purpose english', 'purpose en']),
+        sidebarId: findImportColumn(headers, ['sidebar label id', 'tab menu id']),
+        sidebarEn: findImportColumn(headers, ['sidebar label en', 'tab menu en'])
+      };
+      if (!columns.module || !columns.page || !columns.description || !columns.image) throw new Error('Required columns: Module Name, Page Name, Step by Step Description, and Image.');
+
+      const embedded = embeddedImagesByRow(workbook, worksheet);
+      const groups = new Map();
+      const assets = {};
+      const errors = [];
+      let dataRowCount = 0;
+      let imageCount = 0;
+
+      let lastModuleName = '';
+      let lastPageName = '';
+      for (let rowNumber = headerRow + 1; rowNumber <= worksheet.rowCount; rowNumber++) {
+        const row = worksheet.getRow(rowNumber);
+        const get = column => column ? excelCellText(row.getCell(column)).trim() : '';
+        const rawModuleName = get(columns.module);
+        const rawPageName = get(columns.page);
+        const descriptionId = get(columns.description);
+        const descriptionEn = get(columns.descriptionEn);
+        const imageCell = get(columns.image);
+        const rowImages = embedded.get(rowNumber) || [];
+        if (!rawModuleName && !rawPageName && !descriptionId && !descriptionEn && !imageCell && !rowImages.length) continue;
+        if (rawModuleName) lastModuleName = rawModuleName;
+        if (rawPageName) lastPageName = rawPageName;
+        const moduleName = rawModuleName || lastModuleName;
+        const pageNameValue = rawPageName || lastPageName;
+        dataRowCount++;
+        if (!moduleName || !pageNameValue) {
+          errors.push(`Row ${rowNumber}: Module Name and Page Name are required on the first row of each guide.`);
+          continue;
+        }
+
+        const titleId = get(columns.titleId) || pageNameValue;
+        const titleEn = get(columns.titleEn) || titleId;
+        const key = [moduleName, pageNameValue, titleId].map(value => value.toLowerCase()).join('||');
+        if (!groups.has(key)) {
+          groups.set(key, {
+            moduleName,
+            pageName: pageNameValue,
+            titleId,
+            titleEn,
+            editor: get(columns.editor) || 'Prieds Learning Center',
+            purposeId: get(columns.purposeId),
+            purposeEn: get(columns.purposeEn),
+            sidebarId: get(columns.sidebarId) || pageNameValue,
+            sidebarEn: get(columns.sidebarEn) || get(columns.sidebarId) || pageNameValue,
+            blocksId: [],
+            blocksEn: [],
+            sourceRowCount: 0,
+            imageCount: 0
+          });
+        }
+        const guide = groups.get(key);
+        guide.sourceRowCount++;
+        if (!guide.editor && get(columns.editor)) guide.editor = get(columns.editor);
+
+        const parsedId = splitImportedDescription(descriptionId || descriptionEn);
+        const parsedEn = splitImportedDescription(descriptionEn || descriptionId);
+        if (parsedId.purpose && !guide.purposeId) guide.purposeId = parsedId.purpose;
+        if (parsedEn.purpose && !guide.purposeEn) guide.purposeEn = parsedEn.purpose;
+        if (!guide.purposeEn && guide.purposeId) guide.purposeEn = guide.purposeId;
+        if (parsedId.content || parsedEn.content) {
+          const textId = parsedId.content || parsedEn.content;
+          const textEn = parsedEn.content || parsedId.content;
+          guide.blocksId.push({ type: 'step', text: textId });
+          guide.blocksEn.push({ type: 'step', text: textEn });
+        }
+
+        const imageSources = [...rowImages];
+        if (imageCell) imageSources.push(imageCell);
+        imageSources.forEach((source, imageIndex) => {
+          let asset = source;
+          if (String(source).startsWith('data:image/')) {
+            asset = `import-${Date.now().toString(36)}-${rowNumber}-${imageIndex}-${uid()}`;
+            assets[asset] = source;
+          }
+          guide.blocksId.push({ type: 'image', asset, caption: '', scale: '', align: 'center' });
+          guide.blocksEn.push({ type: 'image', asset, caption: '', scale: '', align: 'center' });
+          guide.imageCount++;
+          imageCount++;
+        });
+      }
+
+      const guides = [...groups.values()].filter(guide => guide.blocksId.length || guide.purposeId || guide.purposeEn);
+      if (!dataRowCount) errors.push('No data rows were found below the template header.');
+      if (!guides.length) errors.push('No valid guides could be created from this file.');
+      return { fileName: file.name, sheetName: worksheet.name, headerRow, dataRowCount, imageCount, guides, assets, errors };
+    }
+
+    async function handleGuideImportFile(file) {
+      $('saveGuideImport').disabled = true;
+      $('importExcelBody').innerHTML = '<div class="importLoading">Reading Excel data and attachments…</div>';
+      try {
+        importExcelDraft = await parseGuideImportFile(file);
+        renderImportPreview();
+      } catch (error) {
+        console.error('Guide import failed:', error);
+        importExcelDraft = null;
+        $('importExcelBody').innerHTML = `<div class="importErrorBox"><strong>Import failed.</strong><br>${esc(error.message || 'The Excel file could not be read.')}</div>${importEmptyHtml()}`;
+        $('saveGuideImport').disabled = true;
+      }
+    }
+
+    function uniqueModuleIdForImport(name, usedIds) {
+      const base = window.KCStore.slugify(name) || 'main-menu';
+      let candidate = base;
+      let number = 2;
+      while (usedIds.has(candidate)) candidate = `${base}-${number++}`;
+      usedIds.add(candidate);
+      return candidate;
+    }
+
+    function uniqueTopicIdForImport(moduleId, title, usedIds) {
+      const base = `${moduleId}-${window.KCStore.slugify(title) || 'guide'}`;
+      let candidate = base;
+      let number = 2;
+      while (usedIds.has(candidate)) candidate = `${base}-${number++}`;
+      usedIds.add(candidate);
+      return candidate;
+    }
+
+    async function saveImportedGuides() {
+      if (!importExcelDraft || importExcelDraft.errors.length || !importExcelDraft.guides.length) return;
+      const button = $('saveGuideImport');
+      button.disabled = true;
+      button.innerHTML = '<span aria-hidden="true">…</span> Saving Import';
+      try {
+        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        const stamp = new Date().toISOString();
+        const usedModuleIds = new Set(state.data.map(module => module.id));
+        const usedTopicIds = new Set(state.data.flatMap(module => module.topics.map(topic => topic.id)));
+        let created = 0;
+        let updated = 0;
+
+        importExcelDraft.guides.forEach(guide => {
+          let module = state.data.find(item => String(item.name?.id || '').trim().toLowerCase() === guide.moduleName.toLowerCase() || item.id === window.KCStore.slugify(guide.moduleName));
+          if (!module) {
+            module = { id: uniqueModuleIdForImport(guide.moduleName, usedModuleIds), name: { id: guide.moduleName, en: guide.moduleName }, topics: [] };
+            state.data.push(module);
+          }
+          const existing = module.topics.find(topic => pageName(topic).trim().toLowerCase() === guide.pageName.toLowerCase()
+            && String(topic.title?.id || '').trim().toLowerCase() === guide.titleId.toLowerCase());
+          const topicData = {
+            title: { id: guide.titleId, en: guide.titleEn || guide.titleId },
+            tabMenu: { id: guide.sidebarId || guide.pageName, en: guide.sidebarEn || guide.sidebarId || guide.pageName },
+            group: null,
+            pageMenu: { id: guide.pageName, en: guide.pageName },
+            source: 'Knowledge Center',
+            editor: guide.editor || 'Prieds Learning Center',
+            purpose: { id: guide.purposeId || '', en: guide.purposeEn || guide.purposeId || '' },
+            updatedAt: stamp,
+            blocks: { id: clone(guide.blocksId), en: clone(guide.blocksEn) }
+          };
+          if (existing) {
+            Object.assign(existing, topicData);
+            updated++;
+          } else {
+            module.topics.push({ id: uniqueTopicIdForImport(module.id, guide.titleId, usedTopicIds), createdAt: stamp, ...topicData });
+            created++;
+          }
+        });
+
+        pendingAssets = { ...pendingAssets, ...importExcelDraft.assets };
+        const saved = await persist();
+        if (!saved) throw new Error('Imported data could not be saved.');
+        closeImportExcelModal();
+        guidePage = 1;
+        switchTab('list');
+        successModal(`${created} guide(s) created and ${updated} guide(s) updated from Excel.`);
+        importExcelDraft = null;
+      } catch (error) {
+        console.error('Save guide import failed:', error);
+        toast(error.message || 'Import data gagal disimpan.');
+        button.disabled = false;
+        button.innerHTML = '<span aria-hidden="true">➤</span> Save Import';
+      }
+    }
+
+    async function downloadGuideImportTemplate() {
+      if (!window.ExcelJS) {
+        toast('Excel template library failed to load.');
+        return;
+      }
+      const workbook = new window.ExcelJS.Workbook();
+      workbook.creator = 'Prieds Knowledge Center Admin';
+      const worksheet = workbook.addWorksheet('Guide Import');
+      worksheet.columns = [
+        { header: 'Module Name', key: 'module', width: 28 },
+        { header: 'Page Name', key: 'page', width: 30 },
+        { header: 'Step by Step Description', key: 'description', width: 90 },
+        { header: 'Image', key: 'image', width: 24 }
+      ];
+      worksheet.addRows([
+        { module: 'Master', page: 'Product Management', description: 'DESKRIPSI:\nHalaman ini digunakan untuk mengelola data produk.', image: '' },
+        { module: 'Master', page: 'Product Management', description: 'LANGKAH-LANGKAH DAN HASIL:\n1. Buka menu Master lalu pilih Product Management.', image: '' },
+        { module: 'Master', page: 'Product Management', description: '2. Klik Create Product, lengkapi data, lalu klik Submit.', image: 'Tempel gambar pada cell ini atau isi URL/path gambar.' }
+      ]);
+      worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+      worksheet.autoFilter = 'A1:D1';
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2187A5' } };
+      worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+      worksheet.eachRow((row, rowNumber) => {
+        row.alignment = { vertical: 'top', wrapText: true };
+        if (rowNumber > 1) row.height = 42;
+      });
+      const instruction = workbook.addWorksheet('Instructions');
+      instruction.getColumn(1).width = 110;
+      instruction.addRows([
+        ['IMPORT GUIDE LIST — INSTRUCTIONS'],
+        ['1. Do not rename the four columns in the Guide Import sheet.'],
+        ['2. Rows with the same Module Name and Page Name are combined into one guide.'],
+        ['3. A row beginning with DESKRIPSI: becomes Page Purpose. Other descriptions become Step content.'],
+        ['4. Paste an image in the Image column on the same row as its description, or enter an image URL/path.'],
+        ['5. Existing guides with the same Module, Page, and Title are updated; other guides are created.']
+      ]);
+      instruction.getRow(1).font = { bold: true, size: 14 };
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Prieds-Knowledge-Center-Guide-Import-Template.xlsx';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    $('openImportExcel').onclick = openImportExcelModal;
+    $('closeImportExcel').onclick = closeImportExcelModal;
+    $('importModalOverlay').onclick = event => { if (event.target === $('importModalOverlay')) closeImportExcelModal(); };
+    $('importExcelFile').onchange = event => { const file = event.target.files?.[0]; if (file) handleGuideImportFile(file); };
+    $('downloadImportTemplate').onclick = downloadGuideImportTemplate;
+    $('saveGuideImport').onclick = saveImportedGuides;
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('importModalOverlay').classList.contains('show')) closeImportExcelModal(); });
+
+
     function groups() { const map = new Map(); allArticles().forEach(x => { const key = x.module.id + '||' + pageName(x.topic); if (!map.has(key)) map.set(key, { module: x.module, page: pageName(x.topic), items: [] }); map.get(key).items.push(x) }); return [...map.values()] }
     function renderArrangement() { const main = $('arrMain').value, page = $('arrPage').value; const gs = groups().filter(g => (!main || g.module.id === main) && (!page || g.page === page)); const totalPages = Math.max(1, Math.ceil(gs.length / PAGE_SIZE)); arrangementPage = Math.min(arrangementPage, totalPages); const pageGroups = gs.slice((arrangementPage - 1) * PAGE_SIZE, arrangementPage * PAGE_SIZE); $('arrRows').innerHTML = gs.length ? pageGroups.map(g => `<tr><td>${esc(g.module.name.id)}</td><td>${esc(g.page)}</td><td>${g.items.length}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-arr-menu="${g.module.id}|${esc(g.page)}">⋮</button><div class="actionDropdown"><button type="button" data-setup="${g.module.id}|${esc(g.page)}">Setup</button></div></div></td></tr>`).join('') : `<tr><td colspan="4" class="empty">No arrangement group found.</td></tr>`; renderPagination('arrPagination', arrangementPage, totalPages, gs.length, next => { arrangementPage = next; renderArrangement() }); $('arrRows').querySelectorAll('[data-arr-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); $('arrRows').querySelectorAll('[data-setup]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const p = b.dataset.setup.split('|'); openArrangement(p[0], p.slice(1).join('|')) }) }
     $('arrSearch').onclick = () => { arrangementPage = 1; renderArrangement() };
