@@ -673,6 +673,8 @@ const CHAT_UI={
 const FEEDBACK_STORE_KEY='prieds_kc_ai_feedback_v1';
 const FEEDBACK_CHANNEL='prieds-kc-feedback';
 const CHAT_SESSION_KEY='prieds_kc_article_chat_v4';
+const AI_QUESTION_STORE_KEY='prieds_kc_ai_question_log_v1';
+const AI_QUESTION_CHANNEL='prieds-kc-ai-questions';
 const NOT_FOUND_ANSWER='Maaf, saya tidak menemukan informasi tersebut pada artikel ini.';
 const chatText=k=>CHAT_UI[lang]?.[k]||CHAT_UI.id[k]||k;
 let aiSession=null;
@@ -1039,7 +1041,38 @@ function renderMarkdown(markdown){
 }
 function createSession(){return{id:'CHAT-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase(),startedAt:new Date().toISOString(),endedAt:null,language:'id',messages:[]}}
 function readChatSession(){try{const saved=JSON.parse(sessionStorage.getItem(CHAT_SESSION_KEY)||'null');return saved&&Array.isArray(saved.messages)?saved:null}catch(_){return null}}
-function persistChatSession(){try{sessionStorage.setItem(CHAT_SESSION_KEY,JSON.stringify(aiSession))}catch(error){console.warn('Chat history could not be saved:',error)}}
+function persistChatSession(){
+  try{
+    sessionStorage.setItem(CHAT_SESSION_KEY,JSON.stringify(aiSession));
+  }catch(error){
+    console.warn('Chat history could not be saved:',error);
+  }
+
+  try{
+    const stored=JSON.parse(localStorage.getItem(AI_QUESTION_STORE_KEY)||'[]');
+    const sessions=Array.isArray(stored)?stored:[];
+    const sharedSession={
+      ...aiSession,
+      updatedAt:new Date().toISOString(),
+      articleContext:typeof currentArticleContext==='function'?currentArticleContext():null
+    };
+    const existingIndex=sessions.findIndex(item=>item&&item.id===sharedSession.id);
+
+    if(existingIndex>=0)sessions[existingIndex]=sharedSession;
+    else sessions.unshift(sharedSession);
+
+    localStorage.setItem(AI_QUESTION_STORE_KEY,JSON.stringify(sessions.slice(0,300)));
+
+    try{
+      const channel=new BroadcastChannel(AI_QUESTION_CHANNEL);
+      channel.postMessage({type:'question-log-updated',sessionId:sharedSession.id});
+      channel.close();
+    }catch(_){}
+  }catch(error){
+    console.warn('Shared Tanya AI log could not be saved:',error);
+  }
+}
+
 function renderAssistantExtras(message,messageIndex){
   const confidence=message.confidence;
   const meta=confidence?`<div class="aiAnswerMeta"><span class="aiConfidence ${confidence.className}">${escapeHtml(chatText('confidence'))}: ${confidence.value}% • ${escapeHtml(confidence.label)}</span><div class="aiAnswerActions"><button class="aiAnswerAction" type="button" data-ai-copy="${messageIndex}">${escapeHtml(chatText('copy'))}</button><button class="aiAnswerAction" type="button" data-ai-regenerate="${messageIndex}">${escapeHtml(chatText('regenerate'))}</button></div></div>`:'';
