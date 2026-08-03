@@ -2335,6 +2335,20 @@
       return byRow;
     }
 
+    function splitImportedDescription(value) {
+      const text = String(value || '').trim();
+      if (!text) return { purpose: '', content: '' };
+      const marker = /(?:^|\n)\s*DESKRIPSI\s*:\s*/i.exec(text);
+      if (!marker) return { purpose: '', content: text };
+      const before = text.slice(0, marker.index).trim();
+      const afterStart = marker.index + marker[0].length;
+      const after = text.slice(afterStart);
+      const nextSection = /\n\s*(?=(?:✅|LANGKAH(?:-LANGKAH)?\s+DAN\s+HASIL\s*:|[A-Z]\.\s*FLOW\s+PROCESS))/i.exec(after);
+      const purpose = (nextSection ? after.slice(0, nextSection.index) : after).trim();
+      const remainder = (nextSection ? after.slice(nextSection.index) : '').trim();
+      return { purpose, content: [before, remainder].filter(Boolean).join('\n\n') };
+    }
+
     function importStatusForGuide(guide) {
       const module = state.data.find(item => item.id === guide.moduleIdHint || String(item.name?.id || '').trim().toLowerCase() === guide.moduleName.toLowerCase());
       if (!module) return 'new';
@@ -2367,28 +2381,32 @@
       if (!file || !/\.xlsx$/i.test(file.name)) throw new Error('Please select an Excel .xlsx file.');
       const workbook = new window.ExcelJS.Workbook();
       await workbook.xlsx.load(await file.arrayBuffer());
-      const worksheet = workbook.worksheets[0];
-      if (!worksheet) throw new Error('The Excel file does not contain a worksheet.');
+      if (!workbook.worksheets.length) throw new Error('The Excel file does not contain a worksheet.');
 
+      let worksheet = null;
       let headerRow = 0;
       let headers = [];
-      for (let rowNumber = 1; rowNumber <= Math.min(12, worksheet.rowCount || 12); rowNumber++) {
-        const row = worksheet.getRow(rowNumber);
-        const current = [];
-        for (let column = 1; column <= Math.max(worksheet.columnCount || 5, 5); column++) current.push(normalizeImportHeader(excelCellText(row.getCell(column))));
-        const hasModule = current.some(value => ['module name', 'main menu', 'module'].includes(value));
-        const hasPage = current.some(value => ['page name', 'page menu', 'page'].includes(value));
-        const hasDescription = current.some(value => ['step by step description', 'step description', 'description', 'content'].includes(value));
-        if (hasModule && hasPage && hasDescription) {
-          headerRow = rowNumber;
-          headers = current;
-          break;
+      for (const candidateSheet of workbook.worksheets) {
+        for (let rowNumber = 1; rowNumber <= Math.min(12, candidateSheet.rowCount || 12); rowNumber++) {
+          const row = candidateSheet.getRow(rowNumber);
+          const current = [];
+          for (let column = 1; column <= Math.max(candidateSheet.columnCount || 4, 4); column++) current.push(normalizeImportHeader(excelCellText(row.getCell(column))));
+          const hasModule = current.some(value => ['module name', 'main menu', 'module'].includes(value));
+          const hasPage = current.some(value => ['page name', 'page menu', 'page'].includes(value));
+          const hasDescription = current.some(value => ['step by step description', 'step description', 'description', 'content'].includes(value));
+          const hasImage = current.some(value => ['image', 'attachment', 'screenshot'].includes(value));
+          if (hasModule && hasPage && hasDescription && hasImage) {
+            worksheet = candidateSheet;
+            headerRow = rowNumber;
+            headers = current;
+            break;
+          }
         }
+        if (worksheet) break;
       }
-      if (!headerRow) throw new Error('Template columns were not found. Use Download Template and keep the headers unchanged.');
+      if (!worksheet || !headerRow) throw new Error('Template columns were not found. Required columns: Module Name, Page Name, Step by Step Description, and Image.');
 
       const columns = {
-        index: findImportColumn(headers, ['index', 'no', 'number']),
         module: findImportColumn(headers, ['module name', 'main menu', 'module']),
         page: findImportColumn(headers, ['page name', 'page menu', 'page']),
         description: findImportColumn(headers, ['step by step description', 'step description', 'description', 'content']),
@@ -2402,7 +2420,7 @@
         sidebarId: findImportColumn(headers, ['sidebar label id', 'tab menu id']),
         sidebarEn: findImportColumn(headers, ['sidebar label en', 'tab menu en'])
       };
-      if (!columns.module || !columns.page || !columns.description) throw new Error('Required columns: Module Name, Page Name, and Step by Step Description.');
+      if (!columns.module || !columns.page || !columns.description || !columns.image) throw new Error('Required columns: Module Name, Page Name, Step by Step Description, and Image.');
 
       const embedded = embeddedImagesByRow(workbook, worksheet);
       const groups = new Map();
@@ -2411,19 +2429,25 @@
       let dataRowCount = 0;
       let imageCount = 0;
 
+      let lastModuleName = '';
+      let lastPageName = '';
       for (let rowNumber = headerRow + 1; rowNumber <= worksheet.rowCount; rowNumber++) {
         const row = worksheet.getRow(rowNumber);
         const get = column => column ? excelCellText(row.getCell(column)).trim() : '';
-        const moduleName = get(columns.module);
-        const pageNameValue = get(columns.page);
+        const rawModuleName = get(columns.module);
+        const rawPageName = get(columns.page);
         const descriptionId = get(columns.description);
         const descriptionEn = get(columns.descriptionEn);
         const imageCell = get(columns.image);
         const rowImages = embedded.get(rowNumber) || [];
-        if (!moduleName && !pageNameValue && !descriptionId && !descriptionEn && !imageCell && !rowImages.length) continue;
+        if (!rawModuleName && !rawPageName && !descriptionId && !descriptionEn && !imageCell && !rowImages.length) continue;
+        if (rawModuleName) lastModuleName = rawModuleName;
+        if (rawPageName) lastPageName = rawPageName;
+        const moduleName = rawModuleName || lastModuleName;
+        const pageNameValue = rawPageName || lastPageName;
         dataRowCount++;
         if (!moduleName || !pageNameValue) {
-          errors.push(`Row ${rowNumber}: Module Name and Page Name are required.`);
+          errors.push(`Row ${rowNumber}: Module Name and Page Name are required on the first row of each guide.`);
           continue;
         }
 
@@ -2451,13 +2475,14 @@
         guide.sourceRowCount++;
         if (!guide.editor && get(columns.editor)) guide.editor = get(columns.editor);
 
-        const descriptionMarker = descriptionId.match(/^\s*DESKRIPSI\s*:\s*([\s\S]*)$/i);
-        if (descriptionMarker) {
-          if (!guide.purposeId) guide.purposeId = descriptionMarker[1].trim();
-          if (!guide.purposeEn) guide.purposeEn = descriptionEn.replace(/^\s*DESCRIPTION\s*:\s*/i, '').trim() || guide.purposeId;
-        } else if (descriptionId || descriptionEn) {
-          const textId = descriptionId || descriptionEn;
-          const textEn = descriptionEn || descriptionId;
+        const parsedId = splitImportedDescription(descriptionId || descriptionEn);
+        const parsedEn = splitImportedDescription(descriptionEn || descriptionId);
+        if (parsedId.purpose && !guide.purposeId) guide.purposeId = parsedId.purpose;
+        if (parsedEn.purpose && !guide.purposeEn) guide.purposeEn = parsedEn.purpose;
+        if (!guide.purposeEn && guide.purposeId) guide.purposeEn = guide.purposeId;
+        if (parsedId.content || parsedEn.content) {
+          const textId = parsedId.content || parsedEn.content;
+          const textEn = parsedEn.content || parsedId.content;
           guide.blocksId.push({ type: 'step', text: textId });
           guide.blocksEn.push({ type: 'step', text: textEn });
         }
@@ -2581,19 +2606,18 @@
       workbook.creator = 'Prieds Knowledge Center Admin';
       const worksheet = workbook.addWorksheet('Guide Import');
       worksheet.columns = [
-        { header: 'index', key: 'index', width: 10 },
         { header: 'Module Name', key: 'module', width: 28 },
         { header: 'Page Name', key: 'page', width: 30 },
         { header: 'Step by Step Description', key: 'description', width: 90 },
         { header: 'Image', key: 'image', width: 24 }
       ];
       worksheet.addRows([
-        { index: 0, module: 'Master', page: 'Product Management', description: 'DESKRIPSI:\nHalaman ini digunakan untuk mengelola data produk.', image: '' },
-        { index: 1, module: 'Master', page: 'Product Management', description: 'LANGKAH-LANGKAH DAN HASIL:\n1. Buka menu Master lalu pilih Product Management.', image: '' },
-        { index: 2, module: 'Master', page: 'Product Management', description: '2. Klik Create Product, lengkapi data, lalu klik Submit.', image: 'Tempel gambar pada cell ini atau isi URL/path gambar.' }
+        { module: 'Master', page: 'Product Management', description: 'DESKRIPSI:\nHalaman ini digunakan untuk mengelola data produk.', image: '' },
+        { module: 'Master', page: 'Product Management', description: 'LANGKAH-LANGKAH DAN HASIL:\n1. Buka menu Master lalu pilih Product Management.', image: '' },
+        { module: 'Master', page: 'Product Management', description: '2. Klik Create Product, lengkapi data, lalu klik Submit.', image: 'Tempel gambar pada cell ini atau isi URL/path gambar.' }
       ]);
       worksheet.views = [{ state: 'frozen', ySplit: 1 }];
-      worksheet.autoFilter = 'A1:E1';
+      worksheet.autoFilter = 'A1:D1';
       worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
       worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2187A5' } };
       worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
@@ -2605,7 +2629,7 @@
       instruction.getColumn(1).width = 110;
       instruction.addRows([
         ['IMPORT GUIDE LIST — INSTRUCTIONS'],
-        ['1. Do not rename the five columns in the Guide Import sheet.'],
+        ['1. Do not rename the four columns in the Guide Import sheet.'],
         ['2. Rows with the same Module Name and Page Name are combined into one guide.'],
         ['3. A row beginning with DESKRIPSI: becomes Page Purpose. Other descriptions become Step content.'],
         ['4. Paste an image in the Image column on the same row as its description, or enter an image URL/path.'],
