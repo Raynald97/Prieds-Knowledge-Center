@@ -621,15 +621,26 @@
 
     .arrangeToolbar {
       display: grid;
-      grid-template-columns: 240px 240px max-content;
+      grid-template-columns: 240px 240px minmax(0, 1fr);
       gap: 10px;
       align-items: end
     }
 
+    .arrangeActions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
     .arrangeToolbar #arrSearch {
       width: max-content;
-      min-width: 92px;
-      justify-self: start
+      min-width: 92px
+    }
+
+    .tocDeleteBtn:disabled {
+      opacity: .42;
+      cursor: not-allowed
     }
 
     .modalOverlay {
@@ -1779,8 +1790,12 @@
         <div class="card">
           <div class="arrangeToolbar">
             <div class="field"><label>Main Menu</label><select id="arrMain"></select></div>
-            <div class="field"><label>Page Menu</label><select id="arrPage"></select></div><button class="primaryBtn"
-              id="arrSearch">Search</button>
+            <div class="field"><label>Page Menu</label><select id="arrPage"></select></div>
+            <div class="arrangeActions">
+              <button class="primaryBtn" id="arrSearch">Search</button>
+              <button class="dangerBtn tocDeleteBtn" id="deleteTocPage" type="button" disabled>Delete Page Menu</button>
+              <button class="dangerBtn tocDeleteBtn" id="deleteTocMain" type="button" disabled>Delete Main Menu</button>
+            </div>
           </div>
         </div>
         <div class="card">
@@ -1906,25 +1921,128 @@
   <script src="knowledge-data.js"></script>
   <script src="knowledge-store.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script type="module">
     let state = await window.KCStore.load(window.KC_DEFAULT_DATA); let pendingAssets = {}; let draftBlocks = []; let editing = null; let dragUid = null; let arrangementContext = null; const PAGE_SIZE = 10; let guidePage = 1; let arrangementPage = 1;
     const $ = id => document.getElementById(id); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const clone = x => JSON.parse(JSON.stringify(x)); const fmt = v => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v)); const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const SHARED_AI_REPORT_ASSET_KEY = '__prieds_kc_ai_report_v1';
+    const SHARED_AI_REPORT_LIMIT = 300;
+    let sharedAiReportCache = { questions: [], feedback: [], updatedAt: null };
+    let sharedReportRefreshPromise = null;
+
+    function utf8ToBase64(value) {
+      const bytes = new TextEncoder().encode(String(value || ''));
+      let binary = '';
+      const chunk = 0x8000;
+      for (let index = 0; index < bytes.length; index += chunk) binary += String.fromCharCode(...bytes.subarray(index, index + chunk));
+      return btoa(binary);
+    }
+
+    function base64ToUtf8(value) {
+      const binary = atob(String(value || ''));
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    function normalizeSharedAiReport(value) {
+      const report = value && typeof value === 'object' ? value : {};
+      return {
+        questions: Array.isArray(report.questions) ? report.questions.slice(0, SHARED_AI_REPORT_LIMIT) : [],
+        feedback: Array.isArray(report.feedback) ? report.feedback.slice(0, SHARED_AI_REPORT_LIMIT) : [],
+        updatedAt: report.updatedAt || null
+      };
+    }
+
+    function sharedAiReportFromState(currentState = state) {
+      if (currentState?.aiReport && typeof currentState.aiReport === 'object') return normalizeSharedAiReport(currentState.aiReport);
+      const encoded = currentState?.assets?.[SHARED_AI_REPORT_ASSET_KEY];
+      if (!encoded) return normalizeSharedAiReport(null);
+      try {
+        const payload = String(encoded).startsWith('data:application/json;base64,') ? String(encoded).split(',').slice(1).join(',') : String(encoded);
+        return normalizeSharedAiReport(JSON.parse(base64ToUtf8(payload)));
+      } catch (error) {
+        console.warn('Shared Tanya AI report could not be decoded:', error);
+        return normalizeSharedAiReport(null);
+      }
+    }
+
+    function writeSharedAiReportToState(currentState, report) {
+      const normalized = normalizeSharedAiReport({ ...report, updatedAt: new Date().toISOString() });
+      currentState.aiReport = normalized;
+      currentState.assets = { ...(currentState.assets || {}), [SHARED_AI_REPORT_ASSET_KEY]: `data:application/json;base64,${utf8ToBase64(JSON.stringify(normalized))}` };
+      return normalized;
+    }
+
+    function knowledgeContentFingerprint(currentState) {
+      const assets = { ...(currentState?.assets || {}) };
+      delete assets[SHARED_AI_REPORT_ASSET_KEY];
+      return JSON.stringify({ data: currentState?.data || [], assets });
+    }
+
+    let knowledgeFingerprint = knowledgeContentFingerprint(state);
+    sharedAiReportCache = sharedAiReportFromState(state);
+
+    async function refreshSharedState({ refreshGuides = false } = {}) {
+      if (sharedReportRefreshPromise) return sharedReportRefreshPromise;
+      sharedReportRefreshPromise = (async () => {
+        try {
+          const latest = await window.KCStore.load(window.KC_DEFAULT_DATA);
+          sharedAiReportCache = sharedAiReportFromState(latest);
+          if (refreshGuides || knowledgeContentFingerprint(latest) !== knowledgeFingerprint) {
+            state = latest;
+            knowledgeFingerprint = knowledgeContentFingerprint(state);
+          }
+          return latest;
+        } catch (error) {
+          console.warn('Shared Knowledge Center data could not be refreshed:', error);
+          return state;
+        } finally {
+          sharedReportRefreshPromise = null;
+        }
+      })();
+      return sharedReportRefreshPromise;
+    }
+
     function allAssets() { return { ...window.KC_DEFAULT_ASSETS, ...(state.assets || {}), ...pendingAssets } }
     function allArticles() { return state.data.flatMap((m, mi) => m.topics.map((t, ti) => ({ module: m, topic: t, mi, ti }))) }
     function pageName(t, lang = 'id') { return t.pageMenu?.[lang] || t.pageMenu?.id || t.pageMenu?.en || 'General' }
     function toast(msg) { $('toast').textContent = msg; $('toast').classList.add('show'); clearTimeout(window.__tt); window.__tt = setTimeout(() => $('toast').classList.remove('show'), 1800) }
     function setSynced(label = 'Synced') { $('syncStatus').textContent = label }
-    async function persist(message) { setSynced('Saving…'); try { state.assets = { ...(state.assets || {}), ...pendingAssets }; state = await window.KCStore.save(state); pendingAssets = {}; setSynced('Synced'); if (message) toast(message); renderAll(); return true } catch (error) { console.error('Knowledge Center storage save failed:', error); setSynced('Save failed'); toast('Data gagal disimpan. Periksa knowledge-store.js dan storage browser.'); return false } }
+    async function persist(message) {
+      setSynced('Saving…');
+      try {
+        state.assets = { ...(state.assets || {}), ...pendingAssets };
+        // Ambil laporan terbaru terlebih dahulu agar penyimpanan guide tidak menimpa data Tanya AI dari perangkat lain.
+        try {
+          const latestReportState = await window.KCStore.load(window.KC_DEFAULT_DATA);
+          sharedAiReportCache = sharedAiReportFromState(latestReportState);
+        } catch (_) { }
+        if (sharedAiReportCache) writeSharedAiReportToState(state, sharedAiReportCache);
+        state = await window.KCStore.save(state);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+        pendingAssets = {};
+        setSynced('Synced');
+        if (message) toast(message);
+        renderAll();
+        return true;
+      } catch (error) {
+        console.error('Knowledge Center storage save failed:', error);
+        setSynced('Save failed');
+        toast('Data gagal disimpan. Periksa knowledge-store.js dan storage browser.');
+        return false;
+      }
+    }
     function moduleOptions(includeAll = false, includeNew = false) { let h = includeAll ? '<option value="">All Main Menu</option>' : ''; h += state.data.map(m => `<option value="${esc(m.id)}">${esc(m.name.id)}</option>`).join(''); if (includeNew) h += '<option value="__new__">+ Create New Main Menu</option>'; return h }
     function uniquePages(moduleId = '') { const arr = allArticles().filter(x => !moduleId || x.module.id === moduleId).map(x => pageName(x.topic)); return [...new Set(arr)].sort((a, b) => a.localeCompare(b)) }
     function pageOptions(moduleId, includeAll = false, includeNew = false) { let h = includeAll ? '<option value="">All Page Menu</option>' : ''; h += uniquePages(moduleId).map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join(''); if (includeNew) h += '<option value="__new__">+ Create New Page Menu</option>'; return h }
-    function initSelects() { $('mainMenu').innerHTML = moduleOptions(false, true); ['filterMain', 'arrMain'].forEach(id => $(id).innerHTML = moduleOptions(true)); $('mainMenu').value = state.data[0]?.id || '__new__'; $('pageMenu').innerHTML = pageOptions($('mainMenu').value, false, true); $('filterPage').innerHTML = pageOptions('', true); $('arrPage').innerHTML = pageOptions('', true); refreshEditors() }
+    function initSelects() { $('mainMenu').innerHTML = moduleOptions(false, true); ['filterMain', 'arrMain'].forEach(id => $(id).innerHTML = moduleOptions(true)); $('mainMenu').value = state.data[0]?.id || '__new__'; $('pageMenu').innerHTML = pageOptions($('mainMenu').value, false, true); $('filterPage').innerHTML = pageOptions('', true); $('arrPage').innerHTML = pageOptions('', true); refreshEditors(); if (typeof syncTocDeleteButtons === 'function') syncTocDeleteButtons() }
     function syncNewPageMenuField() { const isNewPage = $('pageMenu').value === '__new__'; $('newPageMenu').style.display = isNewPage ? '' : 'none'; if (!isNewPage) $('newPageMenu').value = '' }
     function syncCreateMenuFields() { const isNewMain = $('mainMenu').value === '__new__'; $('newMainMenu').style.display = isNewMain ? '' : 'none'; if (!isNewMain) $('newMainMenu').value = ''; $('pageMenu').innerHTML = isNewMain ? '<option value="__new__">+ Create New Page Menu</option>' : pageOptions($('mainMenu').value, false, true); if (isNewMain) $('pageMenu').value = '__new__'; syncNewPageMenuField() }
     $('mainMenu').onchange = syncCreateMenuFields;
     $('pageMenu').onchange = syncNewPageMenuField;
     function refreshEditors() { const editors = [...new Set(allArticles().map(x => String(x.topic.editor || '').trim()).filter(Boolean))].sort(); $('filterEditor').innerHTML = '<option value="">All Editor</option>' + editors.map(x => `<option>${esc(x)}</option>`).join('') }
-    function switchTab(name) { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name)); document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + name)); if (name === 'list') renderGuideList(); if (name === 'arrange') renderArrangement(); if (name === 'feedback') renderFeedbackReport() }
+    async function switchTab(name) { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name)); document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + name)); await refreshSharedState({ refreshGuides: true }); if (name === 'list') renderGuideList(); if (name === 'arrange') renderArrangement(); if (name === 'feedback') renderFeedbackReport({ skipRefresh: true }) }
     document.querySelectorAll('.tab').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
     $('toggleConfigTable').addEventListener('change', (e) => {
         $('configTableWrapper').style.display = e.target.checked ? 'block' : 'none';
@@ -2226,7 +2344,57 @@
       );
     }
     function editGuide(mid, id) { const m = state.data.find(x => x.id === mid), t = m?.topics.find(x => x.id === id); if (!t) return; editing = { moduleId: mid, topicId: id }; $('mainMenu').value = mid; $('newMainMenu').value = ''; $('newMainMenu').style.display = 'none'; $('pageMenu').innerHTML = pageOptions(mid, false, true); const pm = pageName(t); if (![...$('pageMenu').options].some(o => o.value === pm)) $('pageMenu').insertAdjacentHTML('afterbegin', `<option value="${esc(pm)}">${esc(pm)}</option>`); $('pageMenu').value = pm; $('newPageMenu').value = ''; syncNewPageMenuField(); $('titleId').value = t.title.id; $('titleEn').value = t.title.en; let tmId = '', tmEn = ''; if (t.tabMenu) { if (typeof t.tabMenu === 'string') { tmId = t.tabMenu; tmEn = t.tabMenu; } else { tmId = t.tabMenu.id || ''; tmEn = t.tabMenu.en || tmId; } } $('tabMenuId').value = tmId; $('tabMenuEn').value = tmEn; $('editor').value = t.editor || ''; $('purposeId').value = t.purpose?.id || ''; $('purposeEn').value = t.purpose?.en || ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; draftBlocks = existingToDraft(t); renderBuilder(); $('submitGuide').textContent = 'Update Guide'; $('cancelEdit').style.display = 'inline-flex'; $('createSubmitBar').classList.add('editCtaFixed'); switchTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
-    ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1 }); function openFilterDrawer() { $('filterDrawerOverlay').classList.add('show') } function closeFilterDrawer() { $('filterDrawerOverlay').classList.remove('show') } $('applyFilter').onclick = () => { guidePage = 1; renderGuideList() }; $('moreFilter').onclick = openFilterDrawer; $('closeFilterDrawer').onclick = closeFilterDrawer; $('filterDrawerOverlay').onclick = e => { if (e.target === $('filterDrawerOverlay')) closeFilterDrawer() }; $('applyMoreFilter').onclick = () => { guidePage = 1; renderGuideList(); closeFilterDrawer() }; $('resetFilter').onclick = () => { ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach(id => $(id).value = ''); $('filterMain').value = ''; $('filterPage').innerHTML = pageOptions('', true); $('filterEditor').value = ''; guidePage = 1; renderGuideList() }; $('filterTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { guidePage = 1; renderGuideList() } });
+    function syncTocDeleteButtons() {
+      if (!$('deleteTocMain') || !$('deleteTocPage')) return;
+      const mainId = $('arrMain').value;
+      const page = $('arrPage').value;
+      $('deleteTocMain').disabled = !mainId;
+      $('deleteTocPage').disabled = !mainId || !page;
+    }
+
+    async function deleteSelectedPageMenu() {
+      const mainId = $('arrMain').value;
+      const page = $('arrPage').value;
+      const module = state.data.find(item => item.id === mainId);
+      if (!module || !page) { toast('Pilih Main Menu dan Page Menu yang ingin dihapus.'); return }
+      const count = module.topics.filter(topic => pageName(topic) === page).length;
+      if (!count) { toast('Page Menu tidak memiliki guide.'); return }
+      confirmModal(`Delete Page Menu “${page}” and all ${count} guide(s) inside it?`, async () => {
+        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        const latestModule = state.data.find(item => item.id === mainId);
+        if (!latestModule) { toast('Main Menu tidak ditemukan.'); return }
+        latestModule.topics = latestModule.topics.filter(topic => pageName(topic) !== page);
+        const saved = await persist();
+        if (!saved) return;
+        arrangementPage = 1;
+        successModal(`Page Menu “${page}” and ${count} guide(s) have been deleted.`);
+      });
+    }
+
+    async function deleteSelectedMainMenu() {
+      const mainId = $('arrMain').value;
+      const module = state.data.find(item => item.id === mainId);
+      if (!module) { toast('Pilih Main Menu yang ingin dihapus.'); return }
+      const count = module.topics.length;
+      confirmModal(`Delete Main Menu “${module.name?.id || mainId}” and all ${count} guide(s) inside it?`, async () => {
+        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        const latestModule = state.data.find(item => item.id === mainId);
+        if (!latestModule) { toast('Main Menu tidak ditemukan.'); return }
+        state.data = state.data.filter(item => item.id !== mainId);
+        const saved = await persist();
+        if (!saved) return;
+        arrangementPage = 1;
+        successModal(`Main Menu “${latestModule.name?.id || mainId}” and ${count} guide(s) have been deleted.`);
+      });
+    }
+
+    ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1; syncTocDeleteButtons() });
+    $('arrPage').onchange = syncTocDeleteButtons;
+    $('deleteTocPage').onclick = deleteSelectedPageMenu;
+    $('deleteTocMain').onclick = deleteSelectedMainMenu;
+    function openFilterDrawer() { $('filterDrawerOverlay').classList.add('show') } function closeFilterDrawer() { $('filterDrawerOverlay').classList.remove('show') } $('applyFilter').onclick = () => { guidePage = 1; renderGuideList() }; $('moreFilter').onclick = openFilterDrawer; $('closeFilterDrawer').onclick = closeFilterDrawer; $('filterDrawerOverlay').onclick = e => { if (e.target === $('filterDrawerOverlay')) closeFilterDrawer() }; $('applyMoreFilter').onclick = () => { guidePage = 1; renderGuideList(); closeFilterDrawer() }; $('resetFilter').onclick = () => { ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach(id => $(id).value = ''); $('filterMain').value = ''; $('filterPage').innerHTML = pageOptions('', true); $('filterEditor').value = ''; guidePage = 1; renderGuideList() }; $('filterTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { guidePage = 1; renderGuideList() } });
 
 
     // Guide List — Import Excel
@@ -2376,27 +2544,166 @@
       $('saveGuideImport').disabled = Boolean(importExcelDraft.errors.length || !guides.length);
     }
 
+    function xmlElementsByLocalName(root, localName) {
+      return [...root.getElementsByTagName('*')].filter(node => node.localName === localName);
+    }
+
+    function firstXmlElement(root, localName) {
+      return xmlElementsByLocalName(root, localName)[0] || null;
+    }
+
+    function parseXml(text, label) {
+      const documentXml = new DOMParser().parseFromString(String(text || ''), 'application/xml');
+      const parserError = documentXml.querySelector('parsererror');
+      if (parserError) throw new Error(`${label || 'Excel XML'} could not be parsed.`);
+      return documentXml;
+    }
+
+    function normalizeZipPath(path) {
+      const parts = [];
+      String(path || '').replace(/^\/+/, '').split('/').forEach(part => {
+        if (!part || part === '.') return;
+        if (part === '..') parts.pop();
+        else parts.push(part);
+      });
+      return parts.join('/');
+    }
+
+    function resolveZipPath(basePath, target) {
+      if (String(target || '').startsWith('/')) return normalizeZipPath(target);
+      const base = String(basePath || '').split('/');
+      base.pop();
+      return normalizeZipPath([...base, String(target || '')].join('/'));
+    }
+
+    function relationshipMap(documentXml, basePath) {
+      const map = new Map();
+      xmlElementsByLocalName(documentXml, 'Relationship').forEach(node => {
+        const id = node.getAttribute('Id');
+        const target = node.getAttribute('Target');
+        if (id && target) map.set(id, resolveZipPath(basePath, target));
+      });
+      return map;
+    }
+
+    function excelColumnNumber(reference) {
+      const letters = String(reference || '').match(/[A-Z]+/i)?.[0]?.toUpperCase() || '';
+      let value = 0;
+      for (const letter of letters) value = value * 26 + letter.charCodeAt(0) - 64;
+      return value;
+    }
+
+    function excelRowNumber(reference) {
+      return Number(String(reference || '').match(/\d+/)?.[0] || 0);
+    }
+
+    function cellXmlText(cell, sharedStrings) {
+      const type = cell.getAttribute('t') || '';
+      const textNodes = xmlElementsByLocalName(cell, 't');
+      if (type === 'inlineStr' && textNodes.length) return textNodes.map(node => node.textContent || '').join('');
+      const value = firstXmlElement(cell, 'v')?.textContent ?? '';
+      if (type === 's') return sharedStrings[Number(value)] || '';
+      if (type === 'b') return value === '1' ? 'TRUE' : 'FALSE';
+      if (textNodes.length && !value) return textNodes.map(node => node.textContent || '').join('');
+      return value;
+    }
+
+    async function sharedStringsFromZip(zip) {
+      const file = zip.file('xl/sharedStrings.xml');
+      if (!file) return [];
+      const documentXml = parseXml(await file.async('text'), 'Shared strings');
+      return xmlElementsByLocalName(documentXml, 'si').map(item => xmlElementsByLocalName(item, 't').map(node => node.textContent || '').join(''));
+    }
+
+    function worksheetRowsFromXml(documentXml, sharedStrings) {
+      const rows = new Map();
+      xmlElementsByLocalName(documentXml, 'row').forEach(rowNode => {
+        const fallbackRow = rows.size + 1;
+        const rowNumber = Number(rowNode.getAttribute('r') || fallbackRow);
+        const cells = new Map();
+        xmlElementsByLocalName(rowNode, 'c').forEach(cell => {
+          const reference = cell.getAttribute('r') || '';
+          const column = excelColumnNumber(reference);
+          if (column) cells.set(column, cellXmlText(cell, sharedStrings));
+        });
+        rows.set(rowNumber, cells);
+      });
+      return rows;
+    }
+
+    function worksheetRowCount(rows) {
+      return rows.size ? Math.max(...rows.keys()) : 0;
+    }
+
+    async function embeddedImagesByRowFromZip(zip, sheetPath, sheetDocument) {
+      const result = new Map();
+      const sheetRelsPath = normalizeZipPath(`${sheetPath.replace(/\/[^/]+$/, '')}/_rels/${sheetPath.split('/').pop()}.rels`);
+      const sheetRelsFile = zip.file(sheetRelsPath);
+      if (!sheetRelsFile) return result;
+      const sheetRels = relationshipMap(parseXml(await sheetRelsFile.async('text'), 'Worksheet relationships'), sheetPath);
+      const drawingNode = firstXmlElement(sheetDocument, 'drawing');
+      const drawingRelId = drawingNode?.getAttribute('r:id') || drawingNode?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+      const drawingPath = sheetRels.get(drawingRelId);
+      if (!drawingPath || !zip.file(drawingPath)) return result;
+
+      const drawingDocument = parseXml(await zip.file(drawingPath).async('text'), 'Worksheet drawing');
+      const drawingRelsPath = normalizeZipPath(`${drawingPath.replace(/\/[^/]+$/, '')}/_rels/${drawingPath.split('/').pop()}.rels`);
+      const drawingRelsFile = zip.file(drawingRelsPath);
+      const drawingRels = drawingRelsFile ? relationshipMap(parseXml(await drawingRelsFile.async('text'), 'Drawing relationships'), drawingPath) : new Map();
+
+      const anchors = [...xmlElementsByLocalName(drawingDocument, 'twoCellAnchor'), ...xmlElementsByLocalName(drawingDocument, 'oneCellAnchor')];
+      for (const anchor of anchors) {
+        const from = firstXmlElement(anchor, 'from');
+        const rowNumber = Number(firstXmlElement(from, 'row')?.textContent || -1) + 1;
+        const columnNumber = Number(firstXmlElement(from, 'col')?.textContent || -1) + 1;
+        if (rowNumber <= 0 || columnNumber <= 0) continue;
+        const blip = firstXmlElement(anchor, 'blip');
+        const embed = blip?.getAttribute('r:embed') || blip?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed');
+        const imagePath = drawingRels.get(embed);
+        const imageFile = imagePath ? zip.file(imagePath) : null;
+        if (!imageFile) continue;
+        const extension = imagePath.split('.').pop().toLowerCase().replace('jpg', 'jpeg');
+        const mime = extension === 'svg' ? 'image/svg+xml' : `image/${extension}`;
+        const dataUrl = `data:${mime};base64,${await imageFile.async('base64')}`;
+        if (!result.has(rowNumber)) result.set(rowNumber, []);
+        result.get(rowNumber).push(dataUrl);
+      }
+      return result;
+    }
+
     async function parseGuideImportFile(file) {
-      if (!window.ExcelJS) throw new Error('Excel reader library failed to load. Refresh the page and try again.');
+      if (!window.JSZip) throw new Error('Excel ZIP reader failed to load. Refresh the page and try again.');
       if (!file || !/\.xlsx$/i.test(file.name)) throw new Error('Please select an Excel .xlsx file.');
-      const workbook = new window.ExcelJS.Workbook();
-      await workbook.xlsx.load(await file.arrayBuffer());
-      if (!workbook.worksheets.length) throw new Error('The Excel file does not contain a worksheet.');
+      const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
+      const workbookFile = zip.file('xl/workbook.xml');
+      const workbookRelsFile = zip.file('xl/_rels/workbook.xml.rels');
+      if (!workbookFile || !workbookRelsFile) throw new Error('The Excel workbook structure is incomplete.');
+
+      const workbookDocument = parseXml(await workbookFile.async('text'), 'Workbook');
+      const workbookRels = relationshipMap(parseXml(await workbookRelsFile.async('text'), 'Workbook relationships'), 'xl/workbook.xml');
+      const sharedStrings = await sharedStringsFromZip(zip);
+      const sheetDefinitions = xmlElementsByLocalName(workbookDocument, 'sheet').map(sheet => {
+        const relId = sheet.getAttribute('r:id') || sheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+        return { name: sheet.getAttribute('name') || 'Sheet', path: workbookRels.get(relId) };
+      }).filter(sheet => sheet.path && zip.file(sheet.path));
+      if (!sheetDefinitions.length) throw new Error('The Excel file does not contain a readable worksheet.');
 
       let worksheet = null;
       let headerRow = 0;
       let headers = [];
-      for (const candidateSheet of workbook.worksheets) {
-        for (let rowNumber = 1; rowNumber <= Math.min(12, candidateSheet.rowCount || 12); rowNumber++) {
-          const row = candidateSheet.getRow(rowNumber);
+      for (const candidate of sheetDefinitions) {
+        const documentXml = parseXml(await zip.file(candidate.path).async('text'), `Worksheet ${candidate.name}`);
+        const rows = worksheetRowsFromXml(documentXml, sharedStrings);
+        for (let rowNumber = 1; rowNumber <= Math.min(12, worksheetRowCount(rows) || 12); rowNumber++) {
           const current = [];
-          for (let column = 1; column <= Math.max(candidateSheet.columnCount || 4, 4); column++) current.push(normalizeImportHeader(excelCellText(row.getCell(column))));
+          const row = rows.get(rowNumber) || new Map();
+          for (let column = 1; column <= 20; column++) current.push(normalizeImportHeader(row.get(column) || ''));
           const hasModule = current.some(value => ['module name', 'main menu', 'module'].includes(value));
           const hasPage = current.some(value => ['page name', 'page menu', 'page'].includes(value));
           const hasDescription = current.some(value => ['step by step description', 'step description', 'description', 'content'].includes(value));
           const hasImage = current.some(value => ['image', 'attachment', 'screenshot'].includes(value));
           if (hasModule && hasPage && hasDescription && hasImage) {
-            worksheet = candidateSheet;
+            worksheet = { ...candidate, documentXml, rows };
             headerRow = rowNumber;
             headers = current;
             break;
@@ -2422,18 +2729,19 @@
       };
       if (!columns.module || !columns.page || !columns.description || !columns.image) throw new Error('Required columns: Module Name, Page Name, Step by Step Description, and Image.');
 
-      const embedded = embeddedImagesByRow(workbook, worksheet);
+      const embedded = await embeddedImagesByRowFromZip(zip, worksheet.path, worksheet.documentXml);
       const groups = new Map();
       const assets = {};
       const errors = [];
       let dataRowCount = 0;
       let imageCount = 0;
-
       let lastModuleName = '';
       let lastPageName = '';
-      for (let rowNumber = headerRow + 1; rowNumber <= worksheet.rowCount; rowNumber++) {
-        const row = worksheet.getRow(rowNumber);
-        const get = column => column ? excelCellText(row.getCell(column)).trim() : '';
+      const maxRow = worksheetRowCount(worksheet.rows);
+
+      for (let rowNumber = headerRow + 1; rowNumber <= maxRow; rowNumber++) {
+        const row = worksheet.rows.get(rowNumber) || new Map();
+        const get = column => column ? String(row.get(column) || '').trim() : '';
         const rawModuleName = get(columns.module);
         const rawPageName = get(columns.page);
         const descriptionId = get(columns.description);
@@ -2456,19 +2764,12 @@
         const key = [moduleName, pageNameValue, titleId].map(value => value.toLowerCase()).join('||');
         if (!groups.has(key)) {
           groups.set(key, {
-            moduleName,
-            pageName: pageNameValue,
-            titleId,
-            titleEn,
+            moduleName, pageName: pageNameValue, titleId, titleEn,
             editor: get(columns.editor) || 'Prieds Learning Center',
-            purposeId: get(columns.purposeId),
-            purposeEn: get(columns.purposeEn),
+            purposeId: get(columns.purposeId), purposeEn: get(columns.purposeEn),
             sidebarId: get(columns.sidebarId) || pageNameValue,
             sidebarEn: get(columns.sidebarEn) || get(columns.sidebarId) || pageNameValue,
-            blocksId: [],
-            blocksEn: [],
-            sourceRowCount: 0,
-            imageCount: 0
+            blocksId: [], blocksEn: [], sourceRowCount: 0, imageCount: 0
           });
         }
         const guide = groups.get(key);
@@ -2604,17 +2905,17 @@
       }
       const workbook = new window.ExcelJS.Workbook();
       workbook.creator = 'Prieds Knowledge Center Admin';
-      const worksheet = workbook.addWorksheet('Guide Import');
+      const worksheet = workbook.addWorksheet('Sheet1');
       worksheet.columns = [
         { header: 'Module Name', key: 'module', width: 28 },
         { header: 'Page Name', key: 'page', width: 30 },
         { header: 'Step by Step Description', key: 'description', width: 90 },
-        { header: 'Image', key: 'image', width: 24 }
+        { header: 'Image', key: 'image', width: 95 }
       ];
       worksheet.addRows([
-        { module: 'Master', page: 'Product Management', description: 'DESKRIPSI:\nHalaman ini digunakan untuk mengelola data produk.', image: '' },
-        { module: 'Master', page: 'Product Management', description: 'LANGKAH-LANGKAH DAN HASIL:\n1. Buka menu Master lalu pilih Product Management.', image: '' },
-        { module: 'Master', page: 'Product Management', description: '2. Klik Create Product, lengkapi data, lalu klik Submit.', image: 'Tempel gambar pada cell ini atau isi URL/path gambar.' }
+        { module: 'Inventory Management', page: 'Inventory', description: 'DESKRIPSI:\nHalaman Inventory digunakan untuk melihat dan mengelola stok barang pada setiap lokasi penyimpanan.', image: '' },
+        { module: 'Inventory Management', page: 'Inventory', description: 'LANGKAH-LANGKAH DAN HASIL:\n1. Buka menu Inventory Management lalu pilih Inventory.', image: '' },
+        { module: 'Inventory Management', page: 'Inventory', description: '2. Lanjutkan langkah berikutnya sesuai proses. Tempel screenshot pada kolom Image di baris yang sama.', image: '' }
       ]);
       worksheet.views = [{ state: 'frozen', ySplit: 1 }];
       worksheet.autoFilter = 'A1:D1';
@@ -2625,17 +2926,7 @@
         row.alignment = { vertical: 'top', wrapText: true };
         if (rowNumber > 1) row.height = 42;
       });
-      const instruction = workbook.addWorksheet('Instructions');
-      instruction.getColumn(1).width = 110;
-      instruction.addRows([
-        ['IMPORT GUIDE LIST — INSTRUCTIONS'],
-        ['1. Do not rename the four columns in the Guide Import sheet.'],
-        ['2. Rows with the same Module Name and Page Name are combined into one guide.'],
-        ['3. A row beginning with DESKRIPSI: becomes Page Purpose. Other descriptions become Step content.'],
-        ['4. Paste an image in the Image column on the same row as its description, or enter an image URL/path.'],
-        ['5. Existing guides with the same Module, Page, and Title are updated; other guides are created.']
-      ]);
-      instruction.getRow(1).font = { bold: true, size: 14 };
+      // Template mengikuti struktur file contoh: satu sheet, empat kolom, dan gambar ditempel di kolom Image.
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = URL.createObjectURL(blob);
@@ -2684,6 +2975,22 @@
     const AI_ACTIVE_SESSION_KEYS = ['prieds_kc_article_ai_active_v3'];
     const AI_HISTORY_KEYS = ['prieds_kc_article_ai_history_v3'];
 
+    function mergeRowsById(...collections) {
+      const map = new Map();
+      collections.flat().filter(Boolean).forEach((row, index) => {
+        const key = row?.id || row?.sessionId || `${row?.submittedAt || 'row'}-${index}`;
+        const existing = map.get(key);
+        if (!existing || String(row?.updatedAt || row?.submittedAt || '') > String(existing?.updatedAt || existing?.submittedAt || '')) map.set(key, row);
+      });
+      return [...map.values()];
+    }
+
+    async function refreshSharedReportData() {
+      await refreshSharedState({ refreshGuides: true });
+      sharedAiReportCache = sharedAiReportFromState(state);
+      return sharedAiReportCache;
+    }
+
     function readStorageJson(storage, key, fallback) {
       try {
         const value = JSON.parse(storage.getItem(key) || 'null');
@@ -2694,8 +3001,8 @@
     }
 
     function readFeedbackRows() {
-      const rows = readStorageJson(localStorage, FEEDBACK_STORE_KEY, []);
-      return Array.isArray(rows) ? rows : [];
+      const localRows = readStorageJson(localStorage, FEEDBACK_STORE_KEY, []);
+      return mergeRowsById(sharedAiReportCache.feedback || [], Array.isArray(localRows) ? localRows : []);
     }
 
     function firstAssistantAfter(messages, userIndex) {
@@ -2801,6 +3108,14 @@
       const feedbackBySession = new Map(feedbackRows.filter(row => row?.sessionId).map(row => [row.sessionId, row]));
       const collected = [];
 
+      (sharedAiReportCache.questions || []).forEach((entry, index) => {
+        if (Array.isArray(entry?.messages)) collected.push(...sessionQuestionRows(entry, feedbackBySession.get(entry.id || entry.sessionId) || null, 'shared-store'));
+        else {
+          const row = standaloneQuestionRow(entry, index);
+          if (row) { row.origin = 'shared-store'; row.priority = 25; collected.push(row); }
+        }
+      });
+
       feedbackRows.forEach(feedback => collected.push(...sessionQuestionRows({
         id: feedback.sessionId,
         startedAt: feedback.startedAt,
@@ -2905,8 +3220,9 @@
       return `<div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-feedback-menu="${esc(row.id)}">⋮</button><div class="actionDropdown"><button type="button" data-feedback-detail="${esc(row.id)}">Detail</button><button type="button" data-create-faq="${esc(row.id)}" ${alreadyCreated ? 'disabled' : ''}>${alreadyCreated ? 'FAQ Created' : 'Create as a FAQ'}</button></div></div>`;
     }
 
-    function renderFeedbackReport() {
+    async function renderFeedbackReport(options = {}) {
       if (!$('feedbackRows')) return;
+      if (!options.skipRefresh) await refreshSharedReportData();
       const all = readAiQuestionRows();
       const rows = filteredFeedbackRows();
       const metricRows = uniqueMetricRows(rows);
@@ -2937,6 +3253,109 @@
       showModal(`<div class="modalHeader"><h2>Feedback Detail</h2><button class="closeModal" data-close>×</button></div><div class="feedbackDetailMeta"><div><small>Asked / Submitted</small><strong>${feedbackDate(row.submittedAt)}</strong></div><div><small>Rating</small>${ratingHtml(row.rating)}</div><div><small>Result</small>${feedbackBadge(row.helpful)} ${feedbackBadge(row.resolution)}</div></div><div class="formGrid"><div class="field"><label>Article Context</label><div>${esc(row.articleContext?.topicTitle || 'All Knowledge Center')}<div class="muted">${esc(row.articleContext?.moduleName || 'General context')}</div></div></div><div class="field"><label>Session</label><div>${esc(row.sessionId || '—')}<div class="muted">Question ${Number(row.questionIndex) || 1} of ${Number(row.questionCount) || 1} • ${esc(row.language || '—')}</div></div></div><div class="field full"><label>User Question</label><div>${esc(row.lastQuestion || '—')}</div></div><div class="field full"><label>User Comment</label><div>${esc(row.comment || '—')}</div></div></div><div class="sectionRow"><h2>Conversation Transcript</h2></div><div class="feedbackTranscript">${transcript}</div>`);
     }
 
+    function stripFaqMarkdown(value) {
+      return String(value || '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/\s+/g, ' ').trim();
+    }
+
+    function assistantMessageForFeedbackRow(row) {
+      const messages = Array.isArray(row?.messages) ? row.messages : [];
+      let userSeen = 0;
+      for (let index = 0; index < messages.length; index++) {
+        if (messages[index]?.role !== 'user') continue;
+        userSeen++;
+        if (userSeen !== Number(row.questionIndex || 1)) continue;
+        return firstAssistantAfter(messages, index);
+      }
+      return messages.find(message => message?.role === 'assistant') || null;
+    }
+
+    function sourceLinksFromAnswer(answer, explicitSources = []) {
+      const links = [];
+      const seen = new Set();
+      const add = source => {
+        if (!source) return;
+        const topicTitle = String(source.topicTitle || source.title || '').trim();
+        const heading = String(source.heading || topicTitle).trim();
+        let moduleId = source.moduleId || '';
+        let topicIndex = Number.isFinite(Number(source.topicIndex)) ? Number(source.topicIndex) : -1;
+        let targetId = source.targetId || '';
+        if ((!moduleId || topicIndex < 0) && topicTitle) {
+          state.data.some(module => {
+            const index = module.topics.findIndex(topic => normalizeGuideSearch(topic.title?.id) === normalizeGuideSearch(topicTitle) || normalizeGuideSearch(topic.title?.en) === normalizeGuideSearch(topicTitle));
+            if (index < 0) return false;
+            moduleId = module.id;
+            topicIndex = index;
+            const blockIndex = (module.topics[index].blocks?.id || []).findIndex(block => normalizeGuideSearch(block.text) === normalizeGuideSearch(heading));
+            targetId = blockIndex >= 0 ? `kc-section-${String(moduleId).replace(/[^a-z0-9_-]/gi, '-')}-${topicIndex}-${blockIndex}` : '';
+            return true;
+          });
+        }
+        const key = `${moduleId}|${topicIndex}|${heading}|${topicTitle}`;
+        if (seen.has(key) || !topicTitle) return;
+        seen.add(key);
+        links.push({ moduleId, topicIndex, targetId, topicTitle, heading });
+      };
+      explicitSources.forEach(add);
+      const sourcePattern = /-\s*Bagian\s+["“]([^"”]+)["”]\s*[—-]\s*Artikel\s+["“]([^"”]+)["”]/gi;
+      let match;
+      while ((match = sourcePattern.exec(String(answer || ''))) !== null) add({ heading: match[1], topicTitle: match[2] });
+      return links;
+    }
+
+    function faqAnswerBlocks(answer, explicitSources = [], language = 'id') {
+      const raw = String(answer || '').replace(/\r/g, '').trim();
+      const sourceSplit = raw.split(/\n\s*\*\*Sumber:\*\*\s*\n/i);
+      const body = sourceSplit[0].trim();
+      const blocks = [];
+      let paragraph = [];
+      const flushParagraph = () => {
+        const text = stripFaqMarkdown(paragraph.join(' '));
+        if (text) blocks.push({ type: 'p', text });
+        paragraph = [];
+      };
+      body.split('\n').forEach(lineValue => {
+        const line = String(lineValue || '').trim();
+        if (!line) { flushParagraph(); return; }
+        const numbered = line.match(/^(\d+)[.)]\s+(.+)/);
+        const bullet = line.match(/^[-•]\s+(.+)/);
+        const heading = line.match(/^#{1,6}\s+(.+)/);
+        if (numbered) { flushParagraph(); blocks.push({ type: 'step', text: `${numbered[1]}. ${stripFaqMarkdown(numbered[2])}` }); return; }
+        if (bullet) { flushParagraph(); blocks.push({ type: 'p', text: `• ${stripFaqMarkdown(bullet[1])}` }); return; }
+        if (heading) { flushParagraph(); blocks.push({ type: 'subheading', text: stripFaqMarkdown(heading[1]) }); return; }
+        paragraph.push(line);
+      });
+      flushParagraph();
+      const links = sourceLinksFromAnswer(raw, explicitSources);
+      if (links.length) {
+        blocks.push({ type: 'label', text: language === 'en' ? 'Article Source' : 'Sumber Artikel' });
+        links.forEach(source => blocks.push({
+          type: 'p',
+          text: language === 'en' ? `Section “${source.heading}” — Article “${source.topicTitle}”` : `Bagian “${source.heading}” — Artikel “${source.topicTitle}”`,
+          sourceLink: source
+        }));
+      }
+      return blocks.length ? blocks : [{ type: 'p', text: language === 'en' ? 'The answer is not available yet.' : 'Jawaban belum tersedia.' }];
+    }
+
+    function migrateAiFaqArticles(currentState = state) {
+      const faqModule = faqModuleFromState(currentState);
+      if (!faqModule) return false;
+      let changed = false;
+      faqModule.topics.forEach(topic => {
+        if (String(topic.editor || '').toLowerCase() !== 'ai chatbot') return;
+        if (!topic.faqCategory) { topic.faqCategory = { key: 'Other', id: 'Lainnya', en: 'Other' }; changed = true; }
+        ['id', 'en'].forEach(language => {
+          const blocks = Array.isArray(topic.blocks?.[language]) ? topic.blocks[language] : [];
+          const answerIndex = blocks.findIndex(block => block.type === 'p' && /\*\*Sumber:\*\*|\n\s*\d+[.)]\s+/i.test(block.text || ''));
+          if (answerIndex < 0) return;
+          const replacement = faqAnswerBlocks(blocks[answerIndex].text, [], language);
+          topic.blocks[language] = [...blocks.slice(0, answerIndex), ...replacement, ...blocks.slice(answerIndex + 1)];
+          changed = true;
+        });
+      });
+      return changed;
+    }
+
     async function createFaqFromFeedbackRow(id) {
       const row = readAiQuestionRows().find(item => item.id === id);
       if (!row?.lastQuestion) { toast('Tanya AI question not found.'); return }
@@ -2965,18 +3384,20 @@
         const idBase = `${faqModule.id}-${window.KCStore.slugify(question) || 'question'}`;
         let topicId = idBase, number = 2;
         while (usedTopicIds.has(topicId)) topicId = `${idBase}-${number++}`;
-        const answer = row.answer || (row.messages || []).find(message => message.role === 'assistant')?.text || 'Jawaban belum tersedia. Silakan lengkapi artikel FAQ ini melalui action Edit pada Guide List.';
+        const assistantMessage = assistantMessageForFeedbackRow(row);
+        const answer = row.answer || assistantMessage?.text || 'Jawaban belum tersedia. Silakan lengkapi artikel FAQ ini melalui action Edit pada Guide List.';
+        const sources = assistantMessage?.sources || [];
         const blocksId = [
           { type: 'label', text: 'Pertanyaan' },
           { type: 'p', text: question },
           { type: 'label', text: 'Jawaban' },
-          { type: 'p', text: answer }
+          ...faqAnswerBlocks(answer, sources, 'id')
         ];
         const blocksEn = [
           { type: 'label', text: 'Question' },
           { type: 'p', text: question },
           { type: 'label', text: 'Answer' },
-          { type: 'p', text: answer }
+          ...faqAnswerBlocks(answer, sources, 'en')
         ];
 
         faqModule.topics.push({
@@ -2984,6 +3405,7 @@
           title: { id: question, en: question },
           tabMenu: null,
           group: null,
+          faqCategory: { key: 'Other', id: 'Lainnya', en: 'Other' },
           pageMenu: { id: question, en: question },
           source: 'Knowledge Center',
           editor: 'AI Chatbot',
@@ -2995,7 +3417,7 @@
 
         const saved = await persist();
         if (!saved) return;
-        successModal(`FAQ article “${question}” has been created in Guide List with Main Menu “FAQ”.`);
+        successModal(`FAQ article “${question}” has been created in Guide List under FAQ → Lainnya.`);
       });
     }
 
@@ -3019,7 +3441,7 @@
     }
 
     function initFeedbackReport() {
-      $('feedbackApply').onclick = renderFeedbackReport;
+      $('feedbackApply').onclick = () => renderFeedbackReport();
       $('feedbackReset').onclick = () => {
         $('feedbackFrom').value = '';
         $('feedbackTo').value = '';
@@ -3030,7 +3452,8 @@
       };
       $('feedbackDownload').onclick = downloadFeedbackCsv;
       $('feedbackSearch').onkeydown = event => { if (event.key === 'Enter') renderFeedbackReport() };
-      window.addEventListener('focus', renderFeedbackReport);
+      window.addEventListener('focus', () => renderFeedbackReport());
+      window.setInterval(() => { if ($('panel-feedback')?.classList.contains('active')) renderFeedbackReport(); }, 15000);
       window.addEventListener('storage', event => {
         if ([FEEDBACK_STORE_KEY, AI_QUESTION_STORE_KEY, ...AI_ACTIVE_SESSION_KEYS, ...AI_HISTORY_KEYS].includes(event.key)) renderFeedbackReport();
       });
@@ -3257,7 +3680,25 @@
     // Render ulang saat bahasa diganti agar placeholder berubah
     $('targetLang').addEventListener('change', renderBuilder);
     function renderAll() { initSelects(); renderGuideList(); renderArrangement(); renderFeedbackReport() }
-    window.KCStore.subscribe(() => location.reload()); initSelects(); resetCreate(); renderGuideList(); renderArrangement(); initFeedbackReport(); renderFeedbackReport();
+    if (migrateAiFaqArticles(state)) {
+      try {
+        writeSharedAiReportToState(state, sharedAiReportCache);
+        state = await window.KCStore.save(state);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+      } catch (error) { console.warn('Existing AI FAQ migration could not be saved:', error); }
+    }
+    window.KCStore.subscribe(async () => {
+      try {
+        const latest = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        const nextFingerprint = knowledgeContentFingerprint(latest);
+        if (nextFingerprint !== knowledgeFingerprint) { location.reload(); return; }
+        state = latest;
+        sharedAiReportCache = sharedAiReportFromState(latest);
+        if ($('panel-feedback')?.classList.contains('active')) renderFeedbackReport({ skipRefresh: true });
+      } catch (error) { console.warn('Knowledge Center subscription refresh failed:', error); }
+    });
+    initSelects(); resetCreate(); renderGuideList(); renderArrangement(); initFeedbackReport(); renderFeedbackReport();
   </script>
 </body>
 
