@@ -2518,10 +2518,20 @@
     }
 
     function importStatusForGuide(guide) {
-      const module = state.data.find(item => item.id === guide.moduleIdHint || String(item.name?.id || '').trim().toLowerCase() === guide.moduleName.toLowerCase());
+      const normalizeValue = value => String(value || '').trim().toLowerCase();
+      const moduleName = normalizeValue(guide.moduleName);
+      const module = state.data.find(item => {
+        const names = [item.name?.id, item.name?.en, item.id].map(normalizeValue);
+        return item.id === guide.moduleIdHint || names.includes(moduleName) || item.id === window.KCStore.slugify(guide.moduleName);
+      });
       if (!module) return 'new';
-      const existing = module.topics.find(topic => pageName(topic).trim().toLowerCase() === guide.pageName.toLowerCase()
-        && String(topic.title?.id || '').trim().toLowerCase() === guide.titleId.toLowerCase());
+      const pageValue = normalizeValue(guide.pageName);
+      const titleValue = normalizeValue(guide.titleId || guide.titleEn);
+      const existing = module.topics.find(topic => {
+        const pages = [pageName(topic, 'id'), pageName(topic, 'en')].map(normalizeValue);
+        const titles = [topic.title?.id, topic.title?.en].map(normalizeValue);
+        return pages.includes(pageValue) && titles.includes(titleValue);
+      });
       return existing ? 'update' : 'new';
     }
 
@@ -2841,12 +2851,172 @@
       return candidate;
     }
 
+    const importTranslationCache = new Map();
+
+    function importNormalizedValue(value) {
+      return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function importBlocksSignature(blocks) {
+      return (blocks || []).map(block => {
+        const rows = Array.isArray(block?.rows) ? JSON.stringify(block.rows) : '';
+        return [block?.type || '', block?.text || '', block?.caption || '', rows].join('|');
+      }).join('\n');
+    }
+
+    function importGuideLanguageSample(guide) {
+      const blockText = [...(guide.blocksId || []), ...(guide.blocksEn || [])]
+        .map(block => block?.text || block?.caption || (Array.isArray(block?.rows) ? block.rows.flat().join(' ') : ''))
+        .join('\n');
+      return [guide.moduleName, guide.pageName, guide.titleId, guide.titleEn, guide.purposeId, guide.purposeEn, blockText]
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    async function translateImportedText(value, targetLanguage, sourceLanguage) {
+      const textValue = String(value || '').trim();
+      if (!textValue || targetLanguage === sourceLanguage) return textValue;
+      const key = `${sourceLanguage}|${targetLanguage}|${textValue}`;
+      if (importTranslationCache.has(key)) return importTranslationCache.get(key);
+      const translated = String(await translateText(textValue, targetLanguage, sourceLanguage) || textValue).trim();
+      importTranslationCache.set(key, translated || textValue);
+      return translated || textValue;
+    }
+
+    async function translateImportedBlocks(blocks, targetLanguage, sourceLanguage) {
+      const translatedBlocks = [];
+      for (const originalBlock of clone(blocks || [])) {
+        const block = { ...originalBlock };
+        if (typeof block.text === 'string' && block.text.trim()) {
+          block.text = await translateImportedText(block.text, targetLanguage, sourceLanguage);
+        }
+        if (typeof block.caption === 'string' && block.caption.trim()) {
+          block.caption = await translateImportedText(block.caption, targetLanguage, sourceLanguage);
+        }
+        if (Array.isArray(block.rows)) {
+          const translatedRows = [];
+          for (const row of block.rows) {
+            const translatedRow = [];
+            for (const cell of row || []) {
+              translatedRow.push(await translateImportedText(cell, targetLanguage, sourceLanguage));
+            }
+            translatedRows.push(translatedRow);
+          }
+          block.rows = translatedRows;
+        }
+        translatedBlocks.push(block);
+      }
+      return translatedBlocks;
+    }
+
+    async function makeImportedGuideBilingual(guide) {
+      const sourceLanguage = normalizeAiContentLanguage('', importGuideLanguageSample(guide));
+      const sourceIsIndonesian = sourceLanguage === 'id';
+      const targetLanguage = sourceIsIndonesian ? 'en' : 'id';
+      const sourceModule = String(guide.moduleName || '').trim();
+      const sourcePage = String(guide.pageName || '').trim();
+
+      const sourceTitle = String(sourceIsIndonesian ? (guide.titleId || guide.titleEn || sourcePage) : (guide.titleEn || guide.titleId || sourcePage)).trim();
+      const currentTargetTitle = String(sourceIsIndonesian ? guide.titleEn : guide.titleId).trim();
+      const titleNeedsTranslation = !currentTargetTitle || importNormalizedValue(currentTargetTitle) === importNormalizedValue(sourceTitle);
+      const translatedTitle = titleNeedsTranslation
+        ? await translateImportedText(sourceTitle, targetLanguage, sourceLanguage)
+        : currentTargetTitle;
+
+      const sourceSidebar = String(sourceIsIndonesian
+        ? (guide.sidebarId || guide.sidebarEn || sourcePage)
+        : (guide.sidebarEn || guide.sidebarId || sourcePage)).trim();
+      const currentTargetSidebar = String(sourceIsIndonesian ? guide.sidebarEn : guide.sidebarId).trim();
+      const sidebarNeedsTranslation = !currentTargetSidebar || importNormalizedValue(currentTargetSidebar) === importNormalizedValue(sourceSidebar);
+      const translatedSidebar = sidebarNeedsTranslation
+        ? await translateImportedText(sourceSidebar, targetLanguage, sourceLanguage)
+        : currentTargetSidebar;
+
+      const sourcePurpose = String(sourceIsIndonesian
+        ? (guide.purposeId || guide.purposeEn || '')
+        : (guide.purposeEn || guide.purposeId || '')).trim();
+      const currentTargetPurpose = String(sourceIsIndonesian ? guide.purposeEn : guide.purposeId).trim();
+      const purposeNeedsTranslation = sourcePurpose && (!currentTargetPurpose || importNormalizedValue(currentTargetPurpose) === importNormalizedValue(sourcePurpose));
+      const translatedPurpose = purposeNeedsTranslation
+        ? await translateImportedText(sourcePurpose, targetLanguage, sourceLanguage)
+        : currentTargetPurpose;
+
+      const sourceBlocks = clone(sourceIsIndonesian ? guide.blocksId : guide.blocksEn);
+      const currentTargetBlocks = clone(sourceIsIndonesian ? guide.blocksEn : guide.blocksId);
+      const blocksNeedTranslation = !currentTargetBlocks.length
+        || importNormalizedValue(importBlocksSignature(currentTargetBlocks)) === importNormalizedValue(importBlocksSignature(sourceBlocks));
+      const translatedBlocks = blocksNeedTranslation
+        ? await translateImportedBlocks(sourceBlocks, targetLanguage, sourceLanguage)
+        : currentTargetBlocks;
+
+      const translatedModule = await translateImportedText(sourceModule, targetLanguage, sourceLanguage);
+      const translatedPage = await translateImportedText(sourcePage, targetLanguage, sourceLanguage);
+
+      return {
+        ...guide,
+        sourceLanguage,
+        moduleNameId: sourceIsIndonesian ? sourceModule : translatedModule,
+        moduleNameEn: sourceIsIndonesian ? translatedModule : sourceModule,
+        pageNameId: sourceIsIndonesian ? sourcePage : translatedPage,
+        pageNameEn: sourceIsIndonesian ? translatedPage : sourcePage,
+        titleId: sourceIsIndonesian ? sourceTitle : translatedTitle,
+        titleEn: sourceIsIndonesian ? translatedTitle : sourceTitle,
+        sidebarId: sourceIsIndonesian ? sourceSidebar : translatedSidebar,
+        sidebarEn: sourceIsIndonesian ? translatedSidebar : sourceSidebar,
+        purposeId: sourceIsIndonesian ? sourcePurpose : translatedPurpose,
+        purposeEn: sourceIsIndonesian ? translatedPurpose : sourcePurpose,
+        blocksId: sourceIsIndonesian ? sourceBlocks : translatedBlocks,
+        blocksEn: sourceIsIndonesian ? translatedBlocks : sourceBlocks
+      };
+    }
+
+    function findImportedModule(guide) {
+      const candidates = [guide.moduleName, guide.moduleNameId, guide.moduleNameEn]
+        .map(importNormalizedValue)
+        .filter(Boolean);
+      return state.data.find(module => {
+        const existingNames = [module.id, module.name?.id, module.name?.en]
+          .map(importNormalizedValue)
+          .filter(Boolean);
+        return candidates.some(candidate => existingNames.includes(candidate))
+          || module.id === window.KCStore.slugify(guide.moduleName)
+          || module.id === window.KCStore.slugify(guide.moduleNameId)
+          || module.id === window.KCStore.slugify(guide.moduleNameEn);
+      });
+    }
+
+    function findImportedTopic(module, guide) {
+      const pageCandidates = [guide.pageName, guide.pageNameId, guide.pageNameEn]
+        .map(importNormalizedValue)
+        .filter(Boolean);
+      const titleCandidates = [guide.titleId, guide.titleEn]
+        .map(importNormalizedValue)
+        .filter(Boolean);
+      return module.topics.find(topic => {
+        const existingPages = [pageName(topic, 'id'), pageName(topic, 'en')]
+          .map(importNormalizedValue)
+          .filter(Boolean);
+        const existingTitles = [topic.title?.id, topic.title?.en]
+          .map(importNormalizedValue)
+          .filter(Boolean);
+        return pageCandidates.some(value => existingPages.includes(value))
+          && titleCandidates.some(value => existingTitles.includes(value));
+      });
+    }
+
     async function saveImportedGuides() {
       if (!importExcelDraft || importExcelDraft.errors.length || !importExcelDraft.guides.length) return;
       const button = $('saveGuideImport');
       button.disabled = true;
-      button.innerHTML = '<span aria-hidden="true">…</span> Saving Import';
+      importTranslationCache.clear();
       try {
+        const bilingualGuides = [];
+        for (let index = 0; index < importExcelDraft.guides.length; index++) {
+          button.innerHTML = `<span aria-hidden="true">…</span> Translating ${index + 1}/${importExcelDraft.guides.length}`;
+          bilingualGuides.push(await makeImportedGuideBilingual(importExcelDraft.guides[index]));
+        }
+
+        button.innerHTML = '<span aria-hidden="true">…</span> Saving Import';
         state = await window.KCStore.load(window.KC_DEFAULT_DATA);
         const stamp = new Date().toISOString();
         const usedModuleIds = new Set(state.data.map(module => module.id));
@@ -2854,30 +3024,61 @@
         let created = 0;
         let updated = 0;
 
-        importExcelDraft.guides.forEach(guide => {
-          let module = state.data.find(item => String(item.name?.id || '').trim().toLowerCase() === guide.moduleName.toLowerCase() || item.id === window.KCStore.slugify(guide.moduleName));
+        bilingualGuides.forEach(guide => {
+          let module = findImportedModule(guide);
           if (!module) {
-            module = { id: uniqueModuleIdForImport(guide.moduleName, usedModuleIds), name: { id: guide.moduleName, en: guide.moduleName }, topics: [] };
+            module = {
+              id: uniqueModuleIdForImport(guide.moduleNameId || guide.moduleNameEn || guide.moduleName, usedModuleIds),
+              name: {
+                id: guide.moduleNameId || guide.moduleName,
+                en: guide.moduleNameEn || guide.moduleName
+              },
+              topics: []
+            };
             state.data.push(module);
+          } else {
+            module.name = module.name && typeof module.name === 'object' ? module.name : { id: String(module.name || ''), en: String(module.name || '') };
+            if (!module.name.id || importNormalizedValue(module.name.id) === importNormalizedValue(module.name.en)) module.name.id = guide.moduleNameId || module.name.id;
+            if (!module.name.en || importNormalizedValue(module.name.en) === importNormalizedValue(module.name.id)) module.name.en = guide.moduleNameEn || module.name.en;
           }
-          const existing = module.topics.find(topic => pageName(topic).trim().toLowerCase() === guide.pageName.toLowerCase()
-            && String(topic.title?.id || '').trim().toLowerCase() === guide.titleId.toLowerCase());
+
+          const existing = findImportedTopic(module, guide);
           const topicData = {
-            title: { id: guide.titleId, en: guide.titleEn || guide.titleId },
-            tabMenu: { id: guide.sidebarId || guide.pageName, en: guide.sidebarEn || guide.sidebarId || guide.pageName },
+            title: {
+              id: guide.titleId || guide.titleEn,
+              en: guide.titleEn || guide.titleId
+            },
+            tabMenu: {
+              id: guide.sidebarId || guide.pageNameId || guide.pageName,
+              en: guide.sidebarEn || guide.pageNameEn || guide.pageName
+            },
             group: null,
-            pageMenu: { id: guide.pageName, en: guide.pageName },
+            pageMenu: {
+              id: guide.pageNameId || guide.pageName,
+              en: guide.pageNameEn || guide.pageName
+            },
             source: 'Knowledge Center',
             editor: guide.editor || 'Prieds Learning Center',
-            purpose: { id: guide.purposeId || '', en: guide.purposeEn || guide.purposeId || '' },
+            purpose: {
+              id: guide.purposeId || '',
+              en: guide.purposeEn || ''
+            },
+            originalLanguage: guide.sourceLanguage,
             updatedAt: stamp,
-            blocks: { id: clone(guide.blocksId), en: clone(guide.blocksEn) }
+            blocks: {
+              id: clone(guide.blocksId),
+              en: clone(guide.blocksEn)
+            }
           };
           if (existing) {
             Object.assign(existing, topicData);
             updated++;
           } else {
-            module.topics.push({ id: uniqueTopicIdForImport(module.id, guide.titleId, usedTopicIds), createdAt: stamp, ...topicData });
+            module.topics.push({
+              id: uniqueTopicIdForImport(module.id, guide.titleId || guide.titleEn, usedTopicIds),
+              createdAt: stamp,
+              ...topicData
+            });
             created++;
           }
         });
@@ -2888,7 +3089,7 @@
         closeImportExcelModal();
         guidePage = 1;
         switchTab('list');
-        successModal(`${created} guide(s) created and ${updated} guide(s) updated from Excel.`);
+        successModal(`${created} guide(s) created and ${updated} guide(s) updated from Excel. Indonesian and English versions have been prepared automatically.`);
         importExcelDraft = null;
       } catch (error) {
         console.error('Save guide import failed:', error);
@@ -3102,6 +3303,61 @@
       try { localStorage.setItem(AI_QUESTION_STORE_KEY, JSON.stringify(list.slice(0, 300))) } catch (_) { }
     }
 
+    function blockTextAfterLabel(blocks, labelPattern) {
+      const labelIndex = blocks.findIndex(block => block.type === 'label' && labelPattern.test(String(block.text || '').trim()));
+      if (labelIndex < 0) return '';
+      const values = [];
+      for (let index = labelIndex + 1; index < blocks.length; index++) {
+        const block = blocks[index];
+        if (block.type === 'label') break;
+        if (block.type === 'subheading' || block.type === 'p' || block.type === 'step') {
+          const text = String(block.text || '').trim();
+          if (text) values.push(text);
+        }
+      }
+      return values.join('\n').trim();
+    }
+
+    function faqSourceContext(topic) {
+      const blocks = topic?.blocks?.id || topic?.blocks?.en || [];
+      const source = blocks.find(block => block?.sourceLink)?.sourceLink || null;
+      if (source?.moduleId) {
+        const module = state.data.find(item => item.id === source.moduleId);
+        const topicIndex = Number(source.topicIndex);
+        const sourceTopic = module?.topics?.[topicIndex];
+        if (module && sourceTopic) return { moduleId: module.id, moduleName: module.name?.id || module.name?.en || module.id, topicTitle: sourceTopic.title?.id || sourceTopic.title?.en || source.topicTitle || 'All Knowledge Center' };
+      }
+      return { moduleId: 'faq', moduleName: 'FAQ', topicTitle: topic?.title?.id || topic?.title?.en || 'FAQ' };
+    }
+
+    function aiFaqGuideRows() {
+      const faqModule = faqModuleFromState(state);
+      if (!faqModule) return [];
+      return faqModule.topics.filter(topic => {
+        const category = String(topic.faqCategory?.id || topic.faqCategory?.key || '').trim().toLowerCase();
+        return String(topic.editor || '').trim().toLowerCase() === 'ai chatbot' && (!category || category === 'lainnya' || category === 'other');
+      }).map(topic => {
+        const blocks = topic.blocks?.id || topic.blocks?.en || [];
+        const question = blockTextAfterLabel(blocks, /^(pertanyaan|question)$/i) || String(topic.title?.id || topic.title?.en || '').trim();
+        const answer = blockTextAfterLabel(blocks, /^(jawaban|answer)$/i);
+        const submittedAt = topic.createdAt || topic.updatedAt || new Date().toISOString();
+        return {
+          id: `FAQ-GUIDE-${topic.id || normalizeGuideSearch(question)}::q1`,
+          feedbackId: '',
+          sessionId: `FAQ-GUIDE-${topic.id || normalizeGuideSearch(question)}`,
+          submittedAt,
+          startedAt: submittedAt,
+          endedAt: null,
+          language: 'id',
+          articleContext: faqSourceContext(topic),
+          rating: null, helpful: '', resolution: '', comment: '',
+          questionCount: 1, questionIndex: 1, lastQuestion: question, answer,
+          messages: [{ role: 'user', text: question, createdAt: submittedAt }, ...(answer ? [{ role: 'assistant', text: answer, createdAt: topic.updatedAt || submittedAt }] : [])],
+          origin: 'faq-guide', priority: 5
+        };
+      }).filter(row => row.lastQuestion);
+    }
+
     function readAiQuestionRows() {
       harvestCurrentTabChatSession();
       const feedbackRows = readFeedbackRows();
@@ -3144,6 +3400,14 @@
 
       const currentTabSession = readStorageJson(sessionStorage, AI_CHAT_SESSION_KEY, null);
       if (currentTabSession?.id) collected.push(...sessionQuestionRows(currentTabSession, feedbackBySession.get(currentTabSession.id) || null, 'current-tab'));
+
+      const recordedQuestions = new Set(collected.map(row => normalizeGuideSearch(row.lastQuestion)).filter(Boolean));
+      aiFaqGuideRows().forEach(row => {
+        const key = normalizeGuideSearch(row.lastQuestion);
+        if (!key || recordedQuestions.has(key)) return;
+        recordedQuestions.add(key);
+        collected.push(row);
+      });
 
       const deduplicated = new Map();
       collected.forEach(row => {
@@ -3212,7 +3476,12 @@
       const faqModule = faqModuleFromState(currentState);
       if (!faqModule) return null;
       const normalizedQuestion = normalizeGuideSearch(question);
-      return faqModule.topics.find(topic => normalizeGuideSearch(topic.title?.id) === normalizedQuestion || normalizeGuideSearch(pageName(topic)) === normalizedQuestion) || null;
+      return faqModule.topics.find(topic =>
+        normalizeGuideSearch(topic.title?.id) === normalizedQuestion ||
+        normalizeGuideSearch(topic.title?.en) === normalizedQuestion ||
+        normalizeGuideSearch(pageName(topic, 'id')) === normalizedQuestion ||
+        normalizeGuideSearch(pageName(topic, 'en')) === normalizedQuestion
+      ) || null;
     }
 
     function feedbackActionHtml(row) {
@@ -3302,10 +3571,23 @@
       return links;
     }
 
+    function expandInlineFaqNumbering(value) {
+      const raw = String(value || '').replace(/\r/g, '').trim();
+      const markerPattern = /(^|[ \t])(\d{1,2})[.)][ \t]+(?=[A-Za-zÀ-ÿ“"'])/g;
+      const markers = [...raw.matchAll(markerPattern)];
+      if (markers.length < 2 && !markers.some(match => match[2] === '1')) return raw;
+      return raw.replace(markerPattern, (full, lead, number) => `\n${number}. `).trim();
+    }
+
+    function hasInlineFaqNumbering(value) {
+      const expanded = expandInlineFaqNumbering(value);
+      return expanded.split(/\n+/).filter(line => /^\d{1,2}[.)]\s+/.test(line.trim())).length >= 2;
+    }
+
     function faqAnswerBlocks(answer, explicitSources = [], language = 'id') {
       const raw = String(answer || '').replace(/\r/g, '').trim();
       const sourceSplit = raw.split(/\n\s*\*\*Sumber:\*\*\s*\n/i);
-      const body = sourceSplit[0].trim();
+      const body = expandInlineFaqNumbering(sourceSplit[0].trim());
       const blocks = [];
       let paragraph = [];
       const flushParagraph = () => {
@@ -3346,13 +3628,135 @@
         if (!topic.faqCategory) { topic.faqCategory = { key: 'Other', id: 'Lainnya', en: 'Other' }; changed = true; }
         ['id', 'en'].forEach(language => {
           const blocks = Array.isArray(topic.blocks?.[language]) ? topic.blocks[language] : [];
-          const answerIndex = blocks.findIndex(block => block.type === 'p' && /\*\*Sumber:\*\*|\n\s*\d+[.)]\s+/i.test(block.text || ''));
+          const answerLabelIndex = blocks.findIndex(block => block.type === 'label' && /^(jawaban|answer)$/i.test(String(block.text || '').trim()));
+          const answerIndex = blocks.findIndex((block, index) => index > answerLabelIndex && block.type === 'p' && (/\*\*Sumber:\*\*|\n\s*\d+[.)]\s+/i.test(block.text || '') || hasInlineFaqNumbering(block.text)));
           if (answerIndex < 0) return;
           const replacement = faqAnswerBlocks(blocks[answerIndex].text, [], language);
           topic.blocks[language] = [...blocks.slice(0, answerIndex), ...replacement, ...blocks.slice(answerIndex + 1)];
           changed = true;
         });
       });
+      return changed;
+    }
+
+    function normalizeAiContentLanguage(value, text = '') {
+      const language = String(value || '').trim().toLowerCase();
+      if (language === 'en' || language.startsWith('en-') || language.includes('english')) return 'en';
+      if (language === 'id' || language === 'in' || language.startsWith('id-') || language.includes('indonesia')) return 'id';
+      const sample = ` ${String(text || '').toLowerCase().replace(/[^a-zà-ÿ0-9]+/g, ' ')} `;
+      const idHints = [' yang ', ' dan ', ' dengan ', ' untuk ', ' dari ', ' ke ', ' cara ', ' bagaimana ', ' apakah ', ' barang ', ' gudang ', ' lokasi ', ' pilih ', ' klik ', ' langkah ', ' pengguna ', ' artikel '];
+      const enHints = [' the ', ' and ', ' with ', ' for ', ' from ', ' to ', ' how ', ' what ', ' warehouse ', ' location ', ' select ', ' click ', ' step ', ' user ', ' article '];
+      const idScore = idHints.reduce((score, hint) => score + (sample.includes(hint) ? 1 : 0), 0);
+      const enScore = enHints.reduce((score, hint) => score + (sample.includes(hint) ? 1 : 0), 0);
+      return enScore > idScore ? 'en' : 'id';
+    }
+
+    function faqAnswerWithoutSourceFooter(value) {
+      return String(value || '').replace(/\r/g, '').split(/\s*\*\*(?:Sumber|Source):\*\*\s*/i)[0].trim();
+    }
+
+    function faqSourceLinksFromTopic(topic) {
+      const links = [];
+      const seen = new Set();
+      ['id', 'en'].forEach(language => {
+        (topic?.blocks?.[language] || []).forEach(block => {
+          const source = block?.sourceLink;
+          if (!source) return;
+          const key = `${source.moduleId || ''}|${source.topicIndex ?? ''}|${source.targetId || ''}|${source.topicTitle || ''}|${source.heading || ''}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          links.push({ ...source });
+        });
+      });
+      return links;
+    }
+
+    function bilingualFaqBlocks(question, answer, sources, language) {
+      return [
+        { type: 'label', text: language === 'en' ? 'Question' : 'Pertanyaan' },
+        { type: 'p', text: question },
+        { type: 'label', text: language === 'en' ? 'Answer' : 'Jawaban' },
+        ...faqAnswerBlocks(answer, sources, language)
+      ];
+    }
+
+    async function bilingualFaqValues(row, question, answer) {
+      const sourceLanguage = normalizeAiContentLanguage(row?.language, `${question}\n${answer}`);
+      const cleanAnswer = faqAnswerWithoutSourceFooter(answer);
+      let questionId = sourceLanguage === 'id' ? question : '';
+      let questionEn = sourceLanguage === 'en' ? question : '';
+      let answerId = sourceLanguage === 'id' ? cleanAnswer : '';
+      let answerEn = sourceLanguage === 'en' ? cleanAnswer : '';
+
+      if (sourceLanguage === 'id') {
+        questionEn = await translateText(question, 'en', 'id');
+        answerEn = await translateText(cleanAnswer, 'en', 'id');
+      } else {
+        questionId = await translateText(question, 'id', 'en');
+        answerId = await translateText(cleanAnswer, 'id', 'en');
+      }
+
+      return {
+        sourceLanguage,
+        questionId: String(questionId || question).trim(),
+        questionEn: String(questionEn || question).trim(),
+        answerId: String(answerId || cleanAnswer || answer).trim(),
+        answerEn: String(answerEn || cleanAnswer || answer).trim()
+      };
+    }
+
+    async function ensureAiFaqBilingualArticles(currentState = state) {
+      const faqModule = faqModuleFromState(currentState);
+      if (!faqModule) return false;
+      let changed = false;
+
+      for (const topic of faqModule.topics) {
+        if (String(topic.editor || '').trim().toLowerCase() !== 'ai chatbot') continue;
+        if (!topic.title || typeof topic.title !== 'object') {
+          const titleValue = String(topic.title || '').trim();
+          topic.title = { id: titleValue, en: titleValue };
+        }
+        if (!topic.pageMenu || typeof topic.pageMenu !== 'object') {
+          const pageValue = String(topic.pageMenu || topic.title.id || topic.title.en || '').trim();
+          topic.pageMenu = { id: pageValue, en: pageValue };
+        }
+        topic.blocks = topic.blocks && typeof topic.blocks === 'object' ? topic.blocks : { id: [], en: [] };
+        topic.blocks.id = Array.isArray(topic.blocks.id) ? topic.blocks.id : [];
+        topic.blocks.en = Array.isArray(topic.blocks.en) ? topic.blocks.en : [];
+
+        const questionId = blockTextAfterLabel(topic.blocks.id, /^(pertanyaan|question)$/i) || String(topic.title.id || '').trim();
+        const questionEn = blockTextAfterLabel(topic.blocks.en, /^(pertanyaan|question)$/i) || String(topic.title.en || '').trim();
+        const answerId = blockTextAfterLabel(topic.blocks.id, /^(jawaban|answer)$/i);
+        const answerEn = blockTextAfterLabel(topic.blocks.en, /^(jawaban|answer)$/i);
+        const sourceLanguage = normalizeAiContentLanguage(topic.originalLanguage, questionId || questionEn || topic.title.id || topic.title.en);
+        const sources = faqSourceLinksFromTopic(topic);
+        const sameQuestion = normalizeGuideSearch(questionId || topic.title.id) === normalizeGuideSearch(questionEn || topic.title.en);
+        const sameAnswer = normalizeGuideSearch(answerId) === normalizeGuideSearch(answerEn);
+
+        if (sourceLanguage === 'id' && (sameQuestion || !questionEn || sameAnswer || !answerEn)) {
+          const translatedQuestion = sameQuestion || !questionEn ? await translateText(questionId || topic.title.id, 'en', 'id') : questionEn;
+          const translatedAnswer = sameAnswer || !answerEn ? await translateText(faqAnswerWithoutSourceFooter(answerId), 'en', 'id') : answerEn;
+          if (translatedQuestion) {
+            topic.title.en = translatedQuestion;
+            topic.pageMenu.en = translatedQuestion;
+          }
+          topic.blocks.en = bilingualFaqBlocks(translatedQuestion || questionId, translatedAnswer || answerId, sources, 'en');
+          topic.originalLanguage = 'id';
+          topic.updatedAt = new Date().toISOString();
+          changed = true;
+        } else if (sourceLanguage === 'en' && (sameQuestion || !questionId || sameAnswer || !answerId)) {
+          const translatedQuestion = sameQuestion || !questionId ? await translateText(questionEn || topic.title.en, 'id', 'en') : questionId;
+          const translatedAnswer = sameAnswer || !answerId ? await translateText(faqAnswerWithoutSourceFooter(answerEn), 'id', 'en') : answerId;
+          if (translatedQuestion) {
+            topic.title.id = translatedQuestion;
+            topic.pageMenu.id = translatedQuestion;
+          }
+          topic.blocks.id = bilingualFaqBlocks(translatedQuestion || questionEn, translatedAnswer || answerEn, sources, 'id');
+          topic.originalLanguage = 'en';
+          topic.updatedAt = new Date().toISOString();
+          changed = true;
+        }
+      }
       return changed;
     }
 
@@ -3385,30 +3789,27 @@
         let topicId = idBase, number = 2;
         while (usedTopicIds.has(topicId)) topicId = `${idBase}-${number++}`;
         const assistantMessage = assistantMessageForFeedbackRow(row);
-        const answer = row.answer || assistantMessage?.text || 'Jawaban belum tersedia. Silakan lengkapi artikel FAQ ini melalui action Edit pada Guide List.';
+        const sourceLanguage = normalizeAiContentLanguage(row.language, question);
+        const fallbackAnswer = sourceLanguage === 'en'
+          ? 'The answer is not available yet. Complete this FAQ article through the Edit action in Guide List.'
+          : 'Jawaban belum tersedia. Silakan lengkapi artikel FAQ ini melalui action Edit pada Guide List.';
+        const answer = row.answer || assistantMessage?.text || fallbackAnswer;
         const sources = assistantMessage?.sources || [];
-        const blocksId = [
-          { type: 'label', text: 'Pertanyaan' },
-          { type: 'p', text: question },
-          { type: 'label', text: 'Jawaban' },
-          ...faqAnswerBlocks(answer, sources, 'id')
-        ];
-        const blocksEn = [
-          { type: 'label', text: 'Question' },
-          { type: 'p', text: question },
-          { type: 'label', text: 'Answer' },
-          ...faqAnswerBlocks(answer, sources, 'en')
-        ];
+        setSynced('Translating…');
+        const bilingual = await bilingualFaqValues(row, question, answer);
+        const blocksId = bilingualFaqBlocks(bilingual.questionId, bilingual.answerId, sources, 'id');
+        const blocksEn = bilingualFaqBlocks(bilingual.questionEn, bilingual.answerEn, sources, 'en');
 
         faqModule.topics.push({
           id: topicId,
-          title: { id: question, en: question },
+          title: { id: bilingual.questionId, en: bilingual.questionEn },
           tabMenu: null,
           group: null,
           faqCategory: { key: 'Other', id: 'Lainnya', en: 'Other' },
-          pageMenu: { id: question, en: question },
+          pageMenu: { id: bilingual.questionId, en: bilingual.questionEn },
           source: 'Knowledge Center',
           editor: 'AI Chatbot',
+          originalLanguage: bilingual.sourceLanguage,
           purpose: { id: 'Artikel FAQ dibuat dari pertanyaan pengguna pada fitur Tanya AI.', en: 'FAQ article created from a user question in the Ask AI feature.' },
           createdAt: stamp,
           updatedAt: stamp,
@@ -3536,14 +3937,15 @@
     };
   }
 
-    async function translateText(text, targetLang) {
-        if (!text || text.trim() === '') return '';
+    async function translateText(text, targetLang, sourceLang = 'id') {
+        if (!text || text.trim() === '' || sourceLang === targetLang) return String(text || '');
         try {
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=id&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sourceLang)}&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(text)}`;
             const res = await fetch(url);
+            if (!res.ok) throw new Error(`Translation request failed (${res.status})`);
             const data = await res.json();
             // Google Translate mengembalikan array of arrays, kita perlu menggabungkannya
-            return data[0].map(item => item[0]).join('');
+            return Array.isArray(data?.[0]) ? data[0].map(item => item?.[0] || '').join('') : text;
         } catch (err) {
             console.error("Translation error:", err);
             return text; // Kembalikan teks asli jika gagal
@@ -3680,7 +4082,13 @@
     // Render ulang saat bahasa diganti agar placeholder berubah
     $('targetLang').addEventListener('change', renderBuilder);
     function renderAll() { initSelects(); renderGuideList(); renderArrangement(); renderFeedbackReport() }
-    if (migrateAiFaqArticles(state)) {
+    let aiFaqMigrationChanged = migrateAiFaqArticles(state);
+    try {
+      aiFaqMigrationChanged = await ensureAiFaqBilingualArticles(state) || aiFaqMigrationChanged;
+    } catch (error) {
+      console.warn('Existing AI FAQ bilingual migration could not be completed:', error);
+    }
+    if (aiFaqMigrationChanged) {
       try {
         writeSharedAiReportToState(state, sharedAiReportCache);
         state = await window.KCStore.save(state);
