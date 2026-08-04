@@ -89,7 +89,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 .docContent h2{font-size:20px;font-weight:600;margin:28px 0 12px;scroll-margin-top:20px}
 .docLabel{font-size:11px;font-weight:800;color:#0986AD;text-transform:uppercase;letter-spacing:.06em;margin:20px 0 8px}
 .docP{font-size:13px;line-height:1.65;color:#3E4C52;margin:10px 0}
-.aiFaqFormatted{font-size:13px;line-height:1.65;color:#3E4C52;margin:10px 0}.aiFaqFormatted p{margin:9px 0}.aiFaqFormatted ol,.aiFaqFormatted ul{margin:9px 0;padding-left:22px}.aiFaqFormatted li{margin:6px 0}.faqSourceLinks{display:grid;gap:7px;margin:9px 0 16px}.faqSourceLink{width:100%;border:1px solid #BFE3EE;background:#EFFAFF;color:#087B9D;border-radius:6px;padding:9px 10px;text-align:left;font-size:12px;line-height:1.45}.faqSourceLink:hover{background:#DDF5FB}.docInlineSource{border:0;background:transparent;color:#087B9D;text-decoration:underline;padding:0;font:inherit;text-align:left}.docInlineSource:hover{color:#075D78}
+.aiFaqFormatted{font-size:13px;line-height:1.65;color:#3E4C52;margin:10px 0}.aiFaqFormatted p{margin:9px 0}.aiFaqFormatted ol,.aiFaqFormatted ul{margin:9px 0;padding-left:22px}.aiFaqFormatted li{margin:6px 0}.legacyFaqStructured{font-size:13px;line-height:1.65;color:#3E4C52;margin:10px 0}.legacyFaqStructured .docP{margin:0 0 18px}.legacyFaqStructured .docP:last-child{margin-bottom:0}.faqSourceLinks{display:grid;gap:7px;margin:9px 0 16px}.faqSourceLink{width:100%;border:1px solid #BFE3EE;background:#EFFAFF;color:#087B9D;border-radius:6px;padding:9px 10px;text-align:left;font-size:12px;line-height:1.45}.faqSourceLink:hover{background:#DDF5FB}.docInlineSource{border:0;background:transparent;color:#087B9D;text-decoration:underline;padding:0;font:inherit;text-align:left}.docInlineSource:hover{color:#075D78}
 .stepCard{margin:18px 0 10px}
 .stepNum{display:none}.stepText{font-size:13px;line-height:1.65;color:#3D4A50}
 .mediaCard{margin:10px 0 18px;background:#fff;border:0;overflow:hidden}
@@ -632,6 +632,22 @@ function faqMarkdownWithLinks(value){
   return body+sourceHtml;
 }
 function sourceLinkButton(block){const source=block?.sourceLink||{};return`<button type="button" class="docInlineSource" data-faq-module="${esc(source.moduleId||'')}" data-faq-topic-index="${Number(source.topicIndex)||0}" data-faq-target="${esc(source.targetId||'')}">${esc(block.text||'')}</button>`}
+function splitLegacyFaqNumbering(value){
+  const raw=String(value||'').replace(/\r/g,'').trim();
+  const markerPattern=/(^|[ \t])(\d{1,2})[.)][ \t]+(?=[A-Za-zÀ-ÿ“"'])/g;
+  const markers=[...raw.matchAll(markerPattern)];
+  if(markers.length<2&&!markers.some(match=>match[2]==='1'))return null;
+  const expanded=raw.replace(markerPattern,(full,lead,number)=>`\n${number}. `).trim();
+  const lines=expanded.split(/\n+/).map(line=>line.trim()).filter(Boolean);
+  const steps=lines.filter(line=>/^\d{1,2}[.)]\s+/.test(line));
+  if(steps.length<2)return null;
+  return{intro:lines.filter(line=>!/^\d{1,2}[.)]\s+/.test(line)),steps};
+}
+function legacyFaqStructuredHtml(value){
+  const parsed=splitLegacyFaqNumbering(value);
+  if(!parsed)return'';
+  return`<div class="legacyFaqStructured">${parsed.intro.map(text=>`<p class="docP">${esc(text)}</p>`).join('')}${parsed.steps.map(text=>`<p class="docP">${esc(text)}</p>`).join('')}</div>`;
+}
 function renderArticle() { 
   const topic = activeModule.topics[activeTopic], blocks = getBlocks(topic), purpose = topic.purpose?.[lang] || pageFunction(topic, activeModule), intro = articleIntro(topic, blocks); 
   $('breadcrumb').innerHTML = `<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`; 
@@ -655,6 +671,7 @@ function renderArticle() {
     else if (b.type === 'subheading') html += `<h2 id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</h2>`; 
     else if (b.type === 'step') html += `<div class="stepCard" id="${sid}" data-kc-section="${blockIndex}"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`; 
     else if (b.type === 'p' && b.sourceLink) html += `<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${sourceLinkButton(b)}</p>`;
+    else if (b.type === 'p' && activeModule.id === 'faq' && String(topic.editor || '').toLowerCase() === 'ai chatbot' && splitLegacyFaqNumbering(b.text)) html += `<div id="${sid}" data-kc-section="${blockIndex}">${legacyFaqStructuredHtml(b.text)}</div>`;
     else if (b.type === 'p' && activeModule.id === 'faq' && String(topic.editor || '').toLowerCase() === 'ai chatbot' && (/\n|\*\*/.test(String(b.text || '')))) html += `<div class="aiFaqFormatted" id="${sid}" data-kc-section="${blockIndex}">${faqMarkdownWithLinks(b.text)}</div>`;
     else if (b.type === 'p') html += `<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</p>`; 
     else if (b.type === 'image') { 
