@@ -235,6 +235,15 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 <div class="mobileDrawer" id="mobileDrawer"><aside class="sidebar"><h2 class="sidebarTitle" data-ui="tocTitle"></h2><div id="mobileNav"></div></aside></div>
 <div class="lightbox" id="lightbox"><button class="close" id="lightboxClose">×</button><img id="lightboxImg"></div><div class="toast" id="toast"></div>
 <script src="knowledge-data.js"></script><script src="knowledge-store.js"></script><script type="module">const __kcState=await window.KCStore.load(window.KC_DEFAULT_DATA);
+const KC_IMPORT_ASSET_PREFIX='kc-import-asset://';
+const KC_IMPORT_ASSET_DB='prieds-kc-import-assets-v1';
+const KC_IMPORT_ASSET_STORE='assets';
+let kcImportAssetDbPromise=null;
+const kcImportAssetObjectUrls=new Map();
+function openKcImportAssetDb(){if(!('indexedDB'in window))return Promise.reject(new Error('IndexedDB is not supported by this browser.'));if(kcImportAssetDbPromise)return kcImportAssetDbPromise;kcImportAssetDbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open(KC_IMPORT_ASSET_DB,1);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(KC_IMPORT_ASSET_STORE))db.createObjectStore(KC_IMPORT_ASSET_STORE,{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('Imported screenshot storage could not be opened.'));request.onblocked=()=>reject(new Error('Imported screenshot storage is blocked by another browser tab.'))}).catch(error=>{kcImportAssetDbPromise=null;throw error});return kcImportAssetDbPromise}
+function importAssetIdFromReference(value){const source=String(value||'');if(!source.startsWith(KC_IMPORT_ASSET_PREFIX))return'';try{return decodeURIComponent(source.slice(KC_IMPORT_ASSET_PREFIX.length))}catch(_){return source.slice(KC_IMPORT_ASSET_PREFIX.length)}}
+async function loadOriginalImportAsset(reference){const assetId=importAssetIdFromReference(reference);if(!assetId)return String(reference||'');if(kcImportAssetObjectUrls.has(assetId))return kcImportAssetObjectUrls.get(assetId);const db=await openKcImportAssetDb();const record=await new Promise((resolve,reject)=>{const transaction=db.transaction(KC_IMPORT_ASSET_STORE,'readonly');const request=transaction.objectStore(KC_IMPORT_ASSET_STORE).get(assetId);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error||new Error(`Screenshot ${assetId} could not be read.`))});if(!record?.blob)return'';const objectUrl=URL.createObjectURL(record.blob);kcImportAssetObjectUrls.set(assetId,objectUrl);return objectUrl}
+function hydrateHighResolutionImportImages(root=document){root.querySelectorAll('img[data-kc-import-asset]').forEach(async image=>{const reference=image.dataset.kcImportAsset||'';try{const source=await loadOriginalImportAsset(reference);if(!source)throw new Error('Screenshot was not found in high-resolution storage.');image.src=source;const button=image.closest('[data-asset]');if(button)button.dataset.asset=source;image.removeAttribute('data-kc-import-asset')}catch(error){console.error('Imported screenshot could not be displayed:',error);image.alt=lang==='en'?'Imported screenshot could not be loaded in this browser.':'Screenshot hasil import tidak dapat dimuat pada browser ini.'}})}
 let DATA=__kcState.data;
 const FAQ_ROWS=[
   ["FAQ-001","Integrasi","Integration","WMS Lite","WMS Lite","Bagaimana cara melakukan sinkronisasi ulang Sales Order (SO) yang bermasalah?","How do I resynchronize a problematic Sales Order (SO)?","Klik ikon Sync di kanan atas, pilih sinkronisasi SO secara spesifik, lalu masukkan nomor SO yang bermasalah. Jalankan sinkronisasi dan periksa kembali status serta detail SO di Prieds. Jika data masih berbeda, pastikan SO pada sistem sumber, seperti Accurate atau Jurnal, tidak sedang diubah atau telah dihapus.","Click the Sync icon in the upper-right corner, select the specific SO synchronization option, and enter the affected SO number. Run the synchronization and recheck the SO status and details in Prieds. If the data still differs, confirm that the SO in the source system, such as Accurate or Jurnal, has not been edited or deleted."],
@@ -745,13 +754,18 @@ function renderArticle() {
       
       const imgStyle = `display:block;margin:${marginStyle};max-width:100%;height:auto;${b.scale ? `width:${b.scale}%;` : 'width:auto;'}`;
       const captionStyle = `text-align: ${align};`;
+      const isStoredImportAsset = String(src || '').startsWith(KC_IMPORT_ASSET_PREFIX);
+      const displayedSrc = isStoredImportAsset ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' : src;
+      const importAssetAttribute = isStoredImportAsset ? ` data-kc-import-asset="${esc(src)}"` : '';
+      const lightboxAsset = isStoredImportAsset ? '' : src;
       
-      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${sourceIndex}"><button data-asset="${src}" style="background: transparent;"><img loading="lazy" decoding="async" src="${src}" alt="${esc(b.caption || topic.title[lang])}" style="${imgStyle}"></button>${b.caption ? `<figcaption class="mediaCaption" style="${captionStyle}">${esc(b.caption)}</figcaption>` : ''}</figure>` 
+      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${sourceIndex}"><button data-asset="${lightboxAsset}" style="background: transparent;"><img loading="lazy" decoding="async" src="${displayedSrc}"${importAssetAttribute} alt="${esc(b.caption || topic.title[lang])}" style="${imgStyle}"></button>${b.caption ? `<figcaption class="mediaCaption" style="${captionStyle}">${esc(b.caption)}</figcaption>` : ''}</figure>` 
     } 
     else if (b.type === 'table') html += `<div class="docTableWrap" id="${sid}" data-kc-section="${sourceIndex}"><table class="docTable">${b.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>` 
   }); 
   $('docContent').innerHTML = html || `<div class="empty">${t('empty')}</div>`; 
-  $('docContent').querySelectorAll('[data-asset]').forEach(btn => btn.onclick = () => openLightbox(btn.dataset.asset));
+  hydrateHighResolutionImportImages($('docContent'));
+  $('docContent').querySelectorAll('[data-asset]').forEach(btn => btn.onclick = () => { if (btn.dataset.asset) openLightbox(btn.dataset.asset) });
   $('docContent').querySelectorAll('[data-faq-module]').forEach(button => button.onclick = () => openKnowledgeSource({ moduleId: button.dataset.faqModule, topicIndex: Number(button.dataset.faqTopicIndex), targetId: button.dataset.faqTarget || '' }));
   if (typeof updateChatContext === 'function') updateChatContext() 
 }
