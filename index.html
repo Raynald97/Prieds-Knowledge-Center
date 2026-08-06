@@ -92,9 +92,13 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 .aiFaqFormatted{font-size:13px;line-height:1.65;color:#3E4C52;margin:10px 0}.aiFaqFormatted p{margin:9px 0}.aiFaqFormatted ol,.aiFaqFormatted ul{margin:9px 0;padding-left:22px}.aiFaqFormatted li{margin:6px 0}.legacyFaqStructured{font-size:13px;line-height:1.65;color:#3E4C52;margin:10px 0}.legacyFaqStructured .docP{margin:0 0 18px}.legacyFaqStructured .docP:last-child{margin-bottom:0}.faqSourceLinks{display:grid;gap:7px;margin:9px 0 16px}.faqSourceLink{width:100%;border:1px solid #BFE3EE;background:#EFFAFF;color:#087B9D;border-radius:6px;padding:9px 10px;text-align:left;font-size:12px;line-height:1.45}.faqSourceLink:hover{background:#DDF5FB}.docInlineSource{border:0;background:transparent;color:#087B9D;text-decoration:underline;padding:0;font:inherit;text-align:left}.docInlineSource:hover{color:#075D78}
 .stepCard{margin:18px 0 10px}
 .stepNum{display:none}.stepText{font-size:13px;line-height:1.65;color:#3D4A50}
+.docContent.numberedArticle .stepCard{display:grid;grid-template-columns:32px minmax(0,1fr);gap:11px;align-items:start;margin:16px 0;padding:12px 14px;background:#fff;border:1px solid #E1E8EB;border-radius:7px}
+.docContent.numberedArticle .stepNum{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;line-height:1}
+.structuredArticleText>p{margin:0 0 9px}.structuredArticleText>p:last-child{margin-bottom:0}
+.docContent.numberedArticle .mediaCard{margin:8px 0 30px}
 .mediaCard{margin:10px 0 18px;background:#fff;border:0;overflow:hidden}
-.mediaCard button{display:block;width:100%;border:0;background:#fff;padding:0;cursor:zoom-in}
-.mediaCard img{width:100%;height:auto;display:block;border:1px solid #E3E8EB}
+.mediaCard button{display:block;width:100%;border:0;background:#fff;padding:0;cursor:zoom-in;text-align:center}
+.mediaCard img{width:auto;max-width:100%;height:auto;display:block;border:1px solid #E3E8EB;image-rendering:auto}
 .mediaCaption{font-size:10px;color:#7E8A90;padding:7px 2px}
 .docTableWrap{overflow:auto;margin:14px 0 20px;border:1px solid #D5DEE2;background:#fff}
 .docTable{border-collapse:collapse;width:100%;font-size:11px}.docTable td{border:1px solid #DCE4E7;padding:9px;vertical-align:top;line-height:1.45}.docTable tr:first-child{background:#DDF4FA;font-weight:800}
@@ -231,6 +235,15 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 <div class="mobileDrawer" id="mobileDrawer"><aside class="sidebar"><h2 class="sidebarTitle" data-ui="tocTitle"></h2><div id="mobileNav"></div></aside></div>
 <div class="lightbox" id="lightbox"><button class="close" id="lightboxClose">×</button><img id="lightboxImg"></div><div class="toast" id="toast"></div>
 <script src="knowledge-data.js"></script><script src="knowledge-store.js"></script><script type="module">const __kcState=await window.KCStore.load(window.KC_DEFAULT_DATA);
+const KC_IMPORT_ASSET_PREFIX='kc-import-asset://';
+const KC_IMPORT_ASSET_DB='prieds-kc-import-assets-v1';
+const KC_IMPORT_ASSET_STORE='assets';
+let kcImportAssetDbPromise=null;
+const kcImportAssetObjectUrls=new Map();
+function openKcImportAssetDb(){if(!('indexedDB'in window))return Promise.reject(new Error('IndexedDB is not supported by this browser.'));if(kcImportAssetDbPromise)return kcImportAssetDbPromise;kcImportAssetDbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open(KC_IMPORT_ASSET_DB,1);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(KC_IMPORT_ASSET_STORE))db.createObjectStore(KC_IMPORT_ASSET_STORE,{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('Imported screenshot storage could not be opened.'));request.onblocked=()=>reject(new Error('Imported screenshot storage is blocked by another browser tab.'))}).catch(error=>{kcImportAssetDbPromise=null;throw error});return kcImportAssetDbPromise}
+function importAssetIdFromReference(value){const source=String(value||'');if(!source.startsWith(KC_IMPORT_ASSET_PREFIX))return'';try{return decodeURIComponent(source.slice(KC_IMPORT_ASSET_PREFIX.length))}catch(_){return source.slice(KC_IMPORT_ASSET_PREFIX.length)}}
+async function loadOriginalImportAsset(reference){const assetId=importAssetIdFromReference(reference);if(!assetId)return String(reference||'');if(kcImportAssetObjectUrls.has(assetId))return kcImportAssetObjectUrls.get(assetId);const db=await openKcImportAssetDb();const record=await new Promise((resolve,reject)=>{const transaction=db.transaction(KC_IMPORT_ASSET_STORE,'readonly');const request=transaction.objectStore(KC_IMPORT_ASSET_STORE).get(assetId);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error||new Error(`Screenshot ${assetId} could not be read.`))});if(!record?.blob)return'';const objectUrl=URL.createObjectURL(record.blob);kcImportAssetObjectUrls.set(assetId,objectUrl);return objectUrl}
+function hydrateHighResolutionImportImages(root=document){root.querySelectorAll('img[data-kc-import-asset]').forEach(async image=>{const reference=image.dataset.kcImportAsset||'';try{const source=await loadOriginalImportAsset(reference);if(!source)throw new Error('Screenshot was not found in high-resolution storage.');image.src=source;const button=image.closest('[data-asset]');if(button)button.dataset.asset=source;image.removeAttribute('data-kc-import-asset')}catch(error){console.error('Imported screenshot could not be displayed:',error);image.alt=lang==='en'?'Imported screenshot could not be loaded in this browser.':'Screenshot hasil import tidak dapat dimuat pada browser ini.'}})}
 let DATA=__kcState.data;
 const FAQ_ROWS=[
   ["FAQ-001","Integrasi","Integration","WMS Lite","WMS Lite","Bagaimana cara melakukan sinkronisasi ulang Sales Order (SO) yang bermasalah?","How do I resynchronize a problematic Sales Order (SO)?","Klik ikon Sync di kanan atas, pilih sinkronisasi SO secara spesifik, lalu masukkan nomor SO yang bermasalah. Jalankan sinkronisasi dan periksa kembali status serta detail SO di Prieds. Jika data masih berbeda, pastikan SO pada sistem sumber, seperti Accurate atau Jurnal, tidak sedang diubah atau telah dihapus.","Click the Sync icon in the upper-right corner, select the specific SO synchronization option, and enter the affected SO number. Run the synchronization and recheck the SO status and details in Prieds. If the data still differs, confirm that the SO in the source system, such as Accurate or Jurnal, has not been edited or deleted."],
@@ -648,8 +661,58 @@ function legacyFaqStructuredHtml(value){
   if(!parsed)return'';
   return`<div class="legacyFaqStructured">${parsed.intro.map(text=>`<p class="docP">${esc(text)}</p>`).join('')}${parsed.steps.map(text=>`<p class="docP">${esc(text)}</p>`).join('')}</div>`;
 }
+
+const STRUCTURED_INVENTORY_ARTICLES=new Set(['inventory','stock opname','split stock','stock report','stock opname report']);
+function shouldStructureArticle(module,topic){
+  if(String(topic?.source||'').trim().toLowerCase()==='knowledge center'||topic?.originalLanguage)return true;
+  if(guideModuleKey(module)!=='inventory')return false;
+  const names=[topic?.title?.id,topic?.title?.en,topic?.pageMenu?.id,topic?.pageMenu?.en,topic?.tabMenu?.id,topic?.tabMenu?.en]
+    .filter(Boolean).map(normalize);
+  return names.some(name=>STRUCTURED_INVENTORY_ARTICLES.has(name));
+}
+function splitDisplayNumberedText(value){
+  const original=String(value||'').replace(/\r/g,'').replace(/\u00a0/g,' ').trim();
+  if(!original)return null;
+  const prepared=original
+    .replace(/[ \t]+\n/g,'\n')
+    .replace(/\n[ \t]+/g,'\n')
+    .replace(/([^\n])\s+(?=(?:\d{1,3})[.)]\s+(?=[A-Za-zÀ-ÿ]))/g,'$1\n')
+    .replace(/([^\n])\s+(?=[a-z][.)]\s+(?=[A-ZÀ-Ý]))/g,'$1\n')
+    .replace(/\n{3,}/g,'\n\n')
+    .trim();
+  const lines=prepared.split('\n');
+  if(!lines.some(line=>/^\s*\d{1,3}[.)]\s+/.test(line)))return null;
+  const parts=[];let current=null;
+  const push=()=>{if(!current)return;current.text=String(current.text||'').trim();if(current.text)parts.push(current);current=null};
+  lines.forEach(raw=>{
+    const line=String(raw||'').trim();
+    if(!line){push();return}
+    const numbered=line.match(/^\d{1,3}[.)]\s*(.+)$/);
+    if(numbered){push();current={type:'step',text:numbered[1].trim()};return}
+    const heading=/^(?:[A-Z][.)]\s*)?[A-ZÀ-Ý][A-ZÀ-Ý0-9 /&+_\-]{4,}:?$/.test(line);
+    if(heading){push();parts.push({type:'subheading',text:line.replace(/^[A-Z][.)]\s*/,'').replace(/:$/,'').trim()});return}
+    if(current?.type==='step')current.text+=`\n${line}`;
+    else{push();current={type:'p',text:line}}
+  });
+  push();
+  return parts.length?parts:null;
+}
+function structuredArticleBlocks(blocks){
+  const output=[];
+  (blocks||[]).forEach((block,sourceIndex)=>{
+    const base={...block,__kcSourceIndex:sourceIndex,__kcPartIndex:0};
+    if(!['p','step'].includes(block?.type)||!block?.text){output.push(base);return}
+    const parts=splitDisplayNumberedText(block.text);
+    if(!parts){output.push(base);return}
+    parts.forEach((part,partIndex)=>output.push({...block,...part,__kcSourceIndex:sourceIndex,__kcPartIndex:partIndex}));
+  });
+  return output;
+}
+function structuredArticleTextHtml(value){
+  return String(value||'').replace(/\r/g,'').split(/\n{2,}/).map(paragraph=>`<p>${esc(paragraph.trim()).replace(/\n/g,'<br>')}</p>`).join('');
+}
 function renderArticle() { 
-  const topic = activeModule.topics[activeTopic], blocks = getBlocks(topic), purpose = topic.purpose?.[lang] || pageFunction(topic, activeModule), intro = articleIntro(topic, blocks); 
+  const topic = activeModule.topics[activeTopic], rawBlocks = getBlocks(topic), structuredLayout = shouldStructureArticle(activeModule, topic), blocks = structuredLayout ? structuredArticleBlocks(rawBlocks) : rawBlocks, purpose = topic.purpose?.[lang] || pageFunction(topic, activeModule), intro = articleIntro(topic, rawBlocks); 
   $('breadcrumb').innerHTML = `<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`; 
   $('crumbHome').onclick = () => showModuleList(activeModule); 
   $('crumbModule').onclick = () => showModuleList(activeModule); 
@@ -664,16 +727,21 @@ function renderArticle() {
   } 
   $('articleIntro').textContent = intro; 
   $('articleIntro').hidden = !intro; 
+  $('docContent').classList.toggle('numberedArticle', structuredLayout);
   let step = 0, html = ''; 
   blocks.forEach((b, blockIndex) => { 
-    const sid = sectionDomId(activeModule.id, activeTopic, blockIndex); 
-    if (b.type === 'label') html += `<div class="docLabel" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</div>`; 
-    else if (b.type === 'subheading') html += `<h2 id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</h2>`; 
-    else if (b.type === 'step') html += `<div class="stepCard" id="${sid}" data-kc-section="${blockIndex}"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`; 
-    else if (b.type === 'p' && b.sourceLink) html += `<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${sourceLinkButton(b)}</p>`;
-    else if (b.type === 'p' && activeModule.id === 'faq' && String(topic.editor || '').toLowerCase() === 'ai chatbot' && splitLegacyFaqNumbering(b.text)) html += `<div id="${sid}" data-kc-section="${blockIndex}">${legacyFaqStructuredHtml(b.text)}</div>`;
-    else if (b.type === 'p' && activeModule.id === 'faq' && String(topic.editor || '').toLowerCase() === 'ai chatbot' && (/\n|\*\*/.test(String(b.text || '')))) html += `<div class="aiFaqFormatted" id="${sid}" data-kc-section="${blockIndex}">${faqMarkdownWithLinks(b.text)}</div>`;
-    else if (b.type === 'p') html += `<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</p>`; 
+    const sourceIndex = Number.isInteger(b.__kcSourceIndex) ? b.__kcSourceIndex : blockIndex;
+    const partIndex = Number.isInteger(b.__kcPartIndex) ? b.__kcPartIndex : 0;
+    const baseSid = sectionDomId(activeModule.id, activeTopic, sourceIndex);
+    const sid = partIndex ? `${baseSid}-part-${partIndex}` : baseSid;
+    if (b.type === 'label') html += `<div class="docLabel" id="${sid}" data-kc-section="${sourceIndex}">${esc(b.text)}</div>`; 
+    else if (b.type === 'subheading') html += `<h2 id="${sid}" data-kc-section="${sourceIndex}">${esc(b.text)}</h2>`; 
+    else if (b.type === 'step') html += `<div class="stepCard" id="${sid}" data-kc-section="${sourceIndex}"><div class="stepNum">${++step}</div><div class="stepText${structuredLayout ? ' structuredArticleText' : ''}">${structuredLayout ? structuredArticleTextHtml(b.text) : esc(b.text)}</div></div>`; 
+    else if (b.type === 'p' && b.sourceLink) html += `<p class="docP" id="${sid}" data-kc-section="${sourceIndex}">${sourceLinkButton(b)}</p>`;
+    else if (b.type === 'p' && activeModule.id === 'faq' && String(topic.editor || '').toLowerCase() === 'ai chatbot' && splitLegacyFaqNumbering(b.text)) html += `<div id="${sid}" data-kc-section="${sourceIndex}">${legacyFaqStructuredHtml(b.text)}</div>`;
+    else if (b.type === 'p' && activeModule.id === 'faq' && String(topic.editor || '').toLowerCase() === 'ai chatbot' && (/\n|\*\*/.test(String(b.text || '')))) html += `<div class="aiFaqFormatted" id="${sid}" data-kc-section="${sourceIndex}">${faqMarkdownWithLinks(b.text)}</div>`;
+    else if (b.type === 'p' && structuredLayout) html += `<div class="docP structuredArticleText" id="${sid}" data-kc-section="${sourceIndex}">${structuredArticleTextHtml(b.text)}</div>`;
+    else if (b.type === 'p') html += `<p class="docP" id="${sid}" data-kc-section="${sourceIndex}">${esc(b.text)}</p>`; 
     else if (b.type === 'image') { 
       let src = ASSETS[b.asset] || b.asset; 
       if (src && !src.includes('.') && !src.startsWith('data:') && !src.startsWith('http')) {
@@ -684,15 +752,20 @@ function renderArticle() {
       if (align === 'left') marginStyle = '0 auto 0 0';
       else if (align === 'right') marginStyle = '0 0 0 auto';
       
-      const imgStyle = `display: block; margin: ${marginStyle}; ${b.scale ? `width: ${b.scale}%; height: auto;` : ''}`;
+      const imgStyle = `display:block;margin:${marginStyle};max-width:100%;height:auto;${b.scale ? `width:${b.scale}%;` : 'width:auto;'}`;
       const captionStyle = `text-align: ${align};`;
+      const isStoredImportAsset = String(src || '').startsWith(KC_IMPORT_ASSET_PREFIX);
+      const displayedSrc = isStoredImportAsset ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' : src;
+      const importAssetAttribute = isStoredImportAsset ? ` data-kc-import-asset="${esc(src)}"` : '';
+      const lightboxAsset = isStoredImportAsset ? '' : src;
       
-      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${src}" style="background: transparent;"><img loading="lazy" src="${src}" alt="${esc(b.caption || topic.title[lang])}" style="${imgStyle}"></button>${b.caption ? `<figcaption class="mediaCaption" style="${captionStyle}">${esc(b.caption)}</figcaption>` : ''}</figure>` 
+      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${sourceIndex}"><button data-asset="${lightboxAsset}" style="background: transparent;"><img loading="lazy" decoding="async" src="${displayedSrc}"${importAssetAttribute} alt="${esc(b.caption || topic.title[lang])}" style="${imgStyle}"></button>${b.caption ? `<figcaption class="mediaCaption" style="${captionStyle}">${esc(b.caption)}</figcaption>` : ''}</figure>` 
     } 
-    else if (b.type === 'table') html += `<div class="docTableWrap" id="${sid}" data-kc-section="${blockIndex}"><table class="docTable">${b.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>` 
+    else if (b.type === 'table') html += `<div class="docTableWrap" id="${sid}" data-kc-section="${sourceIndex}"><table class="docTable">${b.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>` 
   }); 
   $('docContent').innerHTML = html || `<div class="empty">${t('empty')}</div>`; 
-  $('docContent').querySelectorAll('[data-asset]').forEach(btn => btn.onclick = () => openLightbox(btn.dataset.asset));
+  hydrateHighResolutionImportImages($('docContent'));
+  $('docContent').querySelectorAll('[data-asset]').forEach(btn => btn.onclick = () => { if (btn.dataset.asset) openLightbox(btn.dataset.asset) });
   $('docContent').querySelectorAll('[data-faq-module]').forEach(button => button.onclick = () => openKnowledgeSource({ moduleId: button.dataset.faqModule, topicIndex: Number(button.dataset.faqTopicIndex), targetId: button.dataset.faqTarget || '' }));
   if (typeof updateChatContext === 'function') updateChatContext() 
 }

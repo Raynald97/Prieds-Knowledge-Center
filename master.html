@@ -1927,6 +1927,112 @@
     const $ = id => document.getElementById(id); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const clone = x => JSON.parse(JSON.stringify(x)); const fmt = v => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v)); const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
     const SHARED_AI_REPORT_ASSET_KEY = '__prieds_kc_ai_report_v1';
     const SHARED_AI_REPORT_LIMIT = 300;
+
+    // Import Excel: high-resolution screenshots are stored as original Blobs in IndexedDB.
+    // The article JSON only keeps a lightweight reference, so Save Import is not blocked by
+    // browser/Firebase document-size limits and no image recompression is performed.
+    const KC_IMPORT_ASSET_PREFIX = 'kc-import-asset://';
+    const KC_IMPORT_ASSET_DB = 'prieds-kc-import-assets-v1';
+    const KC_IMPORT_ASSET_STORE = 'assets';
+    let kcImportAssetDbPromise = null;
+    const kcImportAssetObjectUrls = new Map();
+
+    function openKcImportAssetDb() {
+      if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB is not supported by this browser.'));
+      if (kcImportAssetDbPromise) return kcImportAssetDbPromise;
+      kcImportAssetDbPromise = new Promise((resolve, reject) => {
+        const request = indexedDB.open(KC_IMPORT_ASSET_DB, 1);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(KC_IMPORT_ASSET_STORE)) db.createObjectStore(KC_IMPORT_ASSET_STORE, { keyPath: 'id' });
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error('High-resolution image storage could not be opened.'));
+        request.onblocked = () => reject(new Error('High-resolution image storage is blocked by another browser tab.'));
+      }).catch(error => {
+        kcImportAssetDbPromise = null;
+        throw error;
+      });
+      return kcImportAssetDbPromise;
+    }
+
+    function importAssetIdFromReference(value) {
+      const source = String(value || '');
+      if (!source.startsWith(KC_IMPORT_ASSET_PREFIX)) return '';
+      try { return decodeURIComponent(source.slice(KC_IMPORT_ASSET_PREFIX.length)); }
+      catch (_) { return source.slice(KC_IMPORT_ASSET_PREFIX.length); }
+    }
+
+    function dataUrlToOriginalBlob(dataUrl) {
+      const match = String(dataUrl || '').match(/^data:([^;,]+)?(;base64)?,(.*)$/s);
+      if (!match) throw new Error('The Excel screenshot data is invalid.');
+      const mime = match[1] || 'application/octet-stream';
+      const binary = match[2] ? atob(match[3]) : decodeURIComponent(match[3]);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+      return new Blob([bytes], { type: mime });
+    }
+
+    async function saveOriginalImportAsset(assetId, dataUrl) {
+      const db = await openKcImportAssetDb();
+      const blob = dataUrlToOriginalBlob(dataUrl);
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction(KC_IMPORT_ASSET_STORE, 'readwrite');
+        transaction.objectStore(KC_IMPORT_ASSET_STORE).put({ id: assetId, blob, type: blob.type, size: blob.size, updatedAt: new Date().toISOString() });
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error || new Error(`Screenshot ${assetId} could not be stored.`));
+        transaction.onabort = () => reject(transaction.error || new Error(`Screenshot ${assetId} storage was cancelled.`));
+      });
+      return `${KC_IMPORT_ASSET_PREFIX}${encodeURIComponent(assetId)}`;
+    }
+
+    async function loadOriginalImportAsset(reference) {
+      const assetId = importAssetIdFromReference(reference);
+      if (!assetId) return String(reference || '');
+      if (kcImportAssetObjectUrls.has(assetId)) return kcImportAssetObjectUrls.get(assetId);
+      const db = await openKcImportAssetDb();
+      const record = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(KC_IMPORT_ASSET_STORE, 'readonly');
+        const request = transaction.objectStore(KC_IMPORT_ASSET_STORE).get(assetId);
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error || new Error(`Screenshot ${assetId} could not be read.`));
+      });
+      if (!record?.blob) return '';
+      const objectUrl = URL.createObjectURL(record.blob);
+      kcImportAssetObjectUrls.set(assetId, objectUrl);
+      return objectUrl;
+    }
+
+    async function persistHighResolutionImportAssets(assetMap, button) {
+      const entries = Object.entries(assetMap || {});
+      if (!entries.length) return {};
+      let completed = 0;
+      const stored = await Promise.all(entries.map(async ([assetId, source]) => {
+        let reference = source;
+        if (String(source || '').startsWith('data:image/')) reference = await saveOriginalImportAsset(assetId, source);
+        completed++;
+        if (button) button.innerHTML = `<span aria-hidden="true">…</span> Saving images ${completed}/${entries.length}`;
+        return [assetId, reference];
+      }));
+      return Object.fromEntries(stored);
+    }
+
+    function hydrateHighResolutionImportImages(root = document) {
+      root.querySelectorAll('img[data-kc-import-asset]').forEach(async image => {
+        const reference = image.dataset.kcImportAsset || '';
+        try {
+          const source = await loadOriginalImportAsset(reference);
+          if (!source) throw new Error('Screenshot was not found in high-resolution storage.');
+          image.src = source;
+          const button = image.closest('[data-asset]');
+          if (button) button.dataset.asset = source;
+          image.removeAttribute('data-kc-import-asset');
+        } catch (error) {
+          console.error('Imported screenshot could not be displayed:', error);
+          image.alt = 'Imported screenshot could not be loaded on this browser.';
+        }
+      });
+    }
     let sharedAiReportCache = { questions: [], feedback: [], updatedAt: null };
     let sharedReportRefreshPromise = null;
 
@@ -2008,15 +2114,18 @@
     function pageName(t, lang = 'id') { return t.pageMenu?.[lang] || t.pageMenu?.id || t.pageMenu?.en || 'General' }
     function toast(msg) { $('toast').textContent = msg; $('toast').classList.add('show'); clearTimeout(window.__tt); window.__tt = setTimeout(() => $('toast').classList.remove('show'), 1800) }
     function setSynced(label = 'Synced') { $('syncStatus').textContent = label }
-    async function persist(message) {
+    async function persist(message, options = {}) {
       setSynced('Saving…');
       try {
         state.assets = { ...(state.assets || {}), ...pendingAssets };
         // Ambil laporan terbaru terlebih dahulu agar penyimpanan guide tidak menimpa data Tanya AI dari perangkat lain.
-        try {
-          const latestReportState = await window.KCStore.load(window.KC_DEFAULT_DATA);
-          sharedAiReportCache = sharedAiReportFromState(latestReportState);
-        } catch (_) { }
+        // Import/arrangement dapat melewati load kedua karena caller sudah memakai state terbaru.
+        if (!options.skipReportRefresh) {
+          try {
+            const latestReportState = await window.KCStore.load(window.KC_DEFAULT_DATA);
+            sharedAiReportCache = sharedAiReportFromState(latestReportState);
+          } catch (_) { }
+        }
         if (sharedAiReportCache) writeSharedAiReportToState(state, sharedAiReportCache);
         state = await window.KCStore.save(state);
         sharedAiReportCache = sharedAiReportFromState(state);
@@ -2517,6 +2626,62 @@
       return { purpose, content: [before, remainder].filter(Boolean).join('\n\n') };
     }
 
+
+    function importedContentBlocks(value) {
+      const original = String(value || '').replace(/\r/g, '').replace(/\u00a0/g, ' ').trim();
+      if (!original) return [];
+
+      // Excel cells often contain several numbered points in one long line. Insert a safe line break
+      // before those markers, then convert them into separate step blocks without changing their order.
+      const prepared = original
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n[ \t]+/g, '\n')
+        .replace(/([^\n])\s+(?=(?:\d{1,3})[.)]\s+(?=[A-Za-zÀ-ÿ]))/g, '$1\n')
+        .replace(/([^\n])\s+(?=[a-z][.)]\s+(?=[A-ZÀ-Ý]))/g, '$1\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+      const lines = prepared.split('\n');
+      const hasNumberedPoint = lines.some(line => /^\s*\d{1,3}[.)]\s+/.test(line));
+      if (!hasNumberedPoint) return [{ type: 'step', text: prepared }];
+
+      const blocks = [];
+      let current = null;
+      const pushCurrent = () => {
+        if (!current) return;
+        current.text = String(current.text || '').trim();
+        if (current.text) blocks.push(current);
+        current = null;
+      };
+
+      lines.forEach(rawLine => {
+        const line = String(rawLine || '').trim();
+        if (!line) {
+          pushCurrent();
+          return;
+        }
+        const numbered = line.match(/^\d{1,3}[.)]\s*(.+)$/);
+        if (numbered) {
+          pushCurrent();
+          current = { type: 'step', text: numbered[1].trim() };
+          return;
+        }
+        const heading = /^(?:[A-Z][.)]\s*)?[A-ZÀ-Ý][A-ZÀ-Ý0-9 /&+_\-]{4,}:?$/.test(line);
+        if (heading) {
+          pushCurrent();
+          blocks.push({ type: 'subheading', text: line.replace(/^[A-Z][.)]\s*/, '').replace(/:$/, '').trim() });
+          return;
+        }
+        if (current?.type === 'step') {
+          current.text += `\n${line}`;
+        } else {
+          pushCurrent();
+          current = { type: 'p', text: line };
+        }
+      });
+      pushCurrent();
+      return blocks.length ? blocks : [{ type: 'step', text: prepared }];
+    }
+
     function importStatusForGuide(guide) {
       const normalizeValue = value => String(value || '').trim().toLowerCase();
       const moduleName = normalizeValue(guide.moduleName);
@@ -2794,8 +2959,10 @@
         if (parsedId.content || parsedEn.content) {
           const textId = parsedId.content || parsedEn.content;
           const textEn = parsedEn.content || parsedId.content;
-          guide.blocksId.push({ type: 'step', text: textId });
-          guide.blocksEn.push({ type: 'step', text: textEn });
+          const idBlocks = importedContentBlocks(textId);
+          const enBlocks = importedContentBlocks(textEn);
+          guide.blocksId.push(...idBlocks);
+          guide.blocksEn.push(...enBlocks);
         }
 
         const imageSources = [...rowImages];
@@ -2852,6 +3019,31 @@
     }
 
     const importTranslationCache = new Map();
+    const IMPORT_TRANSLATION_CONCURRENCY = 4;
+    const IMPORT_TRANSLATION_TIMEOUT_MS = 12000;
+    const IMPORT_TRANSLATION_CHUNK_SIZE = 1200;
+    let importTranslationActive = 0;
+    const importTranslationQueue = [];
+
+    function runImportTranslationTask(task) {
+      return new Promise((resolve, reject) => {
+        importTranslationQueue.push({ task, resolve, reject });
+        const drain = () => {
+          while (importTranslationActive < IMPORT_TRANSLATION_CONCURRENCY && importTranslationQueue.length) {
+            const item = importTranslationQueue.shift();
+            importTranslationActive++;
+            Promise.resolve()
+              .then(item.task)
+              .then(item.resolve, item.reject)
+              .finally(() => {
+                importTranslationActive--;
+                drain();
+              });
+          }
+        };
+        drain();
+      });
+    }
 
     function importNormalizedValue(value) {
       return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -2866,47 +3058,83 @@
 
     function importGuideLanguageSample(guide) {
       const blockText = [...(guide.blocksId || []), ...(guide.blocksEn || [])]
-        .map(block => block?.text || block?.caption || (Array.isArray(block?.rows) ? block.rows.flat().join(' ') : ''))
+        .filter(block => typeof block?.text === 'string')
+        .map(block => block.text)
         .join('\n');
       return [guide.moduleName, guide.pageName, guide.titleId, guide.titleEn, guide.purposeId, guide.purposeEn, blockText]
         .filter(Boolean)
         .join('\n');
     }
 
+    function splitImportedTranslationText(value) {
+      const source = String(value || '');
+      if (source.length <= IMPORT_TRANSLATION_CHUNK_SIZE) return [source];
+      const tokens = source.match(/[^\n]+|\n+/g) || [source];
+      const chunks = [];
+      let current = '';
+      const pushCurrent = () => { if (current) chunks.push(current); current = ''; };
+      tokens.forEach(token => {
+        if (token.length > IMPORT_TRANSLATION_CHUNK_SIZE) {
+          pushCurrent();
+          for (let index = 0; index < token.length; index += IMPORT_TRANSLATION_CHUNK_SIZE) chunks.push(token.slice(index, index + IMPORT_TRANSLATION_CHUNK_SIZE));
+          return;
+        }
+        if (current && current.length + token.length > IMPORT_TRANSLATION_CHUNK_SIZE) pushCurrent();
+        current += token;
+      });
+      pushCurrent();
+      return chunks;
+    }
+
+    function importTranslationWithTimeout(task, fallback) {
+      return Promise.race([
+        Promise.resolve().then(task),
+        new Promise(resolve => setTimeout(() => resolve(fallback), IMPORT_TRANSLATION_TIMEOUT_MS))
+      ]);
+    }
+
     async function translateImportedText(value, targetLanguage, sourceLanguage) {
       const textValue = String(value || '').trim();
       if (!textValue || targetLanguage === sourceLanguage) return textValue;
       const key = `${sourceLanguage}|${targetLanguage}|${textValue}`;
-      if (importTranslationCache.has(key)) return importTranslationCache.get(key);
-      const translated = String(await translateText(textValue, targetLanguage, sourceLanguage) || textValue).trim();
-      importTranslationCache.set(key, translated || textValue);
-      return translated || textValue;
+      if (!importTranslationCache.has(key)) {
+        const request = Promise.all(splitImportedTranslationText(textValue).map(chunk => {
+          if (!chunk.trim()) return Promise.resolve(chunk);
+          return runImportTranslationTask(async () => {
+            const translated = await importTranslationWithTimeout(
+              () => translateText(chunk, targetLanguage, sourceLanguage),
+              chunk
+            );
+            return String(translated || chunk);
+          });
+        })).then(chunks => chunks.join('').trim() || textValue);
+        importTranslationCache.set(key, request);
+      }
+      try {
+        return await importTranslationCache.get(key);
+      } catch (error) {
+        importTranslationCache.delete(key);
+        console.warn('Imported text translation failed:', error);
+        return textValue;
+      }
     }
 
     async function translateImportedBlocks(blocks, targetLanguage, sourceLanguage) {
-      const translatedBlocks = [];
-      for (const originalBlock of clone(blocks || [])) {
+      return Promise.all(clone(blocks || []).map(async originalBlock => {
         const block = { ...originalBlock };
+        const jobs = [];
         if (typeof block.text === 'string' && block.text.trim()) {
-          block.text = await translateImportedText(block.text, targetLanguage, sourceLanguage);
+          jobs.push(translateImportedText(block.text, targetLanguage, sourceLanguage).then(value => { block.text = value; }));
         }
         if (typeof block.caption === 'string' && block.caption.trim()) {
-          block.caption = await translateImportedText(block.caption, targetLanguage, sourceLanguage);
+          jobs.push(translateImportedText(block.caption, targetLanguage, sourceLanguage).then(value => { block.caption = value; }));
         }
         if (Array.isArray(block.rows)) {
-          const translatedRows = [];
-          for (const row of block.rows) {
-            const translatedRow = [];
-            for (const cell of row || []) {
-              translatedRow.push(await translateImportedText(cell, targetLanguage, sourceLanguage));
-            }
-            translatedRows.push(translatedRow);
-          }
-          block.rows = translatedRows;
+          jobs.push(Promise.all(block.rows.map(row => Promise.all((row || []).map(cell => translateImportedText(cell, targetLanguage, sourceLanguage))))).then(rows => { block.rows = rows; }));
         }
-        translatedBlocks.push(block);
-      }
-      return translatedBlocks;
+        await Promise.all(jobs);
+        return block;
+      }));
     }
 
     async function makeImportedGuideBilingual(guide) {
@@ -2919,38 +3147,32 @@
       const sourceTitle = String(sourceIsIndonesian ? (guide.titleId || guide.titleEn || sourcePage) : (guide.titleEn || guide.titleId || sourcePage)).trim();
       const currentTargetTitle = String(sourceIsIndonesian ? guide.titleEn : guide.titleId).trim();
       const titleNeedsTranslation = !currentTargetTitle || importNormalizedValue(currentTargetTitle) === importNormalizedValue(sourceTitle);
-      const translatedTitle = titleNeedsTranslation
-        ? await translateImportedText(sourceTitle, targetLanguage, sourceLanguage)
-        : currentTargetTitle;
 
       const sourceSidebar = String(sourceIsIndonesian
         ? (guide.sidebarId || guide.sidebarEn || sourcePage)
         : (guide.sidebarEn || guide.sidebarId || sourcePage)).trim();
       const currentTargetSidebar = String(sourceIsIndonesian ? guide.sidebarEn : guide.sidebarId).trim();
       const sidebarNeedsTranslation = !currentTargetSidebar || importNormalizedValue(currentTargetSidebar) === importNormalizedValue(sourceSidebar);
-      const translatedSidebar = sidebarNeedsTranslation
-        ? await translateImportedText(sourceSidebar, targetLanguage, sourceLanguage)
-        : currentTargetSidebar;
 
       const sourcePurpose = String(sourceIsIndonesian
         ? (guide.purposeId || guide.purposeEn || '')
         : (guide.purposeEn || guide.purposeId || '')).trim();
       const currentTargetPurpose = String(sourceIsIndonesian ? guide.purposeEn : guide.purposeId).trim();
       const purposeNeedsTranslation = sourcePurpose && (!currentTargetPurpose || importNormalizedValue(currentTargetPurpose) === importNormalizedValue(sourcePurpose));
-      const translatedPurpose = purposeNeedsTranslation
-        ? await translateImportedText(sourcePurpose, targetLanguage, sourceLanguage)
-        : currentTargetPurpose;
 
       const sourceBlocks = clone(sourceIsIndonesian ? guide.blocksId : guide.blocksEn);
       const currentTargetBlocks = clone(sourceIsIndonesian ? guide.blocksEn : guide.blocksId);
       const blocksNeedTranslation = !currentTargetBlocks.length
         || importNormalizedValue(importBlocksSignature(currentTargetBlocks)) === importNormalizedValue(importBlocksSignature(sourceBlocks));
-      const translatedBlocks = blocksNeedTranslation
-        ? await translateImportedBlocks(sourceBlocks, targetLanguage, sourceLanguage)
-        : currentTargetBlocks;
 
-      const translatedModule = await translateImportedText(sourceModule, targetLanguage, sourceLanguage);
-      const translatedPage = await translateImportedText(sourcePage, targetLanguage, sourceLanguage);
+      const [translatedTitle, translatedSidebar, translatedPurpose, translatedBlocks, translatedModule, translatedPage] = await Promise.all([
+        titleNeedsTranslation ? translateImportedText(sourceTitle, targetLanguage, sourceLanguage) : Promise.resolve(currentTargetTitle),
+        sidebarNeedsTranslation ? translateImportedText(sourceSidebar, targetLanguage, sourceLanguage) : Promise.resolve(currentTargetSidebar),
+        purposeNeedsTranslation ? translateImportedText(sourcePurpose, targetLanguage, sourceLanguage) : Promise.resolve(currentTargetPurpose),
+        blocksNeedTranslation ? translateImportedBlocks(sourceBlocks, targetLanguage, sourceLanguage) : Promise.resolve(currentTargetBlocks),
+        translateImportedText(sourceModule, targetLanguage, sourceLanguage),
+        translateImportedText(sourcePage, targetLanguage, sourceLanguage)
+      ]);
 
       return {
         ...guide,
@@ -3004,20 +3226,43 @@
       });
     }
 
+
+    function importedGuideExistsInState(currentState, guide) {
+      const moduleCandidates = [guide.moduleName, guide.moduleNameId, guide.moduleNameEn].map(importNormalizedValue).filter(Boolean);
+      const module = (currentState?.data || []).find(item => {
+        const names = [item.id, item.name?.id, item.name?.en].map(importNormalizedValue).filter(Boolean);
+        return moduleCandidates.some(candidate => names.includes(candidate));
+      });
+      if (!module) return false;
+      const pageCandidates = [guide.pageName, guide.pageNameId, guide.pageNameEn].map(importNormalizedValue).filter(Boolean);
+      const titleCandidates = [guide.titleId, guide.titleEn].map(importNormalizedValue).filter(Boolean);
+      return (module.topics || []).some(topic => {
+        const pages = [pageName(topic, 'id'), pageName(topic, 'en')].map(importNormalizedValue).filter(Boolean);
+        const titles = [topic.title?.id, topic.title?.en].map(importNormalizedValue).filter(Boolean);
+        return pageCandidates.some(value => pages.includes(value)) && titleCandidates.some(value => titles.includes(value));
+      });
+    }
+
     async function saveImportedGuides() {
       if (!importExcelDraft || importExcelDraft.errors.length || !importExcelDraft.guides.length) return;
       const button = $('saveGuideImport');
       button.disabled = true;
       importTranslationCache.clear();
       try {
-        const bilingualGuides = [];
-        for (let index = 0; index < importExcelDraft.guides.length; index++) {
-          button.innerHTML = `<span aria-hidden="true">…</span> Translating ${index + 1}/${importExcelDraft.guides.length}`;
-          bilingualGuides.push(await makeImportedGuideBilingual(importExcelDraft.guides[index]));
-        }
+        let translatedCount = 0;
+        const totalGuides = importExcelDraft.guides.length;
+        button.innerHTML = `<span aria-hidden="true">…</span> Translating 0/${totalGuides}`;
+        const bilingualGuides = await Promise.all(importExcelDraft.guides.map(async guide => {
+          const translatedGuide = await makeImportedGuideBilingual(guide);
+          translatedCount++;
+          button.innerHTML = `<span aria-hidden="true">…</span> Translating ${translatedCount}/${totalGuides}`;
+          return translatedGuide;
+        }));
 
         button.innerHTML = '<span aria-hidden="true">…</span> Saving Import';
         state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
         const stamp = new Date().toISOString();
         const usedModuleIds = new Set(state.data.map(module => module.id));
         const usedTopicIds = new Set(state.data.flatMap(module => module.topics.map(topic => topic.id)));
@@ -3083,13 +3328,28 @@
           }
         });
 
-        pendingAssets = { ...pendingAssets, ...importExcelDraft.assets };
-        const saved = await persist();
+        button.innerHTML = '<span aria-hidden="true">…</span> Saving high-resolution images';
+        const storedAssets = await persistHighResolutionImportAssets(importExcelDraft.assets, button);
+        pendingAssets = { ...pendingAssets, ...storedAssets };
+
+        button.innerHTML = '<span aria-hidden="true">…</span> Saving articles';
+        const saved = await persist('', { skipReportRefresh: true });
         if (!saved) throw new Error('Imported data could not be saved.');
+
+        button.innerHTML = '<span aria-hidden="true">…</span> Verifying import';
+        const verifiedState = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        const missingGuides = bilingualGuides.filter(guide => !importedGuideExistsInState(verifiedState, guide));
+        if (missingGuides.length) throw new Error(`${missingGuides.length} imported guide(s) could not be verified after saving.`);
+        state = verifiedState;
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+
         closeImportExcelModal();
         guidePage = 1;
-        switchTab('list');
-        successModal(`${created} guide(s) created and ${updated} guide(s) updated from Excel. Indonesian and English versions have been prepared automatically.`);
+        await switchTab('list');
+        const successMessage = `${created} guide(s) created and ${updated} guide(s) updated. The articles are available in Indonesian and English, and the original Excel screenshot resolution has been retained.`;
+        toast('Import berhasil. Artikel Bahasa Indonesia dan English sudah terbentuk.');
+        successModal(successMessage);
         importExcelDraft = null;
       } catch (error) {
         console.error('Save guide import failed:', error);
@@ -3150,18 +3410,47 @@
     function groups() { const map = new Map(); allArticles().forEach(x => { const key = x.module.id + '||' + pageName(x.topic); if (!map.has(key)) map.set(key, { module: x.module, page: pageName(x.topic), items: [] }); map.get(key).items.push(x) }); return [...map.values()] }
     function renderArrangement() { const main = $('arrMain').value, page = $('arrPage').value; const gs = groups().filter(g => (!main || g.module.id === main) && (!page || g.page === page)); const totalPages = Math.max(1, Math.ceil(gs.length / PAGE_SIZE)); arrangementPage = Math.min(arrangementPage, totalPages); const pageGroups = gs.slice((arrangementPage - 1) * PAGE_SIZE, arrangementPage * PAGE_SIZE); $('arrRows').innerHTML = gs.length ? pageGroups.map(g => `<tr><td>${esc(g.module.name.id)}</td><td>${esc(g.page)}</td><td>${g.items.length}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-arr-menu="${g.module.id}|${esc(g.page)}">⋮</button><div class="actionDropdown"><button type="button" data-setup="${g.module.id}|${esc(g.page)}">Setup</button></div></div></td></tr>`).join('') : `<tr><td colspan="4" class="empty">No arrangement group found.</td></tr>`; renderPagination('arrPagination', arrangementPage, totalPages, gs.length, next => { arrangementPage = next; renderArrangement() }); $('arrRows').querySelectorAll('[data-arr-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); $('arrRows').querySelectorAll('[data-setup]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const p = b.dataset.setup.split('|'); openArrangement(p[0], p.slice(1).join('|')) }) }
     $('arrSearch').onclick = () => { arrangementPage = 1; renderArrangement() };
-    function openArrangement(mid, page) { const g = groups().find(x => x.module.id === mid && x.page === page); if (!g) return; arrangementContext = { mid, page, ids: g.items.map(x => x.topic.id), drag: null }; const cards = g.items.map(x => `<div class="sortItem" draggable="true" data-sort="${x.topic.id}"><div class="sortHead"><span class="sortHandle">⋮⋮</span><span>${esc(x.topic.title.id)}</span><span style="margin-left:auto;background:#EAF9FD;color:#087C9D;padding:5px 8px;border-radius:5px">${esc(page)}</span></div><div class="sortInfo">${(x.topic.blocks?.id || []).filter(b => b.type === 'step').length} Step Content • ${esc(x.topic.editor || '—')}</div></div>`).join(''); showModal(`<div class="modalHeader"><h2>Setup Content</h2><button class="closeModal" data-close>×</button></div><p class="helper">Drag and drop the cards to change the guide sequence in index.html.</p><div class="sortable" id="sortable">${cards}</div><div class="submitBar"><button class="primaryBtn" id="saveArrangement">Save Arrangement</button></div>`); bindSort(); $('saveArrangement').onclick = saveArrangement }
-    function bindSort() { $('sortable').querySelectorAll('[data-sort]').forEach(el => { el.ondragstart = () => arrangementContext.drag = el.dataset.sort; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const from = arrangementContext.ids.indexOf(arrangementContext.drag), to = arrangementContext.ids.indexOf(el.dataset.sort); if (from < 0 || to < 0 || from === to) return; const [v] = arrangementContext.ids.splice(from, 1); arrangementContext.ids.splice(to, 0, v); const nodes = [...$('sortable').children], node = nodes.find(n => n.dataset.sort === v), target = [...$('sortable').children].find(n => n.dataset.sort === el.dataset.sort); $('sortable').insertBefore(node, from < to ? target.nextSibling : target) } }) }
-    async function saveArrangement() { 
-      // --- TAMBAHKAN BARIS INI ---
-      state = await window.KCStore.load(window.KC_DEFAULT_DATA);
-      // ---------------------------
+    function openArrangement(mid, page) { const g = groups().find(x => x.module.id === mid && x.page === page); if (!g) return; const ids = g.items.map(x => x.topic.id); arrangementContext = { mid, page, ids: [...ids], originalIds: [...ids], drag: null }; const cards = g.items.map(x => `<div class="sortItem" draggable="true" data-sort="${x.topic.id}"><div class="sortHead"><span class="sortHandle">⋮⋮</span><span>${esc(x.topic.title.id)}</span><span style="margin-left:auto;background:#EAF9FD;color:#087C9D;padding:5px 8px;border-radius:5px">${esc(page)}</span></div><div class="sortInfo">${(x.topic.blocks?.id || []).filter(b => b.type === 'step').length} Step Content • ${esc(x.topic.editor || '—')}</div></div>`).join(''); showModal(`<div class="modalHeader"><h2>Setup Content</h2><button class="closeModal" data-close>×</button></div><p class="helper">Drag and drop the cards to change the guide sequence in index.html.</p><div class="sortable" id="sortable">${cards}</div><div class="submitBar"><button class="primaryBtn" id="saveArrangement" type="button">Save Arrangement</button></div>`); bindSort(); $('saveArrangement').onclick = saveArrangement }
+    function bindSort() { $('sortable').querySelectorAll('[data-sort]').forEach(el => { el.ondragstart = () => { arrangementContext.drag = el.dataset.sort; el.classList.add('dragging') }; el.ondragend = () => { arrangementContext.drag = null; el.classList.remove('dragging') }; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const from = arrangementContext.ids.indexOf(arrangementContext.drag), to = arrangementContext.ids.indexOf(el.dataset.sort); if (from < 0 || to < 0 || from === to) return; const [v] = arrangementContext.ids.splice(from, 1); arrangementContext.ids.splice(to, 0, v); const node = [...$('sortable').children].find(n => n.dataset.sort === v), target = [...$('sortable').children].find(n => n.dataset.sort === el.dataset.sort); $('sortable').insertBefore(node, from < to ? target.nextSibling : target); arrangementContext.drag = null } }) }
+    async function saveArrangement() {
+      if (!arrangementContext) return;
+      const button = $('saveArrangement');
+      button.disabled = true;
+      button.textContent = 'Saving…';
+      try {
+        const latestState = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        const module = latestState.data.find(item => item.id === arrangementContext.mid);
+        if (!module) throw new Error('Main Menu arrangement was not found.');
 
-      const m = state.data.find(x => x.id === arrangementContext.mid), set = new Set(arrangementContext.ids), ordered = arrangementContext.ids.map(id => m.topics.find(t => t.id === id)), i = 0; 
-      m.topics = m.topics.map(t => set.has(t.id) ? ordered[i++] : t); 
-      await persist(); 
-      hideModal(); 
-      successModal('Arrangement has been successfully updated and synchronized with the Knowledge Center.') 
+        const latestGroupIds = module.topics
+          .filter(topic => pageName(topic) === arrangementContext.page || arrangementContext.originalIds.includes(topic.id))
+          .map(topic => topic.id);
+        const orderedIds = [
+          ...arrangementContext.ids.filter(id => latestGroupIds.includes(id)),
+          ...latestGroupIds.filter(id => !arrangementContext.ids.includes(id))
+        ];
+        const topicById = new Map(module.topics.map(topic => [topic.id, topic]));
+        const orderedTopics = orderedIds.map(id => topicById.get(id)).filter(Boolean);
+        if (!orderedTopics.length) throw new Error('No article order could be saved.');
+
+        const groupSet = new Set(orderedTopics.map(topic => topic.id));
+        let orderIndex = 0;
+        module.topics = module.topics.map(topic => groupSet.has(topic.id) ? orderedTopics[orderIndex++] : topic);
+        state = latestState;
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+        const saved = await persist('', { skipReportRefresh: true });
+        if (!saved) throw new Error('Arrangement could not be saved.');
+
+        hideModal();
+        toast('Urutan artikel berhasil disimpan.');
+        successModal('Arrangement has been successfully updated and synchronized with the Knowledge Center.');
+      } catch (error) {
+        console.error('Save arrangement failed:', error);
+        toast(error.message || 'Arrangement gagal disimpan.');
+        button.disabled = false;
+        button.textContent = 'Save Arrangement';
+      }
     }
     function showModal(html, small = false) { $('modalBox').className = 'modal' + (small ? ' small' : ''); $('modalBox').innerHTML = html; $('modalOverlay').classList.add('show'); $('modalBox').querySelectorAll('[data-close]').forEach(x => x.onclick = hideModal) } function hideModal() { $('modalOverlay').classList.remove('show') }
     function successModal(message) { showModal(`<button class="closeModal" style="float:right" data-close>×</button><div class="successIcon">✓</div><h2>Success</h2><p>${esc(message)}</p><div class="modalActions"><button class="primaryBtn" data-close>Close</button></div>`, true) }
@@ -3962,7 +4251,10 @@
               imgSrc = `assets/${imgSrc}.png`; 
           }
           const alignOpts = `<select data-align="${b.uid}" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Alignment"><option value="left" ${b.align==='left'?'selected':''}>Left</option><option value="center" ${(!b.align || b.align==='center')?'selected':''}>Center</option><option value="right" ${b.align==='right'?'selected':''}>Right</option></select>`;
-          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"><input type="number" data-scale="${b.uid}" value="${esc(b.scale || '')}" placeholder="Scale %" min="1" max="100" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Scale (1-100%)">${alignOpts}</div>${imgSrc ? `<img class="blockImage" src="${imgSrc}" style="${b.scale ? `width: ${b.scale}%; height: auto;` : ''}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
+          const isStoredImportAsset = String(imgSrc || '').startsWith(KC_IMPORT_ASSET_PREFIX);
+          const previewSrc = isStoredImportAsset ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' : imgSrc;
+          const importAssetAttribute = isStoredImportAsset ? ` data-kc-import-asset="${esc(imgSrc)}"` : '';
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"><input type="number" data-scale="${b.uid}" value="${esc(b.scale || '')}" placeholder="Scale %" min="1" max="100" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Scale (1-100%)">${alignOpts}</div>${imgSrc ? `<img class="blockImage" src="${previewSrc}"${importAssetAttribute} style="${b.scale ? `width: ${b.scale}%; height: auto;` : ''}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
         } else if (b.type === 'table') { 
           const textRowsId = (b.rowsId || []).map(r => r.join(' | ')).join('\n');
           const textRowsEn = (b.rowsEn || b.rowsId || []).map(r => r.join(' | ')).join('\n');
@@ -3988,6 +4280,7 @@
         return `<div class="block" draggable="true" data-block="${b.uid}"><div class="drag">⋮⋮</div><div class="blockBody">${body}</div><button class="deleteBlock" data-delete="${b.uid}">🗑</button></div>`;
       }).join(''); 
       bindBuilder();
+      hydrateHighResolutionImportImages($('contentBuilder'));
     }
 
     function bindBuilder() { 
