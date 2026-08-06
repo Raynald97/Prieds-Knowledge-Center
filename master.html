@@ -4247,11 +4247,11 @@
         let body = ''; 
         if (b.type === 'image') { 
           let imgSrc = assets[b.asset] || b.asset;
-          if (imgSrc && !imgSrc.includes('.') && !imgSrc.startsWith('data:') && !imgSrc.startsWith('http')) {
+          const isStoredImportAsset = String(imgSrc || '').startsWith(KC_IMPORT_ASSET_PREFIX);
+          if (imgSrc && !isStoredImportAsset && !imgSrc.includes('.') && !imgSrc.startsWith('data:') && !imgSrc.startsWith('http')) {
               imgSrc = `assets/${imgSrc}.png`; 
           }
           const alignOpts = `<select data-align="${b.uid}" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Alignment"><option value="left" ${b.align==='left'?'selected':''}>Left</option><option value="center" ${(!b.align || b.align==='center')?'selected':''}>Center</option><option value="right" ${b.align==='right'?'selected':''}>Right</option></select>`;
-          const isStoredImportAsset = String(imgSrc || '').startsWith(KC_IMPORT_ASSET_PREFIX);
           const previewSrc = isStoredImportAsset ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' : imgSrc;
           const importAssetAttribute = isStoredImportAsset ? ` data-kc-import-asset="${esc(imgSrc)}"` : '';
           body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"><input type="number" data-scale="${b.uid}" value="${esc(b.scale || '')}" placeholder="Scale %" min="1" max="100" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Scale (1-100%)">${alignOpts}</div>${imgSrc ? `<img class="blockImage" src="${previewSrc}"${importAssetAttribute} style="${b.scale ? `width: ${b.scale}%; height: auto;` : ''}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
