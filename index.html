@@ -744,7 +744,8 @@ function renderArticle() {
     else if (b.type === 'p') html += `<p class="docP" id="${sid}" data-kc-section="${sourceIndex}">${esc(b.text)}</p>`; 
     else if (b.type === 'image') { 
       let src = ASSETS[b.asset] || b.asset; 
-      if (src && !src.includes('.') && !src.startsWith('data:') && !src.startsWith('http')) {
+      const isStoredImportAsset = String(src || '').startsWith(KC_IMPORT_ASSET_PREFIX);
+      if (src && !isStoredImportAsset && !src.includes('.') && !src.startsWith('data:') && !src.startsWith('http')) {
           src = `assets/${src}.png`;
       }
       const align = b.align || 'center';
@@ -754,7 +755,6 @@ function renderArticle() {
       
       const imgStyle = `display:block;margin:${marginStyle};max-width:100%;height:auto;${b.scale ? `width:${b.scale}%;` : 'width:auto;'}`;
       const captionStyle = `text-align: ${align};`;
-      const isStoredImportAsset = String(src || '').startsWith(KC_IMPORT_ASSET_PREFIX);
       const displayedSrc = isStoredImportAsset ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' : src;
       const importAssetAttribute = isStoredImportAsset ? ` data-kc-import-asset="${esc(src)}"` : '';
       const lightboxAsset = isStoredImportAsset ? '' : src;
