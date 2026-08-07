@@ -2217,8 +2217,24 @@
       return '';
     }
 
+    function collectImportAssetReferences(currentState = state) {
+      const refs = new Set();
+      const assets = currentState?.assets || {};
+      Object.values(assets).forEach(value => {
+        if (String(value || '').startsWith(KC_IMPORT_ASSET_PREFIX)) refs.add(String(value));
+      });
+      (currentState?.data || []).forEach(module => (module?.topics || []).forEach(topic => {
+        Object.values(topic?.blocks || {}).forEach(blocks => (Array.isArray(blocks) ? blocks : []).forEach(block => {
+          if (block?.type !== 'image') return;
+          const value = assets?.[block.asset] || block.asset;
+          if (String(value || '').startsWith(KC_IMPORT_ASSET_PREFIX)) refs.add(String(value));
+        }));
+      }));
+      return [...refs];
+    }
+
     async function migrateLegacyImportAssetsToSharedStorage(currentState = state) {
-      const references = [...new Set(Object.values(currentState?.assets || {}).filter(value => String(value || '').startsWith(KC_IMPORT_ASSET_PREFIX)))];
+      const references = collectImportAssetReferences(currentState);
       if (!references.length) return;
       let cursor = 0;
       const worker = async () => {
@@ -2227,7 +2243,7 @@
           try { await loadOriginalImportAsset(reference); } catch (_) {}
         }
       };
-      await Promise.all(Array.from({ length: Math.min(3, references.length) }, worker));
+      await Promise.all(Array.from({ length: Math.min(4, references.length) }, worker));
     }
 
     async function persistHighResolutionImportAssets(assetMap, button) {
