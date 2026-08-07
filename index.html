@@ -235,7 +235,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 <div class="mobileDrawer" id="mobileDrawer"><aside class="sidebar"><h2 class="sidebarTitle" data-ui="tocTitle"></h2><div id="mobileNav"></div></aside></div>
 <div class="lightbox" id="lightbox"><button class="close" id="lightboxClose">×</button><img id="lightboxImg"></div><div class="toast" id="toast"></div>
 <script src="knowledge-data.js"></script><script src="knowledge-store.js"></script><script>
-/* Shared Knowledge Center sync patch: lightweight Firebase sync with lazy assets. */
+/* Shared Knowledge Center sync patch: event-based Firebase sync with lazy assets. */
 (function(){
   'use strict';
   const localStore = window.KCStore;
@@ -246,15 +246,20 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
   const IS_ADMIN = /Knowledge Center Admin/i.test(document.title);
   const subscribers = new Set();
   const remoteAssetCache = new Map();
-  let pollTimer = null;
+  const SYNC_COOLDOWN = 30000;
   let lastRemoteStamp = '';
+  let lastSyncCheck = 0;
   let remoteAvailable = true;
   let remoteInitialized = false;
   let memoryState = null;
   let loadPromise = null;
+  let syncPromise = null;
   let defaultDataCache = null;
+  let syncListeners = null;
 
   const stateStamp = state => String(state?.savedAt || state?.updatedAt || '');
+  const cloneState = state => localStore.clone ? localStore.clone(state) : JSON.parse(JSON.stringify(state));
+  const notifySubscribers = state => subscribers.forEach(callback => { try { callback(state ? cloneState(state) : undefined); } catch (_) {} });
 
   async function firebaseRequest(url, options = {}) {
     const response = await fetch(url, {
@@ -303,8 +308,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
     normalized.schemaVersion = localStore.schemaVersion || normalized.schemaVersion || 1;
     normalized.savedAt = new Date().toISOString();
 
-    // Important: do not PUT the whole state. Assets may contain very large images.
-    // PATCH only the guide/report core; existing remote assets stay untouched.
+    // Do not PUT the whole state. Large guide images remain lazy and are patched separately.
     const corePayload = {
       data: normalized.data,
       aiReport: normalized.aiReport || null,
@@ -313,8 +317,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
     };
     await firebaseRequest(`${STATE_ROOT}.json`, { method: 'PATCH', body: JSON.stringify(corePayload) });
 
-    // Only assets actually present/changed in the current browser state are patched.
-    // Existing assets that were not opened remain remote and are not downloaded/re-uploaded.
+    // Only assets already present/changed in this browser are uploaded.
     const assetPatch = normalized.assets && typeof normalized.assets === 'object' ? normalized.assets : {};
     if (Object.keys(assetPatch).length) {
       await firebaseRequest(`${STATE_ROOT}/assets.json`, { method: 'PATCH', body: JSON.stringify(assetPatch) });
@@ -324,14 +327,15 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
     remoteInitialized = true;
     remoteAvailable = true;
     lastRemoteStamp = normalized.savedAt;
+    lastSyncCheck = Date.now();
     memoryState = normalized;
     try { await localStore.save(normalized); } catch (_) {}
-    return localStore.normalizeState(normalized, normalized.data || []);
+    return cloneState(normalized);
   }
 
   async function load(defaultData, options = {}) {
     defaultDataCache = defaultData || defaultDataCache || [];
-    if (!options.force && memoryState) return localStore.clone ? localStore.clone(memoryState) : JSON.parse(JSON.stringify(memoryState));
+    if (!options.force && memoryState) return cloneState(memoryState);
     if (!options.force && loadPromise) return loadPromise;
 
     loadPromise = (async () => {
@@ -341,9 +345,10 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
         if (remote) {
           const normalized = localStore.normalizeState(remote, defaultDataCache);
           lastRemoteStamp = stateStamp(normalized);
+          lastSyncCheck = Date.now();
           memoryState = normalized;
           try { await localStore.save(normalized); } catch (_) {}
-          return localStore.clone ? localStore.clone(normalized) : JSON.parse(JSON.stringify(normalized));
+          return cloneState(normalized);
         }
       } catch (error) {
         remoteAvailable = false;
@@ -361,7 +366,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
           console.warn('Initial Knowledge Center cloud migration could not be completed yet.', error);
         }
       }
-      return cached;
+      return cloneState(cached);
     })();
 
     try { return await loadPromise; }
@@ -370,6 +375,65 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 
   async function refresh(defaultData) {
     return load(defaultData || defaultDataCache || [], { force: true });
+  }
+
+  async function checkRemoteForUpdates({ force = false } = {}) {
+    if (!subscribers.size && !force) return memoryState ? cloneState(memoryState) : null;
+    if (document.hidden && !force) return memoryState ? cloneState(memoryState) : null;
+    const currentTime = Date.now();
+    if (!force && currentTime - lastSyncCheck < SYNC_COOLDOWN) return memoryState ? cloneState(memoryState) : null;
+    if (syncPromise) return syncPromise;
+
+    lastSyncCheck = currentTime;
+    syncPromise = (async () => {
+      try {
+        const stamp = await readRemoteStamp();
+        remoteAvailable = true;
+        if (!stamp) return memoryState ? cloneState(memoryState) : null;
+        if (!lastRemoteStamp) {
+          lastRemoteStamp = stamp;
+          return memoryState ? cloneState(memoryState) : null;
+        }
+        if (stamp === lastRemoteStamp) return memoryState ? cloneState(memoryState) : null;
+        const latest = await refresh(defaultDataCache || []);
+        notifySubscribers(latest);
+        return latest;
+      } catch (error) {
+        remoteAvailable = false;
+        console.warn('Knowledge Center event-based synchronization is temporarily unavailable.', error);
+        return memoryState ? cloneState(memoryState) : null;
+      } finally {
+        syncPromise = null;
+      }
+    })();
+    return syncPromise;
+  }
+
+  async function syncNow(defaultData, options = {}) {
+    defaultDataCache = defaultData || defaultDataCache || [];
+    return checkRemoteForUpdates({ force: options.force !== false });
+  }
+
+  function bindSmartSyncListeners() {
+    if (syncListeners) return;
+    const onVisibility = () => { if (!document.hidden) checkRemoteForUpdates(); };
+    const onFocus = () => checkRemoteForUpdates();
+    const onPageShow = event => { if (event.persisted) checkRemoteForUpdates({ force: true }); };
+    const onOnline = () => checkRemoteForUpdates({ force: true });
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('pageshow', onPageShow);
+    window.addEventListener('online', onOnline);
+    syncListeners = { onVisibility, onFocus, onPageShow, onOnline };
+  }
+
+  function unbindSmartSyncListeners() {
+    if (!syncListeners || subscribers.size) return;
+    document.removeEventListener('visibilitychange', syncListeners.onVisibility);
+    window.removeEventListener('focus', syncListeners.onFocus);
+    window.removeEventListener('pageshow', syncListeners.onPageShow);
+    window.removeEventListener('online', syncListeners.onOnline);
+    syncListeners = null;
   }
 
   async function loadAsset(assetKey) {
@@ -409,18 +473,20 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
           console.warn('Cloud Knowledge Center is not initialized yet. Saving only to browser cache until Admin seeds the shared state.');
           const local = await localStore.save(state);
           memoryState = local;
+          notifySubscribers(local);
           return local;
         }
         remoteInitialized = true;
       }
       const saved = await writeRemoteState(state);
-      subscribers.forEach(callback => { try { callback(saved); } catch (_) {} });
+      notifySubscribers(saved);
       return saved;
     } catch (error) {
       remoteAvailable = false;
       console.error('Shared Knowledge Center save failed. Browser cache is used as fallback.', error);
       const local = await localStore.save(state);
       memoryState = local;
+      notifySubscribers(local);
       return local;
     }
   }
@@ -431,45 +497,24 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
     return save(state);
   }
 
-  function startPolling() {
-    if (pollTimer) return;
-    // Poll only a tiny timestamp instead of downloading state.json every 3 seconds.
-    pollTimer = setInterval(async () => {
-      if (!subscribers.size || document.hidden) return;
-      try {
-        const stamp = await readRemoteStamp();
-        remoteAvailable = true;
-        if (!stamp) return;
-        if (lastRemoteStamp && stamp !== lastRemoteStamp) {
-          lastRemoteStamp = stamp;
-          const latest = await refresh(defaultDataCache || []);
-          subscribers.forEach(callback => { try { callback(latest); } catch (_) {} });
-        } else if (!lastRemoteStamp) {
-          lastRemoteStamp = stamp;
-        }
-      } catch (error) {
-        remoteAvailable = false;
-        console.warn('Knowledge Center background synchronization is temporarily unavailable.', error);
-      }
-    }, 10000);
-  }
-
   function subscribe(callback) {
     subscribers.add(callback);
+    bindSmartSyncListeners();
     const unsubscribeLocal = localStore.subscribe(() => {
-      if (!remoteAvailable) {
+      // Cross-tab changes are event-driven. No recurring timer is used.
+      if (remoteAvailable) checkRemoteForUpdates({ force: true });
+      else {
         memoryState = null;
-        try { callback(); } catch (_) {}
+        localStore.load(defaultDataCache || []).then(latest => {
+          memoryState = latest;
+          notifySubscribers(latest);
+        }).catch(() => {});
       }
     });
-    startPolling();
     return () => {
       subscribers.delete(callback);
       try { unsubscribeLocal?.(); } catch (_) {}
-      if (!subscribers.size && pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-      }
+      unbindSmartSyncListeners();
     };
   }
 
@@ -477,6 +522,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
     ...localStore,
     load,
     refresh,
+    syncNow,
     loadAsset,
     loadAiReport,
     save,
@@ -1572,6 +1618,59 @@ try{
   kcModuleFunctionChannel=new BroadcastChannel(KC_MODULE_FUNCTION_CHANNEL);
   kcModuleFunctionChannel.onmessage=event=>{if(event.data?.type==='module-function-updated')refreshModuleFunctionContent()};
 }catch(error){console.warn('Sinkronisasi langsung fungsi halaman tidak tersedia:',error)}
-window.KCStore.subscribe(async()=>{try{const latest=await window.KCStore.load(window.KC_DEFAULT_DATA);const nextFingerprint=knowledgeContentFingerprint(latest);if(nextFingerprint!==knowledgeFingerprint)location.reload()}catch(error){console.warn('Knowledge Center subscription refresh failed:',error)}});
+async function applyRemoteKnowledgeState(latest){
+  let nextData=Array.isArray(latest?.data)?latest.data:DATA;
+  const refreshedFaq=nextData.find(module=>module.id==='faq');
+  if(!refreshedFaq){
+    nextData=[...nextData,FAQ_MODULE];
+  }else{
+    const defaultFaqById=new Map(FAQ_MODULE.topics.map(topic=>[(topic.source||'').split('•').pop().trim(),topic]));
+    const storedFaqIds=new Set();
+    refreshedFaq.topics=(refreshedFaq.topics||[]).map(topic=>{
+      const faqId=(topic.source||'').split('•').pop().trim();
+      storedFaqIds.add(faqId);
+      const defaults=defaultFaqById.get(faqId);
+      if(!defaults)return topic;
+      return {...topic,pageMenu:topic.pageMenu||defaults.pageMenu,faqCategory:topic.faqCategory||defaults.faqCategory,blocks:syncFaqInformationBlocks(topic.blocks,defaults.blocks)};
+    });
+    FAQ_MODULE.topics.forEach(topic=>{const faqId=(topic.source||'').split('•').pop().trim();if(!storedFaqIds.has(faqId))refreshedFaq.topics.push(topic)});
+  }
+
+  const nextFingerprint=knowledgeContentFingerprint({data:nextData});
+  if(nextFingerprint===knowledgeFingerprint)return;
+  const wasArticleOpen=$('articleView')?.classList.contains('show');
+  const currentModuleId=activeModule?.id||'';
+  const currentTopicId=activeModule?.topics?.[activeTopic]?.id||'';
+  DATA=nextData;
+  knowledgeFingerprint=nextFingerprint;
+  knowledgeBase=null;knowledgeBuildPromise=null;knowledgeReady=false;
+
+  const nextModule=DATA.find(module=>module.id===currentModuleId)||DATA[0];
+  if(!nextModule)return;
+  activeModule=nextModule;
+  openModuleId=nextModule.id;
+
+  if(wasArticleOpen&&currentTopicId){
+    const nextTopicIndex=nextModule.topics.findIndex(topic=>topic.id===currentTopicId);
+    if(nextTopicIndex>=0){
+      activeTopic=nextTopicIndex;
+      renderNav();
+      renderArticle();
+      history.replaceState(null,'',`#${nextModule.id}-${nextTopicIndex}`);
+    }else{
+      showModuleList(nextModule);
+    }
+  }else if(lastListMode.type==='search'){
+    searchArticles(lastListMode.query||'');
+    renderNav();
+  }else{
+    lastListMode={type:'module',module:nextModule,items:nextModule.topics.map((x,i)=>({m:nextModule,x,i}))};
+    renderModuleList(nextModule);
+    renderNav();
+  }
+
+  buildKnowledgeBaseOnce().then(()=>updateChatContext()).catch(()=>{});
+}
+window.KCStore.subscribe(async latestFromEvent=>{try{const latest=latestFromEvent?.data?latestFromEvent:await window.KCStore.load(window.KC_DEFAULT_DATA);await applyRemoteKnowledgeState(latest)}catch(error){console.warn('Knowledge Center subscription refresh failed:',error)}});
 await initChatbot();localize();renderNav();const hash=location.hash.match(/^#([a-z]+)(?:-(\d+))?$/);if(hash){const m=DATA.find(x=>x.id===hash[1]);if(m){if(hash[2]!=null)openArticle(m.id,+hash[2]);else showModuleList(m)}}else showModuleList(activeModule);
 </script></body></html>

@@ -1921,7 +1921,7 @@
   <script src="knowledge-data.js"></script>
   <script src="knowledge-store.js"></script>
   <script>
-/* Shared Knowledge Center sync patch: lightweight Firebase sync with lazy assets. */
+/* Shared Knowledge Center sync patch: event-based Firebase sync with lazy assets. */
 (function(){
   'use strict';
   const localStore = window.KCStore;
@@ -1932,15 +1932,20 @@
   const IS_ADMIN = /Knowledge Center Admin/i.test(document.title);
   const subscribers = new Set();
   const remoteAssetCache = new Map();
-  let pollTimer = null;
+  const SYNC_COOLDOWN = 30000;
   let lastRemoteStamp = '';
+  let lastSyncCheck = 0;
   let remoteAvailable = true;
   let remoteInitialized = false;
   let memoryState = null;
   let loadPromise = null;
+  let syncPromise = null;
   let defaultDataCache = null;
+  let syncListeners = null;
 
   const stateStamp = state => String(state?.savedAt || state?.updatedAt || '');
+  const cloneState = state => localStore.clone ? localStore.clone(state) : JSON.parse(JSON.stringify(state));
+  const notifySubscribers = state => subscribers.forEach(callback => { try { callback(state ? cloneState(state) : undefined); } catch (_) {} });
 
   async function firebaseRequest(url, options = {}) {
     const response = await fetch(url, {
@@ -1989,8 +1994,7 @@
     normalized.schemaVersion = localStore.schemaVersion || normalized.schemaVersion || 1;
     normalized.savedAt = new Date().toISOString();
 
-    // Important: do not PUT the whole state. Assets may contain very large images.
-    // PATCH only the guide/report core; existing remote assets stay untouched.
+    // Do not PUT the whole state. Large guide images remain lazy and are patched separately.
     const corePayload = {
       data: normalized.data,
       aiReport: normalized.aiReport || null,
@@ -1999,8 +2003,7 @@
     };
     await firebaseRequest(`${STATE_ROOT}.json`, { method: 'PATCH', body: JSON.stringify(corePayload) });
 
-    // Only assets actually present/changed in the current browser state are patched.
-    // Existing assets that were not opened remain remote and are not downloaded/re-uploaded.
+    // Only assets already present/changed in this browser are uploaded.
     const assetPatch = normalized.assets && typeof normalized.assets === 'object' ? normalized.assets : {};
     if (Object.keys(assetPatch).length) {
       await firebaseRequest(`${STATE_ROOT}/assets.json`, { method: 'PATCH', body: JSON.stringify(assetPatch) });
@@ -2010,14 +2013,15 @@
     remoteInitialized = true;
     remoteAvailable = true;
     lastRemoteStamp = normalized.savedAt;
+    lastSyncCheck = Date.now();
     memoryState = normalized;
     try { await localStore.save(normalized); } catch (_) {}
-    return localStore.normalizeState(normalized, normalized.data || []);
+    return cloneState(normalized);
   }
 
   async function load(defaultData, options = {}) {
     defaultDataCache = defaultData || defaultDataCache || [];
-    if (!options.force && memoryState) return localStore.clone ? localStore.clone(memoryState) : JSON.parse(JSON.stringify(memoryState));
+    if (!options.force && memoryState) return cloneState(memoryState);
     if (!options.force && loadPromise) return loadPromise;
 
     loadPromise = (async () => {
@@ -2027,9 +2031,10 @@
         if (remote) {
           const normalized = localStore.normalizeState(remote, defaultDataCache);
           lastRemoteStamp = stateStamp(normalized);
+          lastSyncCheck = Date.now();
           memoryState = normalized;
           try { await localStore.save(normalized); } catch (_) {}
-          return localStore.clone ? localStore.clone(normalized) : JSON.parse(JSON.stringify(normalized));
+          return cloneState(normalized);
         }
       } catch (error) {
         remoteAvailable = false;
@@ -2047,7 +2052,7 @@
           console.warn('Initial Knowledge Center cloud migration could not be completed yet.', error);
         }
       }
-      return cached;
+      return cloneState(cached);
     })();
 
     try { return await loadPromise; }
@@ -2056,6 +2061,65 @@
 
   async function refresh(defaultData) {
     return load(defaultData || defaultDataCache || [], { force: true });
+  }
+
+  async function checkRemoteForUpdates({ force = false } = {}) {
+    if (!subscribers.size && !force) return memoryState ? cloneState(memoryState) : null;
+    if (document.hidden && !force) return memoryState ? cloneState(memoryState) : null;
+    const currentTime = Date.now();
+    if (!force && currentTime - lastSyncCheck < SYNC_COOLDOWN) return memoryState ? cloneState(memoryState) : null;
+    if (syncPromise) return syncPromise;
+
+    lastSyncCheck = currentTime;
+    syncPromise = (async () => {
+      try {
+        const stamp = await readRemoteStamp();
+        remoteAvailable = true;
+        if (!stamp) return memoryState ? cloneState(memoryState) : null;
+        if (!lastRemoteStamp) {
+          lastRemoteStamp = stamp;
+          return memoryState ? cloneState(memoryState) : null;
+        }
+        if (stamp === lastRemoteStamp) return memoryState ? cloneState(memoryState) : null;
+        const latest = await refresh(defaultDataCache || []);
+        notifySubscribers(latest);
+        return latest;
+      } catch (error) {
+        remoteAvailable = false;
+        console.warn('Knowledge Center event-based synchronization is temporarily unavailable.', error);
+        return memoryState ? cloneState(memoryState) : null;
+      } finally {
+        syncPromise = null;
+      }
+    })();
+    return syncPromise;
+  }
+
+  async function syncNow(defaultData, options = {}) {
+    defaultDataCache = defaultData || defaultDataCache || [];
+    return checkRemoteForUpdates({ force: options.force !== false });
+  }
+
+  function bindSmartSyncListeners() {
+    if (syncListeners) return;
+    const onVisibility = () => { if (!document.hidden) checkRemoteForUpdates(); };
+    const onFocus = () => checkRemoteForUpdates();
+    const onPageShow = event => { if (event.persisted) checkRemoteForUpdates({ force: true }); };
+    const onOnline = () => checkRemoteForUpdates({ force: true });
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('pageshow', onPageShow);
+    window.addEventListener('online', onOnline);
+    syncListeners = { onVisibility, onFocus, onPageShow, onOnline };
+  }
+
+  function unbindSmartSyncListeners() {
+    if (!syncListeners || subscribers.size) return;
+    document.removeEventListener('visibilitychange', syncListeners.onVisibility);
+    window.removeEventListener('focus', syncListeners.onFocus);
+    window.removeEventListener('pageshow', syncListeners.onPageShow);
+    window.removeEventListener('online', syncListeners.onOnline);
+    syncListeners = null;
   }
 
   async function loadAsset(assetKey) {
@@ -2095,18 +2159,20 @@
           console.warn('Cloud Knowledge Center is not initialized yet. Saving only to browser cache until Admin seeds the shared state.');
           const local = await localStore.save(state);
           memoryState = local;
+          notifySubscribers(local);
           return local;
         }
         remoteInitialized = true;
       }
       const saved = await writeRemoteState(state);
-      subscribers.forEach(callback => { try { callback(saved); } catch (_) {} });
+      notifySubscribers(saved);
       return saved;
     } catch (error) {
       remoteAvailable = false;
       console.error('Shared Knowledge Center save failed. Browser cache is used as fallback.', error);
       const local = await localStore.save(state);
       memoryState = local;
+      notifySubscribers(local);
       return local;
     }
   }
@@ -2117,45 +2183,24 @@
     return save(state);
   }
 
-  function startPolling() {
-    if (pollTimer) return;
-    // Poll only a tiny timestamp instead of downloading state.json every 3 seconds.
-    pollTimer = setInterval(async () => {
-      if (!subscribers.size || document.hidden) return;
-      try {
-        const stamp = await readRemoteStamp();
-        remoteAvailable = true;
-        if (!stamp) return;
-        if (lastRemoteStamp && stamp !== lastRemoteStamp) {
-          lastRemoteStamp = stamp;
-          const latest = await refresh(defaultDataCache || []);
-          subscribers.forEach(callback => { try { callback(latest); } catch (_) {} });
-        } else if (!lastRemoteStamp) {
-          lastRemoteStamp = stamp;
-        }
-      } catch (error) {
-        remoteAvailable = false;
-        console.warn('Knowledge Center background synchronization is temporarily unavailable.', error);
-      }
-    }, 10000);
-  }
-
   function subscribe(callback) {
     subscribers.add(callback);
+    bindSmartSyncListeners();
     const unsubscribeLocal = localStore.subscribe(() => {
-      if (!remoteAvailable) {
+      // Cross-tab changes are event-driven. No recurring timer is used.
+      if (remoteAvailable) checkRemoteForUpdates({ force: true });
+      else {
         memoryState = null;
-        try { callback(); } catch (_) {}
+        localStore.load(defaultDataCache || []).then(latest => {
+          memoryState = latest;
+          notifySubscribers(latest);
+        }).catch(() => {});
       }
     });
-    startPolling();
     return () => {
       subscribers.delete(callback);
       try { unsubscribeLocal?.(); } catch (_) {}
-      if (!subscribers.size && pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-      }
+      unbindSmartSyncListeners();
     };
   }
 
@@ -2163,6 +2208,7 @@
     ...localStore,
     load,
     refresh,
+    syncNow,
     loadAsset,
     loadAiReport,
     save,
@@ -2177,6 +2223,217 @@
   <script type="module">
     let state = await window.KCStore.load(window.KC_DEFAULT_DATA); let pendingAssets = {}; let draftBlocks = []; let editing = null; let dragUid = null; let arrangementContext = null; const PAGE_SIZE = 10; let guidePage = 1; let arrangementPage = 1;
     const $ = id => document.getElementById(id); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const clone = x => JSON.parse(JSON.stringify(x)); const fmt = v => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v)); const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+    // Create/Edit Guide local draft protection. IndexedDB is used instead of localStorage
+    // so large, original-resolution draft assets do not hit the small Web Storage quota.
+    const KC_GUIDE_DRAFT_DB = 'prieds-kc-guide-drafts-v1';
+    const KC_GUIDE_DRAFT_STORE = 'drafts';
+    const KC_GUIDE_DRAFT_KEY = 'active-create-edit-guide';
+    const KC_GUIDE_DRAFT_FALLBACK_KEY = 'prieds-kc-guide-draft-fallback-v1';
+    const KC_GUIDE_DRAFT_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+    let kcGuideDraftDbPromise = null;
+    let guideDraftAutosaveTimer = null;
+    let guideDraftWriteQueue = Promise.resolve();
+    let restoringGuideDraft = false;
+
+    function openGuideDraftDb() {
+      if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB is not supported.'));
+      if (kcGuideDraftDbPromise) return kcGuideDraftDbPromise;
+      kcGuideDraftDbPromise = new Promise((resolve, reject) => {
+        const request = indexedDB.open(KC_GUIDE_DRAFT_DB, 1);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(KC_GUIDE_DRAFT_STORE)) db.createObjectStore(KC_GUIDE_DRAFT_STORE, { keyPath: 'id' });
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error('Guide draft database could not be opened.'));
+        request.onblocked = () => reject(new Error('Guide draft database is blocked by another browser tab.'));
+      }).catch(error => {
+        kcGuideDraftDbPromise = null;
+        throw error;
+      });
+      return kcGuideDraftDbPromise;
+    }
+
+    function queueGuideDraftWrite(task) {
+      guideDraftWriteQueue = guideDraftWriteQueue.catch(() => {}).then(task);
+      return guideDraftWriteQueue;
+    }
+
+    function referencedPendingDraftAssets() {
+      const keys = new Set(draftBlocks.filter(block => block?.type === 'image').map(block => String(block.asset || '')).filter(Boolean));
+      return Object.fromEntries(Object.entries(pendingAssets || {}).filter(([key]) => keys.has(key)));
+    }
+
+    function collectGuideDraftSnapshot() {
+      return {
+        id: KC_GUIDE_DRAFT_KEY,
+        version: 1,
+        savedAt: new Date().toISOString(),
+        editing: editing ? clone(editing) : null,
+        fields: {
+          mainMenu: $('mainMenu')?.value || '',
+          newMainMenu: $('newMainMenu')?.value || '',
+          pageMenu: $('pageMenu')?.value || '',
+          newPageMenu: $('newPageMenu')?.value || '',
+          titleId: $('titleId')?.value || '',
+          titleEn: $('titleEn')?.value || '',
+          tabMenuId: $('tabMenuId')?.value || '',
+          tabMenuEn: $('tabMenuEn')?.value || '',
+          editor: $('editor')?.value || '',
+          purposeId: $('purposeId')?.value || '',
+          purposeEn: $('purposeEn')?.value || '',
+          targetLang: $('targetLang')?.value || 'en',
+          configEnabled: Boolean($('toggleConfigTable')?.checked),
+          configTableId: $('configTableId')?.value || '',
+          configTableEn: $('configTableEn')?.value || ''
+        },
+        draftBlocks: clone(draftBlocks || []),
+        pendingAssets: clone(referencedPendingDraftAssets())
+      };
+    }
+
+    function guideDraftSnapshotHasContent(snapshot) {
+      if (!snapshot) return false;
+      if (snapshot.editing) return true;
+      const fields = snapshot.fields || {};
+      const textKeys = ['newMainMenu', 'newPageMenu', 'titleId', 'titleEn', 'tabMenuId', 'tabMenuEn', 'editor', 'purposeId', 'purposeEn'];
+      if (textKeys.some(key => String(fields[key] || '').trim())) return true;
+      if (fields.configEnabled) return true;
+      return (snapshot.draftBlocks || []).some(block => {
+        if (!block) return false;
+        if (String(block.textId || '').trim() || String(block.textEn || '').trim()) return true;
+        if (String(block.asset || '').trim() || String(block.captionId || '').trim() || String(block.captionEn || '').trim()) return true;
+        if (Array.isArray(block.rowsId) && block.rowsId.some(row => Array.isArray(row) && row.some(cell => String(cell || '').trim()))) return true;
+        if (Array.isArray(block.rowsEn) && block.rowsEn.some(row => Array.isArray(row) && row.some(cell => String(cell || '').trim()))) return true;
+        return false;
+      });
+    }
+
+    async function writeGuideDraftRecord(snapshot) {
+      try {
+        const db = await openGuideDraftDb();
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction(KC_GUIDE_DRAFT_STORE, 'readwrite');
+          transaction.objectStore(KC_GUIDE_DRAFT_STORE).put(snapshot);
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error || new Error('Guide draft could not be saved.'));
+          transaction.onabort = () => reject(transaction.error || new Error('Guide draft save was cancelled.'));
+        });
+        try { localStorage.removeItem(KC_GUIDE_DRAFT_FALLBACK_KEY); } catch (_) {}
+      } catch (error) {
+        // Text/content fallback only. Large pending images intentionally stay out of localStorage.
+        try { localStorage.setItem(KC_GUIDE_DRAFT_FALLBACK_KEY, JSON.stringify({ ...snapshot, pendingAssets: {} })); }
+        catch (_) { console.warn('Guide draft fallback could not be saved.', error); }
+      }
+    }
+
+    async function readGuideDraftRecord() {
+      try {
+        const db = await openGuideDraftDb();
+        const record = await new Promise((resolve, reject) => {
+          const transaction = db.transaction(KC_GUIDE_DRAFT_STORE, 'readonly');
+          const request = transaction.objectStore(KC_GUIDE_DRAFT_STORE).get(KC_GUIDE_DRAFT_KEY);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error || new Error('Guide draft could not be read.'));
+        });
+        if (record) return record;
+      } catch (_) {}
+      try { return JSON.parse(localStorage.getItem(KC_GUIDE_DRAFT_FALLBACK_KEY) || 'null'); }
+      catch (_) { return null; }
+    }
+
+    async function deleteGuideDraftRecord() {
+      try {
+        const db = await openGuideDraftDb();
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction(KC_GUIDE_DRAFT_STORE, 'readwrite');
+          transaction.objectStore(KC_GUIDE_DRAFT_STORE).delete(KC_GUIDE_DRAFT_KEY);
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error || new Error('Guide draft could not be cleared.'));
+        });
+      } catch (_) {}
+      try { localStorage.removeItem(KC_GUIDE_DRAFT_FALLBACK_KEY); } catch (_) {}
+    }
+
+    function saveCreateDraftNow() {
+      if (restoringGuideDraft) return Promise.resolve();
+      clearTimeout(guideDraftAutosaveTimer);
+      guideDraftAutosaveTimer = null;
+      const snapshot = collectGuideDraftSnapshot();
+      return queueGuideDraftWrite(() => guideDraftSnapshotHasContent(snapshot) ? writeGuideDraftRecord(snapshot) : deleteGuideDraftRecord());
+    }
+
+    function scheduleCreateDraftAutosave() {
+      if (restoringGuideDraft) return;
+      clearTimeout(guideDraftAutosaveTimer);
+      guideDraftAutosaveTimer = setTimeout(() => { void saveCreateDraftNow(); }, 450);
+    }
+
+    function clearCreateDraftAutosave() {
+      clearTimeout(guideDraftAutosaveTimer);
+      guideDraftAutosaveTimer = null;
+      return queueGuideDraftWrite(deleteGuideDraftRecord);
+    }
+
+    function ensureSelectDraftValue(select, value, label) {
+      if (!select || !value || [...select.options].some(option => option.value === value)) return;
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label || value;
+      const newOption = [...select.options].find(item => item.value === '__new__');
+      if (newOption) select.insertBefore(option, newOption); else select.appendChild(option);
+    }
+
+    async function restoreCreateDraft() {
+      const snapshot = await readGuideDraftRecord();
+      if (!snapshot || !guideDraftSnapshotHasContent(snapshot)) return false;
+      const savedAt = new Date(snapshot.savedAt || 0).getTime();
+      if (!savedAt || Date.now() - savedAt > KC_GUIDE_DRAFT_MAX_AGE) {
+        await clearCreateDraftAutosave();
+        return false;
+      }
+      restoringGuideDraft = true;
+      try {
+        const fields = snapshot.fields || {};
+        editing = snapshot.editing ? clone(snapshot.editing) : null;
+
+        ensureSelectDraftValue($('mainMenu'), fields.mainMenu, fields.mainMenu);
+        if (fields.mainMenu) $('mainMenu').value = fields.mainMenu;
+        syncCreateMenuFields();
+        $('newMainMenu').value = fields.newMainMenu || '';
+
+        ensureSelectDraftValue($('pageMenu'), fields.pageMenu, fields.pageMenu);
+        if (fields.pageMenu) $('pageMenu').value = fields.pageMenu;
+        syncNewPageMenuField();
+        $('newPageMenu').value = fields.newPageMenu || '';
+
+        ['titleId', 'titleEn', 'tabMenuId', 'tabMenuEn', 'editor', 'purposeId', 'purposeEn'].forEach(id => {
+          if ($(id)) $(id).value = fields[id] || '';
+        });
+        if ($('targetLang') && fields.targetLang && [...$('targetLang').options].some(option => option.value === fields.targetLang)) $('targetLang').value = fields.targetLang;
+        $('toggleConfigTable').checked = Boolean(fields.configEnabled);
+        $('configTableWrapper').style.display = fields.configEnabled ? 'block' : 'none';
+        if (typeof fields.configTableId === 'string') $('configTableId').value = fields.configTableId;
+        if (typeof fields.configTableEn === 'string') $('configTableEn').value = fields.configTableEn;
+
+        draftBlocks = Array.isArray(snapshot.draftBlocks) && snapshot.draftBlocks.length ? clone(snapshot.draftBlocks) : [emptyBlock('step')];
+        draftBlocks.forEach(block => { if (!block.uid) block.uid = uid(); });
+        pendingAssets = { ...pendingAssets, ...(snapshot.pendingAssets || {}) };
+        renderBuilder();
+        clearTitleErrors();
+        validateTitles(false);
+        $('submitGuide').textContent = editing ? 'Update Guide' : 'Submit Guide';
+        $('cancelEdit').style.display = editing ? 'inline-flex' : 'none';
+        $('createSubmitBar').classList.toggle('editCtaFixed', Boolean(editing));
+        setSynced('Draft restored');
+        setTimeout(() => { if ($('syncStatus')?.textContent === 'Draft restored') setSynced('Synced'); }, 1800);
+        return true;
+      } finally {
+        restoringGuideDraft = false;
+      }
+    }
+
     const SHARED_AI_REPORT_ASSET_KEY = '__prieds_kc_ai_report_v1';
     const SHARED_AI_REPORT_LIMIT = 300;
 
@@ -2528,11 +2785,23 @@
     function syncCreateMenuFields() { const isNewMain = $('mainMenu').value === '__new__'; $('newMainMenu').style.display = isNewMain ? '' : 'none'; if (!isNewMain) $('newMainMenu').value = ''; $('pageMenu').innerHTML = isNewMain ? '<option value="__new__">+ Create New Page Menu</option>' : pageOptions($('mainMenu').value, false, true); if (isNewMain) $('pageMenu').value = '__new__'; syncNewPageMenuField() }
     $('mainMenu').onchange = syncCreateMenuFields;
     $('pageMenu').onchange = syncNewPageMenuField;
+    $('mainMenu').addEventListener('change', scheduleCreateDraftAutosave);
+    $('pageMenu').addEventListener('change', scheduleCreateDraftAutosave);
     function refreshEditors() { const editors = [...new Set(allArticles().map(x => String(x.topic.editor || '').trim()).filter(Boolean))].sort(); $('filterEditor').innerHTML = '<option value="">All Editor</option>' + editors.map(x => `<option>${esc(x)}</option>`).join('') }
-    async function switchTab(name) { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name)); document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + name)); await refreshSharedState({ refreshGuides: true }); if (name === 'list') renderGuideList(); if (name === 'arrange') renderArrangement(); if (name === 'feedback') renderFeedbackReport({ skipRefresh: true }) }
+    async function switchTab(name) {
+      const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'create';
+      if (currentTab === 'create' && name !== 'create' && hasUnsavedCreateDraft()) await saveCreateDraftNow();
+      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name));
+      document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + name));
+      await refreshSharedState({ refreshGuides: true });
+      if (name === 'list') renderGuideList();
+      if (name === 'arrange') renderArrangement();
+      if (name === 'feedback') renderFeedbackReport({ skipRefresh: true });
+    }
     document.querySelectorAll('.tab').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
     $('toggleConfigTable').addEventListener('change', (e) => {
         $('configTableWrapper').style.display = e.target.checked ? 'block' : 'none';
+        scheduleCreateDraftAutosave();
     });
     function emptyBlock(type = 'step') { return { uid: uid(), type, textId: '', textEn: '', asset: '', captionId: '', captionEn: '', rowsId: null, rowsEn: null, scale: '', align: 'center' } }
     function existingToDraft(topic) { 
@@ -2613,7 +2882,8 @@
       return options.map(([value, label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
     }
     
-    function resetCreate() { 
+    function resetCreate({ clearDraft = true } = {}) { 
+      if (clearDraft) void clearCreateDraftAutosave();
       editing = null; $('mainMenu').value = state.data[0]?.id || '__new__'; $('newMainMenu').value = ''; $('newPageMenu').value = ''; $('titleId').value = ''; $('titleEn').value = ''; $('tabMenuId').value = ''; $('tabMenuEn').value = ''; $('editor').value = ''; $('purposeId').value = ''; $('purposeEn').value = ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; $('submitGuide').textContent = 'Submit Guide'; $('cancelEdit').style.display = 'none'; $('createSubmitBar').classList.remove('editCtaFixed'); 
       
       // Reset status Config Table saat membuat dokumen baru
@@ -2633,7 +2903,12 @@
     function setTitleError(lang, message) { const field = $(lang === 'id' ? 'titleIdField' : 'titleEnField'), error = $(lang === 'id' ? 'titleIdError' : 'titleEnError'); field.classList.toggle('hasError', Boolean(message)); error.textContent = message || '' }
     function clearTitleErrors() { setTitleError('id', ''); setTitleError('en', '') }
     function validateTitles(show = true) { const idError = validateTitle($('titleId').value, 'id'), enError = validateTitle($('titleEn').value, 'en'); if (show) { setTitleError('id', idError); setTitleError('en', enError) } const hasTyped = $('titleId').value.trim() || $('titleEn').value.trim(); $('submitGuide').disabled = Boolean(hasTyped && (idError || enError)); return !idError && !enError }
-    ['titleId', 'titleEn'].forEach(id => { $(id).addEventListener('input', () => validateTitles(true)); $(id).addEventListener('blur', () => validateTitles(true)) });
+    ['titleId', 'titleEn'].forEach(id => { $(id).addEventListener('input', () => { validateTitles(true); scheduleCreateDraftAutosave(); }); $(id).addEventListener('blur', () => validateTitles(true)) });
+    ['newMainMenu', 'newPageMenu', 'tabMenuId', 'tabMenuEn', 'editor', 'purposeId', 'purposeEn', 'configTableId', 'configTableEn'].forEach(id => {
+      $(id)?.addEventListener('input', scheduleCreateDraftAutosave);
+      $(id)?.addEventListener('change', scheduleCreateDraftAutosave);
+    });
+    $('targetLang')?.addEventListener('change', scheduleCreateDraftAutosave);
     $('cancelEdit').onclick = () => { resetCreate(); switchTab('list'); window.scrollTo({ top: 0, behavior: 'smooth' }) };
     $('submitGuide').onclick = async () => {
       const selectedMain = $('mainMenu').value, newMainName = $('newMainMenu').value.trim(), titleId = $('titleId').value.trim(), titleEn = $('titleEn').value.trim(), tabMenuId = $('tabMenuId').value.trim(), tabMenuEn = $('tabMenuEn').value.trim(), editor = $('editor').value.trim(), purposeId = $('purposeId').value.trim(), purposeEn = $('purposeEn').value.trim();
@@ -2830,7 +3105,7 @@
         }
       );
     }
-    function editGuide(mid, id) { const m = state.data.find(x => x.id === mid), t = m?.topics.find(x => x.id === id); if (!t) return; editing = { moduleId: mid, topicId: id }; $('mainMenu').value = mid; $('newMainMenu').value = ''; $('newMainMenu').style.display = 'none'; $('pageMenu').innerHTML = pageOptions(mid, false, true); const pm = pageName(t); if (![...$('pageMenu').options].some(o => o.value === pm)) $('pageMenu').insertAdjacentHTML('afterbegin', `<option value="${esc(pm)}">${esc(pm)}</option>`); $('pageMenu').value = pm; $('newPageMenu').value = ''; syncNewPageMenuField(); $('titleId').value = t.title.id; $('titleEn').value = t.title.en; let tmId = '', tmEn = ''; if (t.tabMenu) { if (typeof t.tabMenu === 'string') { tmId = t.tabMenu; tmEn = t.tabMenu; } else { tmId = t.tabMenu.id || ''; tmEn = t.tabMenu.en || tmId; } } $('tabMenuId').value = tmId; $('tabMenuEn').value = tmEn; $('editor').value = t.editor || ''; $('purposeId').value = t.purpose?.id || ''; $('purposeEn').value = t.purpose?.en || ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; draftBlocks = existingToDraft(t); renderBuilder(); $('submitGuide').textContent = 'Update Guide'; $('cancelEdit').style.display = 'inline-flex'; $('createSubmitBar').classList.add('editCtaFixed'); switchTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+    function editGuide(mid, id) { const m = state.data.find(x => x.id === mid), t = m?.topics.find(x => x.id === id); if (!t) return; editing = { moduleId: mid, topicId: id }; $('mainMenu').value = mid; $('newMainMenu').value = ''; $('newMainMenu').style.display = 'none'; $('pageMenu').innerHTML = pageOptions(mid, false, true); const pm = pageName(t); if (![...$('pageMenu').options].some(o => o.value === pm)) $('pageMenu').insertAdjacentHTML('afterbegin', `<option value="${esc(pm)}">${esc(pm)}</option>`); $('pageMenu').value = pm; $('newPageMenu').value = ''; syncNewPageMenuField(); $('titleId').value = t.title.id; $('titleEn').value = t.title.en; let tmId = '', tmEn = ''; if (t.tabMenu) { if (typeof t.tabMenu === 'string') { tmId = t.tabMenu; tmEn = t.tabMenu; } else { tmId = t.tabMenu.id || ''; tmEn = t.tabMenu.en || tmId; } } $('tabMenuId').value = tmId; $('tabMenuEn').value = tmEn; $('editor').value = t.editor || ''; $('purposeId').value = t.purpose?.id || ''; $('purposeEn').value = t.purpose?.en || ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; draftBlocks = existingToDraft(t); renderBuilder(); $('submitGuide').textContent = 'Update Guide'; $('cancelEdit').style.display = 'inline-flex'; $('createSubmitBar').classList.add('editCtaFixed'); scheduleCreateDraftAutosave(); switchTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
     function syncTocDeleteButtons() {
       if (!$('deleteTocMain') || !$('deleteTocPage')) return;
       const mainId = $('arrMain').value;
@@ -4715,19 +4990,20 @@
           } else {
             b[el.dataset.field] = el.value;
           }
+          scheduleCreateDraftAutosave();
         } 
       }); 
-      $('contentBuilder').querySelectorAll('[data-type]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.type); if (b) b.type = el.value }); 
-      $('contentBuilder').querySelectorAll('[data-delete]').forEach(el => el.onclick = () => { draftBlocks = draftBlocks.filter(x => x.uid !== el.dataset.delete); renderBuilder() }); 
-      $('contentBuilder').querySelectorAll('[data-file-text]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.fileText); if (b) { b.asset = el.value.trim(); renderBuilder(); } }); 
-      $('contentBuilder').querySelectorAll('[data-scale]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.scale); if (b) { b.scale = el.value.trim(); renderBuilder(); } }); 
-      $('contentBuilder').querySelectorAll('[data-align]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.align); if (b) { b.align = el.value; renderBuilder(); } }); 
-      $('contentBuilder').querySelectorAll('[data-block]').forEach(el => { el.ondragstart = () => dragUid = el.dataset.block; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const target = el.dataset.block; if (!dragUid || dragUid === target) return; const from = draftBlocks.findIndex(x => x.uid === dragUid), to = draftBlocks.findIndex(x => x.uid === target); const [m] = draftBlocks.splice(from, 1); draftBlocks.splice(to, 0, m); renderBuilder() } }) 
+      $('contentBuilder').querySelectorAll('[data-type]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.type); if (b) { b.type = el.value; scheduleCreateDraftAutosave(); } }); 
+      $('contentBuilder').querySelectorAll('[data-delete]').forEach(el => el.onclick = () => { draftBlocks = draftBlocks.filter(x => x.uid !== el.dataset.delete); renderBuilder(); scheduleCreateDraftAutosave(); }); 
+      $('contentBuilder').querySelectorAll('[data-file-text]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.fileText); if (b) { b.asset = el.value.trim(); renderBuilder(); scheduleCreateDraftAutosave(); } }); 
+      $('contentBuilder').querySelectorAll('[data-scale]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.scale); if (b) { b.scale = el.value.trim(); renderBuilder(); scheduleCreateDraftAutosave(); } }); 
+      $('contentBuilder').querySelectorAll('[data-align]').forEach(el => el.onchange = () => { const b = draftBlocks.find(x => x.uid === el.dataset.align); if (b) { b.align = el.value; renderBuilder(); scheduleCreateDraftAutosave(); } }); 
+      $('contentBuilder').querySelectorAll('[data-block]').forEach(el => { el.ondragstart = () => dragUid = el.dataset.block; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const target = el.dataset.block; if (!dragUid || dragUid === target) return; const from = draftBlocks.findIndex(x => x.uid === dragUid), to = draftBlocks.findIndex(x => x.uid === target); const [m] = draftBlocks.splice(from, 1); draftBlocks.splice(to, 0, m); renderBuilder(); scheduleCreateDraftAutosave(); } }) 
     }
 
-    $('addHeading').onclick = () => { draftBlocks.push(emptyBlock('label')); renderBuilder() };
-    $('addImage').onclick = () => { draftBlocks.push(emptyBlock('image')); renderBuilder() };
-    $('addStep').onclick = () => { draftBlocks.push(emptyBlock('step')); renderBuilder() };
+    $('addHeading').onclick = () => { draftBlocks.push(emptyBlock('label')); renderBuilder(); scheduleCreateDraftAutosave(); };
+    $('addImage').onclick = () => { draftBlocks.push(emptyBlock('image')); renderBuilder(); scheduleCreateDraftAutosave(); };
+    $('addStep').onclick = () => { draftBlocks.push(emptyBlock('step')); renderBuilder(); scheduleCreateDraftAutosave(); };
     $('autoTranslateBtn').onclick = async () => {
         const targetLang = $('targetLang').value;
         const btn = $('autoTranslateBtn');
@@ -4785,6 +5061,7 @@
         
         // Render ulang UI agar hasil translate muncul
         renderBuilder();
+        scheduleCreateDraftAutosave();
         
         // Kembalikan state tombol
         btn.disabled = false;
@@ -4815,17 +5092,58 @@
         knowledgeFingerprint = knowledgeContentFingerprint(state);
       } catch (error) { console.warn('Existing AI FAQ migration could not be saved:', error); }
     }
-    window.KCStore.subscribe(async () => {
+    function hasUnsavedCreateDraft() {
+      if (editing) return true;
+      const textFields = ['newMainMenu', 'newPageMenu', 'titleId', 'titleEn', 'tabMenuId', 'tabMenuEn', 'editor', 'purposeId', 'purposeEn'];
+      if (textFields.some(id => String($(id)?.value || '').trim())) return true;
+      if ($('toggleConfigTable')?.checked) return true;
+      return draftBlocks.some(block => {
+        if (!block) return false;
+        if (String(block.textId || '').trim() || String(block.textEn || '').trim()) return true;
+        if (String(block.asset || '').trim() || String(block.captionId || '').trim() || String(block.captionEn || '').trim()) return true;
+        if (Array.isArray(block.rowsId) && block.rowsId.some(row => Array.isArray(row) && row.some(cell => String(cell || '').trim()))) return true;
+        if (Array.isArray(block.rowsEn) && block.rowsEn.some(row => Array.isArray(row) && row.some(cell => String(cell || '').trim()))) return true;
+        return false;
+      });
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && hasUnsavedCreateDraft()) void saveCreateDraftNow();
+    });
+    window.addEventListener('pagehide', () => {
+      if (hasUnsavedCreateDraft()) void saveCreateDraftNow();
+    });
+
+    window.KCStore.subscribe(async latestFromEvent => {
       try {
-        const latest = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        const latest = latestFromEvent?.data ? latestFromEvent : await window.KCStore.load(window.KC_DEFAULT_DATA);
         const nextFingerprint = knowledgeContentFingerprint(latest);
-        if (nextFingerprint !== knowledgeFingerprint) { location.reload(); return; }
-        state = latest;
         sharedAiReportCache = sharedAiReportFromState(latest);
+
+        if (nextFingerprint !== knowledgeFingerprint) {
+          // Never replace an active Create/Edit draft. Submit already refreshes the latest
+          // cloud state immediately before merging and saving the user's draft.
+          if (hasUnsavedCreateDraft()) {
+            setSynced('Remote update available');
+            if ($('panel-feedback')?.classList.contains('active')) renderFeedbackReport({ skipRefresh: true });
+            return;
+          }
+          state = latest;
+          knowledgeFingerprint = nextFingerprint;
+          initSelects();
+          renderVisibleAdminPanel();
+          setSynced('Synced');
+          return;
+        }
+
+        state = latest;
         if ($('panel-feedback')?.classList.contains('active')) renderFeedbackReport({ skipRefresh: true });
       } catch (error) { console.warn('Knowledge Center subscription refresh failed:', error); }
     });
-    initSelects(); resetCreate(); initFeedbackReport();
+    initSelects();
+    resetCreate({ clearDraft: false });
+    await restoreCreateDraft();
+    initFeedbackReport();
   </script>
 </body>
 
