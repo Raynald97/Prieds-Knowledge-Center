@@ -1921,20 +1921,24 @@
   <script src="knowledge-data.js"></script>
   <script src="knowledge-store.js"></script>
   <script>
-/* Shared Knowledge Center sync patch: Firebase Realtime Database across devices. */
+/* Shared Knowledge Center sync patch: lightweight Firebase sync with lazy assets. */
 (function(){
   'use strict';
   const localStore = window.KCStore;
   if (!localStore || localStore.__sharedFirebaseSync) return;
 
   const DATABASE_URL = 'https://prds-management-default-rtdb.asia-southeast1.firebasedatabase.app';
-  const STATE_URL = `${DATABASE_URL}/prieds_knowledge_center_v1/state.json`;
+  const STATE_ROOT = `${DATABASE_URL}/prieds_knowledge_center_v1/state`;
   const IS_ADMIN = /Knowledge Center Admin/i.test(document.title);
   const subscribers = new Set();
+  const remoteAssetCache = new Map();
   let pollTimer = null;
   let lastRemoteStamp = '';
   let remoteAvailable = true;
   let remoteInitialized = false;
+  let memoryState = null;
+  let loadPromise = null;
+  let defaultDataCache = null;
 
   const stateStamp = state => String(state?.savedAt || state?.updatedAt || '');
 
@@ -1948,90 +1952,184 @@
     return response.json();
   }
 
-  async function readRemoteState() {
-    const value = await firebaseRequest(`${STATE_URL}?t=${Date.now()}`);
-    remoteInitialized = !!(value && Array.isArray(value.data));
-    return remoteInitialized ? value : null;
+  async function readRemoteStamp() {
+    return String(await firebaseRequest(`${STATE_ROOT}/savedAt.json?t=${Date.now()}`) || '');
+  }
+
+  async function readRemoteCoreState() {
+    const stampPromise = firebaseRequest(`${STATE_ROOT}/savedAt.json?t=${Date.now()}`);
+    const [data, aiReport, savedAt] = await Promise.all([
+      firebaseRequest(`${STATE_ROOT}/data.json?t=${Date.now()}`),
+      firebaseRequest(`${STATE_ROOT}/aiReport.json?t=${Date.now()}`),
+      stampPromise
+    ]);
+    remoteInitialized = Array.isArray(data);
+    if (!remoteInitialized) return null;
+    return {
+      data,
+      assets: {},
+      aiReport: aiReport && typeof aiReport === 'object' ? aiReport : undefined,
+      savedAt: savedAt || new Date().toISOString(),
+      schemaVersion: localStore.schemaVersion || 1
+    };
+  }
+
+  async function readRemoteAsset(assetKey) {
+    const key = String(assetKey || '');
+    if (!key) return '';
+    if (remoteAssetCache.has(key)) return remoteAssetCache.get(key);
+    const value = await firebaseRequest(`${STATE_ROOT}/assets/${encodeURIComponent(key)}.json?t=${Date.now()}`);
+    const normalized = typeof value === 'string' ? value : '';
+    remoteAssetCache.set(key, normalized);
+    return normalized;
   }
 
   async function writeRemoteState(state) {
     const normalized = localStore.normalizeState(state, state?.data || []);
     normalized.schemaVersion = localStore.schemaVersion || normalized.schemaVersion || 1;
     normalized.savedAt = new Date().toISOString();
-    const saved = await firebaseRequest(STATE_URL, { method: 'PUT', body: JSON.stringify(normalized) });
+
+    // Important: do not PUT the whole state. Assets may contain very large images.
+    // PATCH only the guide/report core; existing remote assets stay untouched.
+    const corePayload = {
+      data: normalized.data,
+      aiReport: normalized.aiReport || null,
+      schemaVersion: normalized.schemaVersion,
+      savedAt: normalized.savedAt
+    };
+    await firebaseRequest(`${STATE_ROOT}.json`, { method: 'PATCH', body: JSON.stringify(corePayload) });
+
+    // Only assets actually present/changed in the current browser state are patched.
+    // Existing assets that were not opened remain remote and are not downloaded/re-uploaded.
+    const assetPatch = normalized.assets && typeof normalized.assets === 'object' ? normalized.assets : {};
+    if (Object.keys(assetPatch).length) {
+      await firebaseRequest(`${STATE_ROOT}/assets.json`, { method: 'PATCH', body: JSON.stringify(assetPatch) });
+      Object.entries(assetPatch).forEach(([key, value]) => remoteAssetCache.set(key, value));
+    }
+
     remoteInitialized = true;
-    lastRemoteStamp = stateStamp(saved || normalized);
-    return localStore.normalizeState(saved || normalized, normalized.data || []);
+    remoteAvailable = true;
+    lastRemoteStamp = normalized.savedAt;
+    memoryState = normalized;
+    try { await localStore.save(normalized); } catch (_) {}
+    return localStore.normalizeState(normalized, normalized.data || []);
   }
 
-  async function load(defaultData) {
-    try {
-      const remote = await readRemoteState();
-      remoteAvailable = true;
-      if (remote) {
-        const normalized = localStore.normalizeState(remote, defaultData);
-        lastRemoteStamp = stateStamp(normalized);
-        try { await localStore.save(normalized); } catch (_) {}
-        return normalized;
+  async function load(defaultData, options = {}) {
+    defaultDataCache = defaultData || defaultDataCache || [];
+    if (!options.force && memoryState) return localStore.clone ? localStore.clone(memoryState) : JSON.parse(JSON.stringify(memoryState));
+    if (!options.force && loadPromise) return loadPromise;
+
+    loadPromise = (async () => {
+      try {
+        const remote = await readRemoteCoreState();
+        remoteAvailable = true;
+        if (remote) {
+          const normalized = localStore.normalizeState(remote, defaultDataCache);
+          lastRemoteStamp = stateStamp(normalized);
+          memoryState = normalized;
+          try { await localStore.save(normalized); } catch (_) {}
+          return localStore.clone ? localStore.clone(normalized) : JSON.parse(JSON.stringify(normalized));
+        }
+      } catch (error) {
+        remoteAvailable = false;
+        console.warn('Shared Knowledge Center core is temporarily unavailable; browser cache is used as fallback.', error);
       }
+
+      const cached = await localStore.load(defaultDataCache);
+      memoryState = cached;
+      if (IS_ADMIN && remoteAvailable && !remoteInitialized) {
+        try {
+          const seeded = await writeRemoteState(cached);
+          memoryState = seeded;
+          return seeded;
+        } catch (error) {
+          console.warn('Initial Knowledge Center cloud migration could not be completed yet.', error);
+        }
+      }
+      return cached;
+    })();
+
+    try { return await loadPromise; }
+    finally { loadPromise = null; }
+  }
+
+  async function refresh(defaultData) {
+    return load(defaultData || defaultDataCache || [], { force: true });
+  }
+
+  async function loadAsset(assetKey) {
+    const key = String(assetKey || '');
+    if (!key) return '';
+    if (memoryState?.assets && Object.prototype.hasOwnProperty.call(memoryState.assets, key)) return memoryState.assets[key];
+    if (remoteAssetCache.has(key)) return remoteAssetCache.get(key);
+    try {
+      remoteAvailable = true;
+      return await readRemoteAsset(key);
     } catch (error) {
       remoteAvailable = false;
-      console.warn('Shared Knowledge Center state is temporarily unavailable; browser cache is used as fallback.', error);
-    }
-
-    const cached = await localStore.load(defaultData);
-    if (IS_ADMIN && remoteAvailable && !remoteInitialized) {
+      console.warn(`Knowledge Center asset ${key} could not be loaded from shared storage.`, error);
       try {
-        const seeded = await writeRemoteState(cached);
-        try { await localStore.save(seeded); } catch (_) {}
-        return seeded;
-      } catch (error) {
-        console.warn('Initial Knowledge Center cloud migration could not be completed yet.', error);
+        const cached = await localStore.load(defaultDataCache || []);
+        return cached?.assets?.[key] || '';
+      } catch (_) {
+        return '';
       }
     }
-    return cached;
+  }
+
+  async function loadAiReport() {
+    try {
+      const value = await firebaseRequest(`${STATE_ROOT}/aiReport.json?t=${Date.now()}`);
+      return value && typeof value === 'object' ? value : null;
+    } catch (_) {
+      return memoryState?.aiReport || null;
+    }
   }
 
   async function save(state) {
     try {
-      // A public/stale browser is never allowed to initialize an empty cloud database.
-      // The Admin page is the authoritative first-time migration source.
       if (!IS_ADMIN && !remoteInitialized) {
-        const current = await readRemoteState();
-        if (!current) {
+        const stamp = await readRemoteStamp().catch(() => '');
+        if (!stamp) {
           console.warn('Cloud Knowledge Center is not initialized yet. Saving only to browser cache until Admin seeds the shared state.');
-          return localStore.save(state);
+          const local = await localStore.save(state);
+          memoryState = local;
+          return local;
         }
+        remoteInitialized = true;
       }
       const saved = await writeRemoteState(state);
-      try { await localStore.save(saved); } catch (_) {}
-      subscribers.forEach(callback => { try { callback(); } catch (_) {} });
+      subscribers.forEach(callback => { try { callback(saved); } catch (_) {} });
       return saved;
     } catch (error) {
       remoteAvailable = false;
       console.error('Shared Knowledge Center save failed. Browser cache is used as fallback.', error);
-      return localStore.save(state);
+      const local = await localStore.save(state);
+      memoryState = local;
+      return local;
     }
   }
 
   async function reset(defaultData) {
     const state = localStore.normalizeState(null, defaultData);
+    state.assets = {};
     return save(state);
   }
 
   function startPolling() {
     if (pollTimer) return;
+    // Poll only a tiny timestamp instead of downloading state.json every 3 seconds.
     pollTimer = setInterval(async () => {
       if (!subscribers.size || document.hidden) return;
       try {
-        const remote = await readRemoteState();
+        const stamp = await readRemoteStamp();
         remoteAvailable = true;
-        if (!remote) return;
-        const stamp = stateStamp(remote);
-        if (lastRemoteStamp && stamp && stamp !== lastRemoteStamp) {
+        if (!stamp) return;
+        if (lastRemoteStamp && stamp !== lastRemoteStamp) {
           lastRemoteStamp = stamp;
-          try { await localStore.save(localStore.normalizeState(remote, remote.data || [])); } catch (_) {}
-          subscribers.forEach(callback => { try { callback(); } catch (_) {} });
+          const latest = await refresh(defaultDataCache || []);
+          subscribers.forEach(callback => { try { callback(latest); } catch (_) {} });
         } else if (!lastRemoteStamp) {
           lastRemoteStamp = stamp;
         }
@@ -2039,13 +2137,14 @@
         remoteAvailable = false;
         console.warn('Knowledge Center background synchronization is temporarily unavailable.', error);
       }
-    }, 3000);
+    }, 10000);
   }
 
   function subscribe(callback) {
     subscribers.add(callback);
     const unsubscribeLocal = localStore.subscribe(() => {
       if (!remoteAvailable) {
+        memoryState = null;
         try { callback(); } catch (_) {}
       }
     });
@@ -2063,6 +2162,9 @@
   window.KCStore = {
     ...localStore,
     load,
+    refresh,
+    loadAsset,
+    loadAiReport,
     save,
     reset,
     subscribe,
@@ -2070,9 +2172,8 @@
     sharedDatabaseUrl: DATABASE_URL
   };
 })();
+;
 </script>
-  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script type="module">
     let state = await window.KCStore.load(window.KC_DEFAULT_DATA); let pendingAssets = {}; let draftBlocks = []; let editing = null; let dragUid = null; let arrangementContext = null; const PAGE_SIZE = 10; let guidePage = 1; let arrangementPage = 1;
     const $ = id => document.getElementById(id); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const clone = x => JSON.parse(JSON.stringify(x)); const fmt = v => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v)); const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -2278,9 +2379,8 @@
       });
     }
 
-    // Migrate screenshots that were imported before this shared-sync fix. It runs in the background
-    // from the Admin laptop and does not change article content or UI.
-    setTimeout(() => migrateLegacyImportAssetsToSharedStorage(state).catch(error => console.warn('Legacy screenshot migration incomplete.', error)), 0);
+    // Legacy screenshots are migrated only when the related guide/image is opened.
+    // This avoids downloading every imported image when Admin first loads.
     let sharedAiReportCache = { questions: [], feedback: [], updatedAt: null };
     let sharedReportRefreshPromise = null;
 
@@ -2328,9 +2428,7 @@
     }
 
     function knowledgeContentFingerprint(currentState) {
-      const assets = { ...(currentState?.assets || {}) };
-      delete assets[SHARED_AI_REPORT_ASSET_KEY];
-      return JSON.stringify({ data: currentState?.data || [], assets });
+      return JSON.stringify({ data: currentState?.data || [] });
     }
 
     let knowledgeFingerprint = knowledgeContentFingerprint(state);
@@ -2358,6 +2456,38 @@
     }
 
     function allAssets() { return { ...window.KC_DEFAULT_ASSETS, ...(state.assets || {}), ...pendingAssets } }
+    const KC_TRANSPARENT_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+    function isDirectAssetValue(value) {
+      const source = String(value || '');
+      return !source || source.startsWith('data:') || source.startsWith('http://') || source.startsWith('https://') || source.startsWith('blob:') || source.startsWith(KC_IMPORT_ASSET_PREFIX) || source.includes('/') || source.includes('.');
+    }
+    async function resolveRemoteStateAsset(assetKey) {
+      const key = String(assetKey || '');
+      if (!key) return '';
+      const known = allAssets();
+      if (Object.prototype.hasOwnProperty.call(known, key)) return known[key];
+      if (isDirectAssetValue(key)) return key;
+      try { return await window.KCStore.loadAsset(key); }
+      catch (_) { return ''; }
+    }
+    function hydrateRemoteStateAssetImages(root = document) {
+      root.querySelectorAll('img[data-kc-state-asset]').forEach(async image => {
+        const key = image.dataset.kcStateAsset || '';
+        try {
+          let source = await resolveRemoteStateAsset(key);
+          if (!source) source = `assets/${key}.png`;
+          if (String(source).startsWith(KC_IMPORT_ASSET_PREFIX)) source = await loadOriginalImportAsset(source);
+          else if (source && !source.includes('.') && !source.startsWith('data:') && !source.startsWith('http')) source = `assets/${source}.png`;
+          if (!source) throw new Error(`Asset ${key} was not found.`);
+          image.src = source;
+          const button = image.closest('[data-asset]');
+          if (button) button.dataset.asset = source;
+          image.removeAttribute('data-kc-state-asset');
+        } catch (error) {
+          console.warn(`Guide image ${key} could not be loaded lazily.`, error);
+        }
+      });
+    }
     function allArticles() { return state.data.flatMap((m, mi) => m.topics.map((t, ti) => ({ module: m, topic: t, mi, ti }))) }
     function pageName(t, lang = 'id') { return t.pageMenu?.[lang] || t.pageMenu?.id || t.pageMenu?.en || 'General' }
     function toast(msg) { $('toast').textContent = msg; $('toast').classList.add('show'); clearTimeout(window.__tt); window.__tt = setTimeout(() => $('toast').classList.remove('show'), 1800) }
@@ -2370,8 +2500,8 @@
         // Import/arrangement dapat melewati load kedua karena caller sudah memakai state terbaru.
         if (!options.skipReportRefresh) {
           try {
-            const latestReportState = await window.KCStore.load(window.KC_DEFAULT_DATA);
-            sharedAiReportCache = sharedAiReportFromState(latestReportState);
+            const latestReport = await window.KCStore.loadAiReport?.();
+            if (latestReport) sharedAiReportCache = normalizeSharedAiReport(latestReport);
           } catch (_) { }
         }
         if (sharedAiReportCache) writeSharedAiReportToState(state, sharedAiReportCache);
@@ -2514,7 +2644,7 @@
       if (!validateTitles(true)) { toast('Please correct the title error before submitting.'); return }
       
       // --- TAMBAHKAN BARIS INI ---
-      state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+      state = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
       // ---------------------------
 
       let m = state.data.find(x => x.id === selectedMain), newModule = null;
@@ -2592,7 +2722,7 @@
       confirmModal(`Delete “${a?.topic.title.id || 'this guide'}”? It will also disappear from index.html.`, async () => { 
         
         // --- TAMBAHKAN BARIS INI ---
-        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        state = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
         // ---------------------------
 
         const m = state.data.find(x => x.id === mid); 
@@ -2618,7 +2748,7 @@
     
         async () => {
           // Ambil versi data terbaru sebelum melakukan perubahan.
-          state = await window.KCStore.load(
+          state = await window.KCStore.refresh(
             window.KC_DEFAULT_DATA
           );
     
@@ -2717,7 +2847,7 @@
       const count = module.topics.filter(topic => pageName(topic) === page).length;
       if (!count) { toast('Page Menu tidak memiliki guide.'); return }
       confirmModal(`Delete Page Menu “${page}” and all ${count} guide(s) inside it?`, async () => {
-        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        state = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
         sharedAiReportCache = sharedAiReportFromState(state);
         const latestModule = state.data.find(item => item.id === mainId);
         if (!latestModule) { toast('Main Menu tidak ditemukan.'); return }
@@ -2735,7 +2865,7 @@
       if (!module) { toast('Pilih Main Menu yang ingin dihapus.'); return }
       const count = module.topics.length;
       confirmModal(`Delete Main Menu “${module.name?.id || mainId}” and all ${count} guide(s) inside it?`, async () => {
-        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        state = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
         sharedAiReportCache = sharedAiReportFromState(state);
         const latestModule = state.data.find(item => item.id === mainId);
         if (!latestModule) { toast('Main Menu tidak ditemukan.'); return }
@@ -2756,6 +2886,36 @@
 
     // Guide List — Import Excel
     let importExcelDraft = null;
+    let importLibrariesPromise = null;
+
+    function loadExternalScriptOnce(src, globalName) {
+      if (window[globalName]) return Promise.resolve(window[globalName]);
+      return new Promise((resolve, reject) => {
+        const existing = [...document.scripts].find(script => script.src === src);
+        if (existing) {
+          existing.addEventListener('load', () => resolve(window[globalName]), { once: true });
+          existing.addEventListener('error', () => reject(new Error(`${globalName} failed to load.`)), { once: true });
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = () => resolve(window[globalName]);
+        script.onerror = () => reject(new Error(`${globalName} failed to load.`));
+        document.head.appendChild(script);
+      });
+    }
+
+    function ensureImportLibraries() {
+      if (window.ExcelJS && window.JSZip) return Promise.resolve();
+      if (!importLibrariesPromise) {
+        importLibrariesPromise = Promise.all([
+          loadExternalScriptOnce('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js', 'ExcelJS'),
+          loadExternalScriptOnce('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js', 'JSZip')
+        ]).catch(error => { importLibrariesPromise = null; throw error; });
+      }
+      return importLibrariesPromise;
+    }
 
     function importEmptyHtml() {
       return `<div class="importEmptyState"><div class="importEmptyIcon" aria-hidden="true"></div><div class="importEmptyCopy"><h2>Ooops, haven't input your data!</h2><p>There is no data about transaction yet</p></div></div>`;
@@ -3095,6 +3255,7 @@
     }
 
     async function parseGuideImportFile(file) {
+      await ensureImportLibraries();
       if (!window.JSZip) throw new Error('Excel ZIP reader failed to load. Refresh the page and try again.');
       if (!file || !/\.xlsx$/i.test(file.name)) throw new Error('Please select an Excel .xlsx file.');
       const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
@@ -3508,7 +3669,7 @@
         }));
 
         button.innerHTML = '<span aria-hidden="true">…</span> Saving Import';
-        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        state = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
         sharedAiReportCache = sharedAiReportFromState(state);
         knowledgeFingerprint = knowledgeContentFingerprint(state);
         const stamp = new Date().toISOString();
@@ -3608,6 +3769,8 @@
     }
 
     async function downloadGuideImportTemplate() {
+      try { await ensureImportLibraries(); }
+      catch (error) { console.error(error); toast('Excel template library failed to load.'); return; }
       if (!window.ExcelJS) {
         toast('Excel template library failed to load.');
         return;
@@ -3666,7 +3829,7 @@
       button.disabled = true;
       button.textContent = 'Saving…';
       try {
-        const latestState = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        const latestState = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
         const module = latestState.data.find(item => item.id === arrangementContext.mid);
         if (!module) throw new Error('Main Menu arrangement was not found.');
 
@@ -3724,8 +3887,13 @@
     }
 
     async function refreshSharedReportData() {
-      await refreshSharedState({ refreshGuides: true });
-      sharedAiReportCache = sharedAiReportFromState(state);
+      try {
+        const report = await window.KCStore.loadAiReport?.();
+        if (report) sharedAiReportCache = normalizeSharedAiReport(report);
+        else sharedAiReportCache = sharedAiReportFromState(state);
+      } catch (_) {
+        sharedAiReportCache = sharedAiReportFromState(state);
+      }
       return sharedAiReportCache;
     }
 
@@ -4307,7 +4475,7 @@
       }
 
       confirmModal(`Create “${question}” as a FAQ article?`, async () => {
-        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        state = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
         let faqModule = faqModuleFromState(state);
         if (!faqModule) {
           const usedModuleIds = new Set(state.data.map(module => module.id));
@@ -4463,7 +4631,7 @@
       ];
 
       // --- TAMBAHKAN BARIS INI ---
-      state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+      state = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
       // ---------------------------
 
       // Eksekusi fungsi split dari store
@@ -4494,15 +4662,18 @@
       $('contentBuilder').innerHTML = draftBlocks.map((b, i) => { 
         let body = ''; 
         if (b.type === 'image') { 
-          let imgSrc = assets[b.asset] || b.asset;
+          const hasKnownAsset = Object.prototype.hasOwnProperty.call(assets, b.asset);
+          const needsRemoteStateAsset = Boolean(b.asset && !hasKnownAsset && !isDirectAssetValue(b.asset));
+          let imgSrc = needsRemoteStateAsset ? '' : (assets[b.asset] || b.asset);
           const isStoredImportAsset = String(imgSrc || '').startsWith(KC_IMPORT_ASSET_PREFIX);
           if (imgSrc && !isStoredImportAsset && !imgSrc.includes('.') && !imgSrc.startsWith('data:') && !imgSrc.startsWith('http')) {
               imgSrc = `assets/${imgSrc}.png`; 
           }
           const alignOpts = `<select data-align="${b.uid}" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Alignment"><option value="left" ${b.align==='left'?'selected':''}>Left</option><option value="center" ${(!b.align || b.align==='center')?'selected':''}>Center</option><option value="right" ${b.align==='right'?'selected':''}>Right</option></select>`;
-          const previewSrc = isStoredImportAsset ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' : imgSrc;
+          const previewSrc = (isStoredImportAsset || needsRemoteStateAsset) ? KC_TRANSPARENT_PIXEL : imgSrc;
           const importAssetAttribute = isStoredImportAsset ? ` data-kc-import-asset="${esc(imgSrc)}"` : '';
-          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"><input type="number" data-scale="${b.uid}" value="${esc(b.scale || '')}" placeholder="Scale %" min="1" max="100" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Scale (1-100%)">${alignOpts}</div>${imgSrc ? `<img class="blockImage" src="${previewSrc}"${importAssetAttribute} style="${b.scale ? `width: ${b.scale}%; height: auto;` : ''}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
+          const remoteAssetAttribute = needsRemoteStateAsset ? ` data-kc-state-asset="${esc(b.asset)}"` : '';
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"><input type="number" data-scale="${b.uid}" value="${esc(b.scale || '')}" placeholder="Scale %" min="1" max="100" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Scale (1-100%)">${alignOpts}</div>${(imgSrc || needsRemoteStateAsset) ? `<img class="blockImage" src="${previewSrc}"${importAssetAttribute}${remoteAssetAttribute} style="${b.scale ? `width: ${b.scale}%; height: auto;` : ''}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
         } else if (b.type === 'table') { 
           const textRowsId = (b.rowsId || []).map(r => r.join(' | ')).join('\n');
           const textRowsEn = (b.rowsEn || b.rowsId || []).map(r => r.join(' | ')).join('\n');
@@ -4529,6 +4700,7 @@
       }).join(''); 
       bindBuilder();
       hydrateHighResolutionImportImages($('contentBuilder'));
+      hydrateRemoteStateAssetImages($('contentBuilder'));
     }
 
     function bindBuilder() { 
@@ -4622,7 +4794,13 @@
     
     // Render ulang saat bahasa diganti agar placeholder berubah
     $('targetLang').addEventListener('change', renderBuilder);
-    function renderAll() { initSelects(); renderGuideList(); renderArrangement(); renderFeedbackReport() }
+    function renderVisibleAdminPanel() {
+      const activeTab = document.querySelector('.tab.active')?.dataset.tab || 'create';
+      if (activeTab === 'list') renderGuideList();
+      else if (activeTab === 'arrange') renderArrangement();
+      else if (activeTab === 'feedback') renderFeedbackReport({ skipRefresh: true });
+    }
+    function renderAll() { initSelects(); renderVisibleAdminPanel() }
     let aiFaqMigrationChanged = migrateAiFaqArticles(state);
     try {
       aiFaqMigrationChanged = await ensureAiFaqBilingualArticles(state) || aiFaqMigrationChanged;
@@ -4647,7 +4825,7 @@
         if ($('panel-feedback')?.classList.contains('active')) renderFeedbackReport({ skipRefresh: true });
       } catch (error) { console.warn('Knowledge Center subscription refresh failed:', error); }
     });
-    initSelects(); resetCreate(); renderGuideList(); renderArrangement(); initFeedbackReport(); renderFeedbackReport();
+    initSelects(); resetCreate(); initFeedbackReport();
   </script>
 </body>
 
