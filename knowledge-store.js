@@ -9,6 +9,7 @@
   const CHANNEL='prieds-kc-sync-v1';
   const CLIENT_ID=Math.random().toString(36).slice(2)+Date.now().toString(36);
   let dbPromise=null;
+  let memoryState=null;
 
   const clone=value=>JSON.parse(JSON.stringify(value));
   const slugify=value=>String(value||'guide').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,70)||'guide';
@@ -41,9 +42,9 @@
     state.assets=state.assets||{};
     state.data=Array.isArray(state.data)?state.data:clone(defaultData);
     const used=new Set();
-    state.data.forEach((module,mi)=>{
+    state.data.forEach((module)=>{
       module.topics=Array.isArray(module.topics)?module.topics:[];
-      module.topics.forEach((topic,ti)=>{
+      module.topics.forEach((topic)=>{
         let id=topic.id||`${module.id}-${slugify(topic.title?.id||topic.title?.en||'guide')}`;
         let n=2,base=id;
         while(used.has(id)) id=base+'-'+n++;
@@ -62,70 +63,79 @@
     return state;
   }
 
-  let firebaseDb = null;
-  async function initFirebase() {
-    if (firebaseDb) return firebaseDb;
-    // Import Firebase SDK dari CDN
-    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-    const { getDatabase, ref, get, set } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js");
-    
-    // GANTI DENGAN FIREBASE CONFIG ANDA
-    const firebaseConfig = {
-      apiKey: "AIzaSyA_HUqsuf1Exp0tiWQZ1HZ17C4SVDt8fEo",
-      authDomain: "prieds-user-guide.firebaseapp.com",
-      databaseURL: "https://prieds-user-guide-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "prieds-user-guide",
-      storageBucket: "prieds-user-guide.firebasestorage.app",
-      messagingSenderId: "1021947629732",
-      appId: "1:1021947629732:web:099b5b55ecbbcc13f7d631",
-    };
-
-    const app = initializeApp(firebaseConfig);
-    firebaseDb = getDatabase(app);
-    window._fbTools = { ref, get, set };
-    return firebaseDb;
+  function openDb(){
+    if(!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB is unavailable.'));
+    if(dbPromise) return dbPromise;
+    dbPromise=new Promise((resolve,reject)=>{
+      const request=indexedDB.open(DB_NAME,DB_VERSION);
+      request.onupgradeneeded=()=>{
+        const db=request.result;
+        if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+      };
+      request.onsuccess=()=>resolve(request.result);
+      request.onerror=()=>reject(request.error||new Error('Knowledge Center browser cache could not be opened.'));
+      request.onblocked=()=>reject(new Error('Knowledge Center browser cache is blocked by another tab.'));
+    }).catch(error=>{dbPromise=null;throw error});
+    return dbPromise;
   }
 
   async function idbGet(){
-    const db = await initFirebase();
-    const { ref, get } = window._fbTools;
-    const snapshot = await get(ref(db, 'prieds_kc_state'));
-    return snapshot.exists() ? snapshot.val() : null;
+    const db=await openDb();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(STORE,'readonly');
+      const req=tx.objectStore(STORE).get(KEY);
+      req.onsuccess=()=>resolve(req.result||null);
+      req.onerror=()=>reject(req.error||new Error('Knowledge Center browser cache could not be read.'));
+    });
   }
 
   async function idbPut(value){
-    const db = await initFirebase();
-    const { ref, set } = window._fbTools;
-    await set(ref(db, 'prieds_kc_state'), value);
+    const db=await openDb();
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction(STORE,'readwrite');
+      tx.objectStore(STORE).put(value,KEY);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>reject(tx.error||new Error('Knowledge Center browser cache could not be saved.'));
+      tx.onabort=()=>reject(tx.error||new Error('Knowledge Center browser cache save was cancelled.'));
+    });
   }
+
   function fallbackGet(){try{const x=localStorage.getItem(FALLBACK_KEY);return x?JSON.parse(x):null;}catch(_){return null;}}
   function fallbackPut(value){try{localStorage.setItem(FALLBACK_KEY,JSON.stringify(value));return true;}catch(_){return false;}}
   function ping(){
     try{localStorage.setItem(PING_KEY,String(Date.now()));}catch(_){}
     try{const bc=new BroadcastChannel(CHANNEL);bc.postMessage({type:'updated',at:Date.now(),sender:CLIENT_ID});bc.close();}catch(_){}
   }
+
   async function load(defaultData){
+    if(memoryState) return clone(memoryState);
     let raw=null;
     try{raw=await idbGet();}catch(_){raw=fallbackGet();}
     const state=normalizeState(raw,defaultData);
+    memoryState=state;
     if(!raw){try{await idbPut(state);}catch(_){fallbackPut(state);}}
-    return state;
+    return clone(state);
   }
+
   async function save(state){
     const normalized=normalizeState(state,state.data||[]);
-    normalized.savedAt=now();
+    normalized.savedAt=normalized.savedAt||now();
+    memoryState=normalized;
     try{await idbPut(normalized);}catch(err){if(!fallbackPut(normalized)) throw err;}
     ping();
-    return normalized;
+    return clone(normalized);
   }
+
   async function reset(defaultData){
     const state=normalizeState(null,defaultData);
+    state.savedAt=now();
     await save(state); return state;
   }
+
   function subscribe(callback){
     let bc=null;
-    try{bc=new BroadcastChannel(CHANNEL);bc.onmessage=e=>{if(!e.data||e.data.sender!==CLIENT_ID)callback();};}catch(_){}
-    const onStorage=e=>{if(e.key===PING_KEY)callback();};
+    try{bc=new BroadcastChannel(CHANNEL);bc.onmessage=e=>{if(!e.data||e.data.sender!==CLIENT_ID){memoryState=null;callback();}};}catch(_){}
+    const onStorage=e=>{if(e.key===PING_KEY){memoryState=null;callback();}};
     window.addEventListener('storage',onStorage);
     return ()=>{window.removeEventListener('storage',onStorage);if(bc)bc.close();};
   }
@@ -134,37 +144,24 @@
     if (!state || !state.data) return state;
     const moduleObj = state.data.find(m => m.id === moduleId);
     if (!moduleObj || !moduleObj.topics[topicIndex]) {
-      console.error("Master topic tidak ditemukan.");
+      console.error('Master topic tidak ditemukan.');
       return state;
     }
-
     const masterTopic = moduleObj.topics[topicIndex];
     const newTopics = [];
-
     splitRules.forEach(rule => {
-      const filteredId = rule.blockIndexes
-        .map(idx => masterTopic.blocks?.id?.[idx])
-        .filter(Boolean);
-
-      const filteredEn = rule.blockIndexes
-        .map(idx => masterTopic.blocks?.en?.[idx])
-        .filter(Boolean);
-
+      const filteredId = rule.blockIndexes.map(idx => masterTopic.blocks?.id?.[idx]).filter(Boolean);
+      const filteredEn = rule.blockIndexes.map(idx => masterTopic.blocks?.en?.[idx]).filter(Boolean);
       newTopics.push({
         ...masterTopic,
         title: rule.title,
         tabMenu: rule.tabName,
-        blocks: {
-          id: filteredId,
-          en: filteredEn
-        }
+        blocks: { id: filteredId, en: filteredEn }
       });
     });
-
-    // Gantikan topic lama dengan daftar topic baru hasil split
     moduleObj.topics.splice(topicIndex, 1, ...newTopics);
     return state;
   }
 
-  window.KCStore={load,save,reset,subscribe,slugify,derivePageMenu,normalizeState,clone,splitMasterGuide};
+  window.KCStore={load,save,reset,subscribe,slugify,derivePageMenu,normalizeState,clone,splitMasterGuide,schemaVersion:1};
 })();
