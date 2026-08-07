@@ -89,11 +89,16 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 .docContent h2{font-size:20px;font-weight:600;margin:28px 0 12px;scroll-margin-top:20px}
 .docLabel{font-size:11px;font-weight:800;color:#0986AD;text-transform:uppercase;letter-spacing:.06em;margin:20px 0 8px}
 .docP{font-size:13px;line-height:1.65;color:#3E4C52;margin:10px 0}
+.aiFaqFormatted{font-size:13px;line-height:1.65;color:#3E4C52;margin:10px 0}.aiFaqFormatted p{margin:9px 0}.aiFaqFormatted ol,.aiFaqFormatted ul{margin:9px 0;padding-left:22px}.aiFaqFormatted li{margin:6px 0}.legacyFaqStructured{font-size:13px;line-height:1.65;color:#3E4C52;margin:10px 0}.legacyFaqStructured .docP{margin:0 0 18px}.legacyFaqStructured .docP:last-child{margin-bottom:0}.faqSourceLinks{display:grid;gap:7px;margin:9px 0 16px}.faqSourceLink{width:100%;border:1px solid #BFE3EE;background:#EFFAFF;color:#087B9D;border-radius:6px;padding:9px 10px;text-align:left;font-size:12px;line-height:1.45}.faqSourceLink:hover{background:#DDF5FB}.docInlineSource{border:0;background:transparent;color:#087B9D;text-decoration:underline;padding:0;font:inherit;text-align:left}.docInlineSource:hover{color:#075D78}
 .stepCard{margin:18px 0 10px}
 .stepNum{display:none}.stepText{font-size:13px;line-height:1.65;color:#3D4A50}
+.docContent.numberedArticle .stepCard{display:grid;grid-template-columns:32px minmax(0,1fr);gap:11px;align-items:start;margin:16px 0;padding:12px 14px;background:#fff;border:1px solid #E1E8EB;border-radius:7px}
+.docContent.numberedArticle .stepNum{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:800;line-height:1}
+.structuredArticleText>p{margin:0 0 9px}.structuredArticleText>p:last-child{margin-bottom:0}
+.docContent.numberedArticle .mediaCard{margin:8px 0 30px}
 .mediaCard{margin:10px 0 18px;background:#fff;border:0;overflow:hidden}
-.mediaCard button{display:block;width:100%;border:0;background:#fff;padding:0;cursor:zoom-in}
-.mediaCard img{width:100%;height:auto;display:block;border:1px solid #E3E8EB}
+.mediaCard button{display:block;width:100%;border:0;background:#fff;padding:0;cursor:zoom-in;text-align:center}
+.mediaCard img{width:auto;max-width:100%;height:auto;display:block;border:1px solid #E3E8EB;image-rendering:auto}
 .mediaCaption{font-size:10px;color:#7E8A90;padding:7px 2px}
 .docTableWrap{overflow:auto;margin:14px 0 20px;border:1px solid #D5DEE2;background:#fff}
 .docTable{border-collapse:collapse;width:100%;font-size:11px}.docTable td{border:1px solid #DCE4E7;padding:9px;vertical-align:top;line-height:1.45}.docTable tr:first-child{background:#DDF4FA;font-weight:800}
@@ -229,7 +234,175 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 
 <div class="mobileDrawer" id="mobileDrawer"><aside class="sidebar"><h2 class="sidebarTitle" data-ui="tocTitle"></h2><div id="mobileNav"></div></aside></div>
 <div class="lightbox" id="lightbox"><button class="close" id="lightboxClose">×</button><img id="lightboxImg"></div><div class="toast" id="toast"></div>
-<script src="knowledge-data.js"></script><script src="knowledge-store.js"></script><script type="module">const __kcState=await window.KCStore.load(window.KC_DEFAULT_DATA);
+<script src="knowledge-data.js"></script><script src="knowledge-store.js"></script><script>
+/* Shared Knowledge Center sync patch: Firebase Realtime Database across devices. */
+(function(){
+  'use strict';
+  const localStore = window.KCStore;
+  if (!localStore || localStore.__sharedFirebaseSync) return;
+
+  const DATABASE_URL = 'https://prds-management-default-rtdb.asia-southeast1.firebasedatabase.app';
+  const STATE_URL = `${DATABASE_URL}/prieds_knowledge_center_v1/state.json`;
+  const IS_ADMIN = /Knowledge Center Admin/i.test(document.title);
+  const subscribers = new Set();
+  let pollTimer = null;
+  let lastRemoteStamp = '';
+  let remoteAvailable = true;
+  let remoteInitialized = false;
+
+  const stateStamp = state => String(state?.savedAt || state?.updatedAt || '');
+
+  async function firebaseRequest(url, options = {}) {
+    const response = await fetch(url, {
+      cache: 'no-store',
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+    });
+    if (!response.ok) throw new Error(`Firebase request failed (${response.status})`);
+    return response.json();
+  }
+
+  async function readRemoteState() {
+    const value = await firebaseRequest(`${STATE_URL}?t=${Date.now()}`);
+    remoteInitialized = !!(value && Array.isArray(value.data));
+    return remoteInitialized ? value : null;
+  }
+
+  async function writeRemoteState(state) {
+    const normalized = localStore.normalizeState(state, state?.data || []);
+    normalized.schemaVersion = localStore.schemaVersion || normalized.schemaVersion || 1;
+    normalized.savedAt = new Date().toISOString();
+    const saved = await firebaseRequest(STATE_URL, { method: 'PUT', body: JSON.stringify(normalized) });
+    remoteInitialized = true;
+    lastRemoteStamp = stateStamp(saved || normalized);
+    return localStore.normalizeState(saved || normalized, normalized.data || []);
+  }
+
+  async function load(defaultData) {
+    try {
+      const remote = await readRemoteState();
+      remoteAvailable = true;
+      if (remote) {
+        const normalized = localStore.normalizeState(remote, defaultData);
+        lastRemoteStamp = stateStamp(normalized);
+        try { await localStore.save(normalized); } catch (_) {}
+        return normalized;
+      }
+    } catch (error) {
+      remoteAvailable = false;
+      console.warn('Shared Knowledge Center state is temporarily unavailable; browser cache is used as fallback.', error);
+    }
+
+    const cached = await localStore.load(defaultData);
+    if (IS_ADMIN && remoteAvailable && !remoteInitialized) {
+      try {
+        const seeded = await writeRemoteState(cached);
+        try { await localStore.save(seeded); } catch (_) {}
+        return seeded;
+      } catch (error) {
+        console.warn('Initial Knowledge Center cloud migration could not be completed yet.', error);
+      }
+    }
+    return cached;
+  }
+
+  async function save(state) {
+    try {
+      // A public/stale browser is never allowed to initialize an empty cloud database.
+      // The Admin page is the authoritative first-time migration source.
+      if (!IS_ADMIN && !remoteInitialized) {
+        const current = await readRemoteState();
+        if (!current) {
+          console.warn('Cloud Knowledge Center is not initialized yet. Saving only to browser cache until Admin seeds the shared state.');
+          return localStore.save(state);
+        }
+      }
+      const saved = await writeRemoteState(state);
+      try { await localStore.save(saved); } catch (_) {}
+      subscribers.forEach(callback => { try { callback(); } catch (_) {} });
+      return saved;
+    } catch (error) {
+      remoteAvailable = false;
+      console.error('Shared Knowledge Center save failed. Browser cache is used as fallback.', error);
+      return localStore.save(state);
+    }
+  }
+
+  async function reset(defaultData) {
+    const state = localStore.normalizeState(null, defaultData);
+    return save(state);
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(async () => {
+      if (!subscribers.size || document.hidden) return;
+      try {
+        const remote = await readRemoteState();
+        remoteAvailable = true;
+        if (!remote) return;
+        const stamp = stateStamp(remote);
+        if (lastRemoteStamp && stamp && stamp !== lastRemoteStamp) {
+          lastRemoteStamp = stamp;
+          try { await localStore.save(localStore.normalizeState(remote, remote.data || [])); } catch (_) {}
+          subscribers.forEach(callback => { try { callback(); } catch (_) {} });
+        } else if (!lastRemoteStamp) {
+          lastRemoteStamp = stamp;
+        }
+      } catch (error) {
+        remoteAvailable = false;
+        console.warn('Knowledge Center background synchronization is temporarily unavailable.', error);
+      }
+    }, 3000);
+  }
+
+  function subscribe(callback) {
+    subscribers.add(callback);
+    const unsubscribeLocal = localStore.subscribe(() => {
+      if (!remoteAvailable) {
+        try { callback(); } catch (_) {}
+      }
+    });
+    startPolling();
+    return () => {
+      subscribers.delete(callback);
+      try { unsubscribeLocal?.(); } catch (_) {}
+      if (!subscribers.size && pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+  }
+
+  window.KCStore = {
+    ...localStore,
+    load,
+    save,
+    reset,
+    subscribe,
+    __sharedFirebaseSync: true,
+    sharedDatabaseUrl: DATABASE_URL
+  };
+})();
+</script><script type="module">const __kcState=await window.KCStore.load(window.KC_DEFAULT_DATA);
+const KC_IMPORT_ASSET_PREFIX='kc-import-asset://';
+const KC_IMPORT_ASSET_DB='prieds-kc-import-assets-v1';
+const KC_IMPORT_ASSET_STORE='assets';
+const KC_SHARED_DATABASE_URL=window.KCStore.sharedDatabaseUrl||'https://prds-management-default-rtdb.asia-southeast1.firebasedatabase.app';
+const KC_SHARED_IMPORT_ASSET_ROOT='prieds_knowledge_center_v1/import_assets';
+let kcImportAssetDbPromise=null;
+const kcImportAssetObjectUrls=new Map();
+function openKcImportAssetDb(){if(!('indexedDB'in window))return Promise.reject(new Error('IndexedDB is not supported by this browser.'));if(kcImportAssetDbPromise)return kcImportAssetDbPromise;kcImportAssetDbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open(KC_IMPORT_ASSET_DB,1);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(KC_IMPORT_ASSET_STORE))db.createObjectStore(KC_IMPORT_ASSET_STORE,{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('Imported screenshot storage could not be opened.'));request.onblocked=()=>reject(new Error('Imported screenshot storage is blocked by another browser tab.'))}).catch(error=>{kcImportAssetDbPromise=null;throw error});return kcImportAssetDbPromise}
+function importAssetIdFromReference(value){const source=String(value||'');if(!source.startsWith(KC_IMPORT_ASSET_PREFIX))return'';try{return decodeURIComponent(source.slice(KC_IMPORT_ASSET_PREFIX.length))}catch(_){return source.slice(KC_IMPORT_ASSET_PREFIX.length)}}
+function sharedImportAssetUrl(assetId){return `${KC_SHARED_DATABASE_URL}/${KC_SHARED_IMPORT_ASSET_ROOT}/${encodeURIComponent(assetId)}.json`}
+async function loadSharedImportAsset(assetId){const response=await fetch(`${sharedImportAssetUrl(assetId)}?t=${Date.now()}`,{cache:'no-store'});if(!response.ok)throw new Error(`Shared screenshot request failed (${response.status}).`);const value=await response.json();return typeof value==='string'?value:''}
+async function writeSharedImportAsset(assetId,dataUrl){const response=await fetch(sharedImportAssetUrl(assetId),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(String(dataUrl||''))});if(!response.ok)throw new Error(`Shared screenshot upload failed (${response.status}).`);return true}
+function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(reader.error||new Error('Screenshot cache could not be converted.'));reader.readAsDataURL(blob)})}
+async function loadOriginalImportAsset(reference){const assetId=importAssetIdFromReference(reference);if(!assetId)return String(reference||'');if(kcImportAssetObjectUrls.has(assetId))return kcImportAssetObjectUrls.get(assetId);try{const shared=await loadSharedImportAsset(assetId);if(shared){kcImportAssetObjectUrls.set(assetId,shared);return shared}}catch(error){console.warn('Shared imported screenshot could not be loaded; trying browser cache.',error)}try{const db=await openKcImportAssetDb();const record=await new Promise((resolve,reject)=>{const transaction=db.transaction(KC_IMPORT_ASSET_STORE,'readonly');const request=transaction.objectStore(KC_IMPORT_ASSET_STORE).get(assetId);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error||new Error(`Screenshot ${assetId} could not be read.`))});if(!record?.blob)return'';const dataUrl=await blobToDataUrl(record.blob);if(!dataUrl)return'';kcImportAssetObjectUrls.set(assetId,dataUrl);try{await writeSharedImportAsset(assetId,dataUrl);console.info(`Shared screenshot repaired: ${assetId}`)}catch(error){console.warn(`Screenshot ${assetId} is available locally but could not be uploaded to shared storage.`,error)}return dataUrl}catch(error){console.warn(`Screenshot ${assetId} was not found in this browser cache.`,error);return''}}
+function collectImportAssetReferences(currentState=__kcState){const refs=new Set();const assets=currentState?.assets||{};Object.values(assets).forEach(value=>{if(String(value||'').startsWith(KC_IMPORT_ASSET_PREFIX))refs.add(String(value))});(currentState?.data||[]).forEach(module=>(module?.topics||[]).forEach(topic=>Object.values(topic?.blocks||{}).forEach(blocks=>(Array.isArray(blocks)?blocks:[]).forEach(block=>{if(block?.type!=='image')return;const value=assets?.[block.asset]||block.asset;if(String(value||'').startsWith(KC_IMPORT_ASSET_PREFIX))refs.add(String(value))}))));return [...refs]}
+async function migrateLegacyImportAssetsToSharedStorage(currentState=__kcState){const references=collectImportAssetReferences(currentState);if(!references.length)return;let cursor=0,uploaded=0;const worker=async()=>{while(cursor<references.length){const reference=references[cursor++];const assetId=importAssetIdFromReference(reference);if(!assetId)continue;try{const shared=await loadSharedImportAsset(assetId);if(shared){kcImportAssetObjectUrls.set(assetId,shared);continue}}catch(_){}try{const source=await loadOriginalImportAsset(reference);if(source)uploaded++}catch(_){}}};await Promise.all(Array.from({length:Math.min(4,references.length)},worker));if(uploaded)console.info(`Knowledge Center shared screenshot repair completed: ${uploaded} local image(s) migrated.`)}
+function hydrateHighResolutionImportImages(root=document){root.querySelectorAll('img[data-kc-import-asset]').forEach(async image=>{const reference=image.dataset.kcImportAsset||'';try{const source=await loadOriginalImportAsset(reference);if(!source)throw new Error('Screenshot was not found in shared or browser storage.');image.src=source;const button=image.closest('[data-asset]');if(button)button.dataset.asset=source;image.removeAttribute('data-kc-import-asset')}catch(error){console.error('Imported screenshot could not be displayed:',error);image.alt=lang==='en'?'Imported screenshot could not be loaded.':'Screenshot hasil import tidak dapat dimuat.'}})}
+setTimeout(()=>migrateLegacyImportAssetsToSharedStorage(__kcState).catch(error=>console.warn('Background screenshot repair incomplete.',error)),0);
 let DATA=__kcState.data;
 const FAQ_ROWS=[
   ["FAQ-001","Integrasi","Integration","WMS Lite","WMS Lite","Bagaimana cara melakukan sinkronisasi ulang Sales Order (SO) yang bermasalah?","How do I resynchronize a problematic Sales Order (SO)?","Klik ikon Sync di kanan atas, pilih sinkronisasi SO secara spesifik, lalu masukkan nomor SO yang bermasalah. Jalankan sinkronisasi dan periksa kembali status serta detail SO di Prieds. Jika data masih berbeda, pastikan SO pada sistem sumber, seperti Accurate atau Jurnal, tidak sedang diubah atau telah dihapus.","Click the Sync icon in the upper-right corner, select the specific SO synchronization option, and enter the affected SO number. Run the synchronization and recheck the SO status and details in Prieds. If the data still differs, confirm that the SO in the source system, such as Accurate or Jurnal, has not been edited or deleted."],
@@ -618,8 +791,87 @@ function rerenderLastList(){if(lastListMode.type==='search')searchArticles(lastL
 function normalize(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ')}
 function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}else{const menu=topicMenuMeta(activeModule,activeModule.topics[activeTopic],activeTopic);if(menu)openTopicMenus.add(topicMenuStateKey(activeModule.id,menu.key))}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
 function sectionDomId(moduleId,topicIndex,blockIndex){return`kc-section-${String(moduleId||'module').replace(/[^a-z0-9_-]/gi,'-')}-${topicIndex}-${blockIndex}`}
+function findKnowledgeSourceByTitle(topicTitle,heading){
+  const wanted=normalize(topicTitle);let found=null;
+  DATA.some(module=>{if(module.id==='faq')return false;const topicIndex=module.topics.findIndex(topic=>normalize(topic.title?.id)===wanted||normalize(topic.title?.en)===wanted);if(topicIndex<0)return false;const topic=module.topics[topicIndex];const blocks=topic.blocks?.id||topic.blocks?.en||[];const blockIndex=blocks.findIndex(block=>normalize(block.text)===normalize(heading));found={moduleId:module.id,topicIndex,topicId:topic.id,topicTitle:topic.title?.id||topicTitle,heading,targetId:blockIndex>=0?sectionDomId(module.id,topicIndex,blockIndex):''};return true});return found}
+function faqMarkdownWithLinks(value){
+  const raw=String(value||'').replace(/\r/g,'');
+  const parts=raw.split(/\n\s*\*\*Sumber:\*\*\s*\n/i);
+  const body=renderMarkdown(parts[0]||'');
+  const links=[];const sourcePattern=/-\s*Bagian\s+["“]([^"”]+)["”]\s*[—-]\s*Artikel\s+["“]([^"”]+)["”]/gi;let match;
+  while((match=sourcePattern.exec(parts.slice(1).join('\n')))!==null){const source=findKnowledgeSourceByTitle(match[2],match[1]);if(source)links.push(source)}
+  const sourceHtml=links.length?`<div class="docLabel">Sumber Artikel</div><div class="faqSourceLinks">${links.map((source,index)=>`<button type="button" class="faqSourceLink" data-faq-source="${index}" data-faq-module="${esc(source.moduleId)}" data-faq-topic-index="${source.topicIndex}" data-faq-target="${esc(source.targetId||'')}">Bagian “${esc(source.heading)}” — Artikel “${esc(source.topicTitle)}”</button>`).join('')}</div>`:'';
+  return body+sourceHtml;
+}
+function sourceLinkButton(block){const source=block?.sourceLink||{};return`<button type="button" class="docInlineSource" data-faq-module="${esc(source.moduleId||'')}" data-faq-topic-index="${Number(source.topicIndex)||0}" data-faq-target="${esc(source.targetId||'')}">${esc(block.text||'')}</button>`}
+function splitLegacyFaqNumbering(value){
+  const raw=String(value||'').replace(/\r/g,'').trim();
+  const markerPattern=/(^|[ \t])(\d{1,2})[.)][ \t]+(?=[A-Za-zÀ-ÿ“"'])/g;
+  const markers=[...raw.matchAll(markerPattern)];
+  if(markers.length<2&&!markers.some(match=>match[2]==='1'))return null;
+  const expanded=raw.replace(markerPattern,(full,lead,number)=>`\n${number}. `).trim();
+  const lines=expanded.split(/\n+/).map(line=>line.trim()).filter(Boolean);
+  const steps=lines.filter(line=>/^\d{1,2}[.)]\s+/.test(line));
+  if(steps.length<2)return null;
+  return{intro:lines.filter(line=>!/^\d{1,2}[.)]\s+/.test(line)),steps};
+}
+function legacyFaqStructuredHtml(value){
+  const parsed=splitLegacyFaqNumbering(value);
+  if(!parsed)return'';
+  return`<div class="legacyFaqStructured">${parsed.intro.map(text=>`<p class="docP">${esc(text)}</p>`).join('')}${parsed.steps.map(text=>`<p class="docP">${esc(text)}</p>`).join('')}</div>`;
+}
+
+const STRUCTURED_INVENTORY_ARTICLES=new Set(['inventory','stock opname','split stock','stock report','stock opname report']);
+function shouldStructureArticle(module,topic){
+  if(String(topic?.source||'').trim().toLowerCase()==='knowledge center'||topic?.originalLanguage)return true;
+  if(guideModuleKey(module)!=='inventory')return false;
+  const names=[topic?.title?.id,topic?.title?.en,topic?.pageMenu?.id,topic?.pageMenu?.en,topic?.tabMenu?.id,topic?.tabMenu?.en]
+    .filter(Boolean).map(normalize);
+  return names.some(name=>STRUCTURED_INVENTORY_ARTICLES.has(name));
+}
+function splitDisplayNumberedText(value){
+  const original=String(value||'').replace(/\r/g,'').replace(/\u00a0/g,' ').trim();
+  if(!original)return null;
+  const prepared=original
+    .replace(/[ \t]+\n/g,'\n')
+    .replace(/\n[ \t]+/g,'\n')
+    .replace(/([^\n])\s+(?=(?:\d{1,3})[.)]\s+(?=[A-Za-zÀ-ÿ]))/g,'$1\n')
+    .replace(/([^\n])\s+(?=[a-z][.)]\s+(?=[A-ZÀ-Ý]))/g,'$1\n')
+    .replace(/\n{3,}/g,'\n\n')
+    .trim();
+  const lines=prepared.split('\n');
+  if(!lines.some(line=>/^\s*\d{1,3}[.)]\s+/.test(line)))return null;
+  const parts=[];let current=null;
+  const push=()=>{if(!current)return;current.text=String(current.text||'').trim();if(current.text)parts.push(current);current=null};
+  lines.forEach(raw=>{
+    const line=String(raw||'').trim();
+    if(!line){push();return}
+    const numbered=line.match(/^\d{1,3}[.)]\s*(.+)$/);
+    if(numbered){push();current={type:'step',text:numbered[1].trim()};return}
+    const heading=/^(?:[A-Z][.)]\s*)?[A-ZÀ-Ý][A-ZÀ-Ý0-9 /&+_\-]{4,}:?$/.test(line);
+    if(heading){push();parts.push({type:'subheading',text:line.replace(/^[A-Z][.)]\s*/,'').replace(/:$/,'').trim()});return}
+    if(current?.type==='step')current.text+=`\n${line}`;
+    else{push();current={type:'p',text:line}}
+  });
+  push();
+  return parts.length?parts:null;
+}
+function structuredArticleBlocks(blocks){
+  const output=[];
+  (blocks||[]).forEach((block,sourceIndex)=>{
+    const base={...block,__kcSourceIndex:sourceIndex,__kcPartIndex:0};
+    if(!['p','step'].includes(block?.type)||!block?.text){output.push(base);return}
+    const parts=splitDisplayNumberedText(block.text);
+    if(!parts){output.push(base);return}
+    parts.forEach((part,partIndex)=>output.push({...block,...part,__kcSourceIndex:sourceIndex,__kcPartIndex:partIndex}));
+  });
+  return output;
+}
+function structuredArticleTextHtml(value){
+  return String(value||'').replace(/\r/g,'').split(/\n{2,}/).map(paragraph=>`<p>${esc(paragraph.trim()).replace(/\n/g,'<br>')}</p>`).join('');
+}
 function renderArticle() { 
-  const topic = activeModule.topics[activeTopic], blocks = getBlocks(topic), purpose = topic.purpose?.[lang] || pageFunction(topic, activeModule), intro = articleIntro(topic, blocks); 
+  const topic = activeModule.topics[activeTopic], rawBlocks = getBlocks(topic), structuredLayout = shouldStructureArticle(activeModule, topic), blocks = structuredLayout ? structuredArticleBlocks(rawBlocks) : rawBlocks, purpose = topic.purpose?.[lang] || pageFunction(topic, activeModule), intro = articleIntro(topic, rawBlocks); 
   $('breadcrumb').innerHTML = `<button id="crumbHome">${t('home')}</button> / <button id="crumbModule">${esc(activeModule.name[lang])}</button> / ${esc(topic.title[lang])}`; 
   $('crumbHome').onclick = () => showModuleList(activeModule); 
   $('crumbModule').onclick = () => showModuleList(activeModule); 
@@ -634,16 +886,25 @@ function renderArticle() {
   } 
   $('articleIntro').textContent = intro; 
   $('articleIntro').hidden = !intro; 
+  $('docContent').classList.toggle('numberedArticle', structuredLayout);
   let step = 0, html = ''; 
   blocks.forEach((b, blockIndex) => { 
-    const sid = sectionDomId(activeModule.id, activeTopic, blockIndex); 
-    if (b.type === 'label') html += `<div class="docLabel" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</div>`; 
-    else if (b.type === 'subheading') html += `<h2 id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</h2>`; 
-    else if (b.type === 'step') html += `<div class="stepCard" id="${sid}" data-kc-section="${blockIndex}"><div class="stepNum">${++step}</div><div class="stepText">${esc(b.text)}</div></div>`; 
-    else if (b.type === 'p') html += `<p class="docP" id="${sid}" data-kc-section="${blockIndex}">${esc(b.text)}</p>`; 
+    const sourceIndex = Number.isInteger(b.__kcSourceIndex) ? b.__kcSourceIndex : blockIndex;
+    const partIndex = Number.isInteger(b.__kcPartIndex) ? b.__kcPartIndex : 0;
+    const baseSid = sectionDomId(activeModule.id, activeTopic, sourceIndex);
+    const sid = partIndex ? `${baseSid}-part-${partIndex}` : baseSid;
+    if (b.type === 'label') html += `<div class="docLabel" id="${sid}" data-kc-section="${sourceIndex}">${esc(b.text)}</div>`; 
+    else if (b.type === 'subheading') html += `<h2 id="${sid}" data-kc-section="${sourceIndex}">${esc(b.text)}</h2>`; 
+    else if (b.type === 'step') html += `<div class="stepCard" id="${sid}" data-kc-section="${sourceIndex}"><div class="stepNum">${++step}</div><div class="stepText${structuredLayout ? ' structuredArticleText' : ''}">${structuredLayout ? structuredArticleTextHtml(b.text) : esc(b.text)}</div></div>`; 
+    else if (b.type === 'p' && b.sourceLink) html += `<p class="docP" id="${sid}" data-kc-section="${sourceIndex}">${sourceLinkButton(b)}</p>`;
+    else if (b.type === 'p' && activeModule.id === 'faq' && String(topic.editor || '').toLowerCase() === 'ai chatbot' && splitLegacyFaqNumbering(b.text)) html += `<div id="${sid}" data-kc-section="${sourceIndex}">${legacyFaqStructuredHtml(b.text)}</div>`;
+    else if (b.type === 'p' && activeModule.id === 'faq' && String(topic.editor || '').toLowerCase() === 'ai chatbot' && (/\n|\*\*/.test(String(b.text || '')))) html += `<div class="aiFaqFormatted" id="${sid}" data-kc-section="${sourceIndex}">${faqMarkdownWithLinks(b.text)}</div>`;
+    else if (b.type === 'p' && structuredLayout) html += `<div class="docP structuredArticleText" id="${sid}" data-kc-section="${sourceIndex}">${structuredArticleTextHtml(b.text)}</div>`;
+    else if (b.type === 'p') html += `<p class="docP" id="${sid}" data-kc-section="${sourceIndex}">${esc(b.text)}</p>`; 
     else if (b.type === 'image') { 
       let src = ASSETS[b.asset] || b.asset; 
-      if (src && !src.includes('.') && !src.startsWith('data:') && !src.startsWith('http')) {
+      const isStoredImportAsset = String(src || '').startsWith(KC_IMPORT_ASSET_PREFIX);
+      if (src && !isStoredImportAsset && !src.includes('.') && !src.startsWith('data:') && !src.startsWith('http')) {
           src = `assets/${src}.png`;
       }
       const align = b.align || 'center';
@@ -651,15 +912,20 @@ function renderArticle() {
       if (align === 'left') marginStyle = '0 auto 0 0';
       else if (align === 'right') marginStyle = '0 0 0 auto';
       
-      const imgStyle = `display: block; margin: ${marginStyle}; ${b.scale ? `width: ${b.scale}%; height: auto;` : ''}`;
+      const imgStyle = `display:block;margin:${marginStyle};max-width:100%;height:auto;${b.scale ? `width:${b.scale}%;` : 'width:auto;'}`;
       const captionStyle = `text-align: ${align};`;
+      const displayedSrc = isStoredImportAsset ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' : src;
+      const importAssetAttribute = isStoredImportAsset ? ` data-kc-import-asset="${esc(src)}"` : '';
+      const lightboxAsset = isStoredImportAsset ? '' : src;
       
-      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${blockIndex}"><button data-asset="${src}" style="background: transparent;"><img loading="lazy" src="${src}" alt="${esc(b.caption || topic.title[lang])}" style="${imgStyle}"></button>${b.caption ? `<figcaption class="mediaCaption" style="${captionStyle}">${esc(b.caption)}</figcaption>` : ''}</figure>` 
+      if (src) html += `<figure class="mediaCard" id="${sid}" data-kc-section="${sourceIndex}"><button data-asset="${lightboxAsset}" style="background: transparent;"><img loading="lazy" decoding="async" src="${displayedSrc}"${importAssetAttribute} alt="${esc(b.caption || topic.title[lang])}" style="${imgStyle}"></button>${b.caption ? `<figcaption class="mediaCaption" style="${captionStyle}">${esc(b.caption)}</figcaption>` : ''}</figure>` 
     } 
-    else if (b.type === 'table') html += `<div class="docTableWrap" id="${sid}" data-kc-section="${blockIndex}"><table class="docTable">${b.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>` 
+    else if (b.type === 'table') html += `<div class="docTableWrap" id="${sid}" data-kc-section="${sourceIndex}"><table class="docTable">${b.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>` 
   }); 
   $('docContent').innerHTML = html || `<div class="empty">${t('empty')}</div>`; 
-  $('docContent').querySelectorAll('[data-asset]').forEach(btn => btn.onclick = () => openLightbox(btn.dataset.asset)); 
+  hydrateHighResolutionImportImages($('docContent'));
+  $('docContent').querySelectorAll('[data-asset]').forEach(btn => btn.onclick = () => { if (btn.dataset.asset) openLightbox(btn.dataset.asset) });
+  $('docContent').querySelectorAll('[data-faq-module]').forEach(button => button.onclick = () => openKnowledgeSource({ moduleId: button.dataset.faqModule, topicIndex: Number(button.dataset.faqTopicIndex), targetId: button.dataset.faqTarget || '' }));
   if (typeof updateChatContext === 'function') updateChatContext() 
 }
 function openLightbox(src){$('lightboxImg').src=src;$('lightbox').classList.add('show')}
@@ -673,6 +939,22 @@ const CHAT_UI={
 const FEEDBACK_STORE_KEY='prieds_kc_ai_feedback_v1';
 const FEEDBACK_CHANNEL='prieds-kc-feedback';
 const CHAT_SESSION_KEY='prieds_kc_article_chat_v4';
+const AI_QUESTION_STORE_KEY='prieds_kc_ai_question_log_v1';
+const AI_QUESTION_CHANNEL='prieds-kc-ai-questions';
+const SHARED_AI_REPORT_ASSET_KEY='__prieds_kc_ai_report_v1';
+const SHARED_AI_REPORT_LIMIT=300;
+let sharedReportWriteQueue=Promise.resolve();
+let sharedSessionSyncTimer=null;
+function utf8ToBase64(value){const bytes=new TextEncoder().encode(String(value||''));let binary='';const chunk=0x8000;for(let index=0;index<bytes.length;index+=chunk)binary+=String.fromCharCode(...bytes.subarray(index,index+chunk));return btoa(binary)}
+function base64ToUtf8(value){const binary=atob(String(value||''));return new TextDecoder().decode(Uint8Array.from(binary,char=>char.charCodeAt(0)))}
+function normalizeSharedReport(value){const report=value&&typeof value==='object'?value:{};return{questions:Array.isArray(report.questions)?report.questions.slice(0,SHARED_AI_REPORT_LIMIT):[],feedback:Array.isArray(report.feedback)?report.feedback.slice(0,SHARED_AI_REPORT_LIMIT):[],updatedAt:report.updatedAt||null}}
+function sharedReportFromState(currentState){if(currentState?.aiReport&&typeof currentState.aiReport==='object')return normalizeSharedReport(currentState.aiReport);const encoded=currentState?.assets?.[SHARED_AI_REPORT_ASSET_KEY];if(!encoded)return normalizeSharedReport(null);try{const payload=String(encoded).startsWith('data:application/json;base64,')?String(encoded).split(',').slice(1).join(','):String(encoded);return normalizeSharedReport(JSON.parse(base64ToUtf8(payload)))}catch(error){console.warn('Shared Tanya AI report could not be decoded:',error);return normalizeSharedReport(null)}}
+function writeSharedReportToState(currentState,report){const normalized=normalizeSharedReport({...report,updatedAt:new Date().toISOString()});currentState.aiReport=normalized;currentState.assets={...(currentState.assets||{}),[SHARED_AI_REPORT_ASSET_KEY]:`data:application/json;base64,${utf8ToBase64(JSON.stringify(normalized))}`};return normalized}
+function upsertById(rows,entry){const list=Array.isArray(rows)?[...rows]:[];const key=entry?.id||entry?.sessionId;const index=list.findIndex(item=>(item?.id||item?.sessionId)===key);if(index>=0)list[index]=entry;else list.unshift(entry);return list.slice(0,SHARED_AI_REPORT_LIMIT)}
+function queueSharedReportMutation(mutator){sharedReportWriteQueue=sharedReportWriteQueue.then(async()=>{const latest=await window.KCStore.load(window.KC_DEFAULT_DATA);const report=sharedReportFromState(latest);await mutator(report);writeSharedReportToState(latest,report);const saved=await window.KCStore.save(latest);return sharedReportFromState(saved)}).catch(error=>{console.warn('Shared Tanya AI data could not be synchronized:',error);return null});return sharedReportWriteQueue}
+function scheduleSharedSessionSync(){clearTimeout(sharedSessionSyncTimer);sharedSessionSyncTimer=setTimeout(()=>{if(!aiSession)return;const sharedSession={...aiSession,updatedAt:new Date().toISOString(),articleContext:typeof currentArticleContext==='function'?currentArticleContext():null};queueSharedReportMutation(report=>{report.questions=upsertById(report.questions,sharedSession)})},450)}
+function knowledgeContentFingerprint(currentState){const assets={...(currentState?.assets||{})};delete assets[SHARED_AI_REPORT_ASSET_KEY];return JSON.stringify({data:currentState?.data||[],assets})}
+let knowledgeFingerprint=knowledgeContentFingerprint(__kcState);
 const NOT_FOUND_ANSWER='Maaf, saya tidak menemukan informasi tersebut pada artikel ini.';
 const chatText=k=>CHAT_UI[lang]?.[k]||CHAT_UI.id[k]||k;
 let aiSession=null;
@@ -775,7 +1057,7 @@ function createArticleSections(data){
           sections.push({
             id:`${moduleId}:${topicIndex}:${payload.blockIndex}:${partIndex}`,
             moduleId,moduleOrder,moduleName:moduleNameId,moduleNameEn,
-            topicIndex,topicTitle:titleId,topicTitleEn:titleEn,
+            topicIndex,topicId:topic.id,topicTitle:titleId,topicTitleEn:titleEn,
             topicKey:`${moduleId}|${topicIndex}`,
             heading:payload.headingId||titleId,headingEn:payload.headingEn||titleEn,
             headingOrder:payload.headingOrder??payload.blockIndex,
@@ -962,7 +1244,7 @@ function compactSentence(text,max=235){const clean=cleanArticleText(text);return
 function splitSentences(text){return(cleanArticleText(text).match(/[^.!?]+[.!?]?/g)||[]).map(cleanArticleText).filter(sentence=>sentence.length>18)}
 function uniqueSources(results,max=4){
   const seen=new Set(),sources=[];
-  results.forEach(result=>{const key=`${result.topicKey}|${result.heading}`;if(seen.has(key)||sources.length>=max)return;seen.add(key);sources.push({moduleId:result.moduleId,module:result.moduleName,topicIndex:result.topicIndex,topicTitle:result.topicTitle,heading:result.heading,targetId:result.targetId,score:result.score,excerpt:compactSentence(result.text,260)})});
+  results.forEach(result=>{const key=`${result.topicKey}|${result.heading}`;if(seen.has(key)||sources.length>=max)return;seen.add(key);sources.push({moduleId:result.moduleId,module:result.moduleName,topicIndex:result.topicIndex,topicId:result.topicId,topicTitle:result.topicTitle,heading:result.heading,targetId:result.targetId,score:result.score,excerpt:compactSentence(result.text,260)})});
   return sources;
 }
 function truncateWords(text,maxWords=250){const words=String(text).split(/\s+/);return words.length<=maxWords?text:words.slice(0,maxWords).join(' ')+'…'}
@@ -1039,7 +1321,39 @@ function renderMarkdown(markdown){
 }
 function createSession(){return{id:'CHAT-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).slice(2,7).toUpperCase(),startedAt:new Date().toISOString(),endedAt:null,language:'id',messages:[]}}
 function readChatSession(){try{const saved=JSON.parse(sessionStorage.getItem(CHAT_SESSION_KEY)||'null');return saved&&Array.isArray(saved.messages)?saved:null}catch(_){return null}}
-function persistChatSession(){try{sessionStorage.setItem(CHAT_SESSION_KEY,JSON.stringify(aiSession))}catch(error){console.warn('Chat history could not be saved:',error)}}
+function persistChatSession(){
+  try{
+    sessionStorage.setItem(CHAT_SESSION_KEY,JSON.stringify(aiSession));
+  }catch(error){
+    console.warn('Chat history could not be saved:',error);
+  }
+
+  try{
+    const stored=JSON.parse(localStorage.getItem(AI_QUESTION_STORE_KEY)||'[]');
+    const sessions=Array.isArray(stored)?stored:[];
+    const sharedSession={
+      ...aiSession,
+      updatedAt:new Date().toISOString(),
+      articleContext:typeof currentArticleContext==='function'?currentArticleContext():null
+    };
+    const existingIndex=sessions.findIndex(item=>item&&item.id===sharedSession.id);
+
+    if(existingIndex>=0)sessions[existingIndex]=sharedSession;
+    else sessions.unshift(sharedSession);
+
+    localStorage.setItem(AI_QUESTION_STORE_KEY,JSON.stringify(sessions.slice(0,300)));
+
+    try{
+      const channel=new BroadcastChannel(AI_QUESTION_CHANNEL);
+      channel.postMessage({type:'question-log-updated',sessionId:sharedSession.id});
+      channel.close();
+    }catch(_){}
+  }catch(error){
+    console.warn('Shared Tanya AI log could not be saved:',error);
+  }
+  scheduleSharedSessionSync();
+}
+
 function renderAssistantExtras(message,messageIndex){
   const confidence=message.confidence;
   const meta=confidence?`<div class="aiAnswerMeta"><span class="aiConfidence ${confidence.className}">${escapeHtml(chatText('confidence'))}: ${confidence.value}% • ${escapeHtml(confidence.label)}</span><div class="aiAnswerActions"><button class="aiAnswerAction" type="button" data-ai-copy="${messageIndex}">${escapeHtml(chatText('copy'))}</button><button class="aiAnswerAction" type="button" data-ai-regenerate="${messageIndex}">${escapeHtml(chatText('regenerate'))}</button></div></div>`:'';
@@ -1106,15 +1420,15 @@ function openKnowledgeSource(source){
   setTimeout(()=>{const target=document.getElementById(source.targetId)||document.getElementById('articleTitle');if(!target)return;target.scrollIntoView({behavior:'smooth',block:'center'});target.classList.remove('kcAiHighlight');void target.offsetWidth;target.classList.add('kcAiHighlight');setTimeout(()=>target.classList.remove('kcAiHighlight'),3900)},180);
 }
 function readFeedback(){try{const rows=JSON.parse(localStorage.getItem(FEEDBACK_STORE_KEY)||'[]');return Array.isArray(rows)?rows:[]}catch(_){return[]}}
-function saveFeedback(entry){const rows=readFeedback();rows.unshift(entry);localStorage.setItem(FEEDBACK_STORE_KEY,JSON.stringify(rows.slice(0,300)));try{const channel=new BroadcastChannel(FEEDBACK_CHANNEL);channel.postMessage({type:'feedback-saved',id:entry.id});channel.close()}catch(_){}}
+async function saveFeedback(entry){const rows=readFeedback();const local=upsertById(rows,entry);localStorage.setItem(FEEDBACK_STORE_KEY,JSON.stringify(local));try{const channel=new BroadcastChannel(FEEDBACK_CHANNEL);channel.postMessage({type:'feedback-saved',id:entry.id});channel.close()}catch(_){}await queueSharedReportMutation(report=>{report.feedback=upsertById(report.feedback,entry);if(aiSession){const sharedSession={...aiSession,updatedAt:new Date().toISOString(),articleContext:typeof currentArticleContext==='function'?currentArticleContext():null};report.questions=upsertById(report.questions,sharedSession)}})}
 function openSurvey(){const questionCount=(aiSession?.messages||[]).filter(message=>message.role==='user').length;if(!questionCount){toastMsg(chatText('needConversation'));return}aiSession.endedAt=new Date().toISOString();aiSurveyPending=true;$('aiSurveyForm').reset();$('surveyRating').value='';document.querySelectorAll('.surveyStar').forEach(star=>star.classList.remove('active'));$('aiSurveyOverlay').classList.add('show')}
 function closeSurvey(){$('aiSurveyOverlay').classList.remove('show');aiSurveyPending=false}
-function submitSurvey(event){
+async function submitSurvey(event){
   event.preventDefault();const rating=Number($('surveyRating').value);if(!rating){toastMsg('Pilih nilai kepuasan.');return}
   const data=new FormData(event.currentTarget),helpful=data.get('surveyHelpful'),resolution=data.get('surveyResolution');if(!helpful||!resolution)return;
   const context=currentArticleContext(),questions=aiSession.messages.filter(message=>message.role==='user').map(message=>message.text);
   const entry={id:'FB-'+Date.now().toString(36).toUpperCase(),submittedAt:new Date().toISOString(),sessionId:aiSession.id,startedAt:aiSession.startedAt,endedAt:aiSession.endedAt||new Date().toISOString(),language:'id',articleContext:context,rating,helpful,resolution,comment:$('surveyComment').value.trim(),questionCount:questions.length,lastQuestion:questions.at(-1)||'',messages:aiSession.messages,knowledgeStats:knowledgeBase?{articleCount:knowledgeBase.articleCount,headingCount:knowledgeBase.headingCount}:null};
-  saveFeedback(entry);closeSurvey();closeChat();resetChat();toastMsg(chatText('thanks'));
+  await saveFeedback(entry);closeSurvey();closeChat();resetChat();toastMsg(chatText('thanks'));
 }
 async function initChatbot(){
   aiSession=readChatSession()||createSession();
@@ -1147,6 +1461,6 @@ try{
   kcModuleFunctionChannel=new BroadcastChannel(KC_MODULE_FUNCTION_CHANNEL);
   kcModuleFunctionChannel.onmessage=event=>{if(event.data?.type==='module-function-updated')refreshModuleFunctionContent()};
 }catch(error){console.warn('Sinkronisasi langsung fungsi halaman tidak tersedia:',error)}
-window.KCStore.subscribe(()=>location.reload());
+window.KCStore.subscribe(async()=>{try{const latest=await window.KCStore.load(window.KC_DEFAULT_DATA);const nextFingerprint=knowledgeContentFingerprint(latest);if(nextFingerprint!==knowledgeFingerprint)location.reload()}catch(error){console.warn('Knowledge Center subscription refresh failed:',error)}});
 await initChatbot();localize();renderNav();const hash=location.hash.match(/^#([a-z]+)(?:-(\d+))?$/);if(hash){const m=DATA.find(x=>x.id===hash[1]);if(m){if(hash[2]!=null)openArticle(m.id,+hash[2]);else showModuleList(m)}}else showModuleList(activeModule);
 </script></body></html>

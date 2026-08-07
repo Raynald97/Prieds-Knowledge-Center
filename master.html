@@ -621,15 +621,26 @@
 
     .arrangeToolbar {
       display: grid;
-      grid-template-columns: 240px 240px max-content;
+      grid-template-columns: 240px 240px minmax(0, 1fr);
       gap: 10px;
       align-items: end
     }
 
+    .arrangeActions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
     .arrangeToolbar #arrSearch {
       width: max-content;
-      min-width: 92px;
-      justify-self: start
+      min-width: 92px
+    }
+
+    .tocDeleteBtn:disabled {
+      opacity: .42;
+      cursor: not-allowed
     }
 
     .modalOverlay {
@@ -1312,6 +1323,313 @@
         font-size: 16px
       }
     }
+
+
+    /* Guide List — Import Excel */
+    .importExcelBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-color: var(--primary);
+      color: #087FA4;
+      font-weight: 750;
+      white-space: nowrap
+    }
+
+    .importExcelBtn:hover {
+      background: #EEF9FC
+    }
+
+    .importModalOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 180;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(18, 31, 37, .56)
+    }
+
+    .importModalOverlay.show {
+      display: flex
+    }
+
+    .importModal {
+      position: relative;
+      width: min(1480px, 98vw);
+      min-height: 390px;
+      max-height: 92vh;
+      overflow: auto;
+      padding: 62px 42px 36px;
+      border-radius: 7px;
+      background: #fff;
+      box-shadow: 0 22px 64px rgba(0, 0, 0, .28)
+    }
+
+    .importModalClose {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: #E8E8E8;
+      color: #D45212;
+      font-size: 34px;
+      font-weight: 300;
+      line-height: 1
+    }
+
+    .importModalToolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 28px
+    }
+
+    .importChooseBtn,
+    .importTemplateBtn,
+    .importSaveBtn {
+      min-height: 45px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 700
+    }
+
+    .importChooseBtn {
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 3px 8px rgba(40, 184, 226, .25);
+      cursor: pointer
+    }
+
+    .importChooseBtn:hover {
+      background: var(--primary-dark)
+    }
+
+    .importTemplateBtn {
+      border: 2px solid var(--primary);
+      background: #fff;
+      color: #14A9D4
+    }
+
+    .importTemplateBtn:hover {
+      background: #EEF9FC
+    }
+
+    .importSaveBtn {
+      border: 1px solid #BFC5C8;
+      background: #DCDCDC;
+      color: #9B9B9B
+    }
+
+    .importSaveBtn:not(:disabled) {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff
+    }
+
+    .importSaveBtn:not(:disabled):hover {
+      background: var(--primary-dark)
+    }
+
+    .importSaveBtn:disabled {
+      cursor: not-allowed
+    }
+
+    .importEmptyState {
+      min-height: 215px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 38px;
+      padding: 30px;
+      color: #666
+    }
+
+    .importEmptyIcon {
+      position: relative;
+      width: 116px;
+      height: 104px;
+      flex: 0 0 auto
+    }
+
+    .importEmptyIcon::before {
+      content: '';
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 0;
+      height: 28px;
+      border-radius: 12px 12px 0 0;
+      background: var(--primary)
+    }
+
+    .importEmptyIcon::after {
+      content: '';
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 35px;
+      bottom: 0;
+      border-radius: 0 0 12px 12px;
+      background: linear-gradient(90deg, var(--primary) 0 28%, transparent 28% 36%, var(--primary) 36% 64%, transparent 64% 72%, var(--primary) 72% 100%)
+    }
+
+    .importEmptyCopy h2 {
+      margin: 0 0 18px;
+      color: #666;
+      font-size: clamp(24px, 2.3vw, 34px);
+      font-weight: 450
+    }
+
+    .importEmptyCopy p {
+      margin: 0;
+      color: #777;
+      font-size: clamp(16px, 1.6vw, 22px)
+    }
+
+    .importFileSummary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border: 1px solid #CDE3EA;
+      border-radius: 7px;
+      background: #F5FBFD
+    }
+
+    .importFileSummary strong {
+      display: block;
+      color: #176F8A;
+      font-size: 13px
+    }
+
+    .importFileSummary span {
+      display: block;
+      margin-top: 3px;
+      color: #67777E;
+      font-size: 11px
+    }
+
+    .importStats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .importStats b {
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: #E7F8FC;
+      color: #087C9E;
+      font-size: 10px
+    }
+
+    .importPreviewTable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px
+    }
+
+    .importPreviewTable th {
+      padding: 10px 11px;
+      background: #2187A5;
+      color: #fff;
+      text-align: left;
+      white-space: nowrap
+    }
+
+    .importPreviewTable td {
+      padding: 10px 11px;
+      border-bottom: 1px solid #E4EBEE;
+      vertical-align: top
+    }
+
+    .importPreviewTable tr:nth-child(even) {
+      background: #F8FAFB
+    }
+
+    .importStatus {
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800
+    }
+
+    .importStatus.new {
+      background: #E6F8EF;
+      color: #11835A
+    }
+
+    .importStatus.update {
+      background: #FFF5D9;
+      color: #8C6810
+    }
+
+    .importStatus.error {
+      background: #FFF0ED;
+      color: #C14A35
+    }
+
+    .importErrorBox {
+      margin-bottom: 14px;
+      padding: 11px 13px;
+      border: 1px solid #F0B8AE;
+      border-radius: 7px;
+      background: #FFF6F4;
+      color: #B84834;
+      font-size: 12px;
+      line-height: 1.55
+    }
+
+    .importLoading {
+      min-height: 215px;
+      display: grid;
+      place-items: center;
+      color: #60737B;
+      font-size: 14px
+    }
+
+    @media(max-width:720px) {
+      .importModal {
+        padding: 70px 18px 24px
+      }
+
+      .importModalToolbar {
+        align-items: stretch;
+        flex-direction: column
+      }
+
+      .importChooseBtn,
+      .importTemplateBtn,
+      .importSaveBtn {
+        width: 100%
+      }
+
+      .importEmptyState {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px
+      }
+    }
+
   </style>
 </head>
 
@@ -1442,7 +1760,8 @@
           <div class="listFilterBar">
             <div class="field"><label>Title</label><input id="filterTitle" placeholder="Search title"></div>
             <div class="listFilterActions"><button class="primaryBtn" id="applyFilter">Search</button><button
-                class="ghostBtn" id="moreFilter">More Filter</button></div>
+                class="ghostBtn" id="moreFilter">More Filter</button><button class="ghostBtn importExcelBtn"
+                id="openImportExcel" type="button"><span aria-hidden="true">↥</span> Import Excel</button></div>
           </div>
         </div>
         <div class="card">
@@ -1471,8 +1790,12 @@
         <div class="card">
           <div class="arrangeToolbar">
             <div class="field"><label>Main Menu</label><select id="arrMain"></select></div>
-            <div class="field"><label>Page Menu</label><select id="arrPage"></select></div><button class="primaryBtn"
-              id="arrSearch">Search</button>
+            <div class="field"><label>Page Menu</label><select id="arrPage"></select></div>
+            <div class="arrangeActions">
+              <button class="primaryBtn" id="arrSearch">Search</button>
+              <button class="dangerBtn tocDeleteBtn" id="deleteTocPage" type="button" disabled>Delete Page Menu</button>
+              <button class="dangerBtn tocDeleteBtn" id="deleteTocMain" type="button" disabled>Delete Main Menu</button>
+            </div>
           </div>
         </div>
         <div class="card">
@@ -1569,31 +1892,514 @@
           class="primaryBtn" id="applyMoreFilter">Apply Filter</button></div>
     </aside>
   </div>
+
+  <div class="importModalOverlay" id="importModalOverlay" aria-hidden="true">
+    <div class="importModal" role="dialog" aria-modal="true" aria-label="Import Guide List from Excel">
+      <button class="importModalClose" id="closeImportExcel" type="button" aria-label="Close import modal">×</button>
+      <div class="importModalToolbar">
+        <label class="importChooseBtn" for="importExcelFile"><span aria-hidden="true">☁</span> Choose a File</label>
+        <input id="importExcelFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+        <button class="importTemplateBtn" id="downloadImportTemplate" type="button"><span aria-hidden="true">↧</span> Download Template</button>
+        <button class="importSaveBtn" id="saveGuideImport" type="button" disabled><span aria-hidden="true">➤</span> Save Import</button>
+      </div>
+      <div id="importExcelBody">
+        <div class="importEmptyState">
+          <div class="importEmptyIcon" aria-hidden="true"></div>
+          <div class="importEmptyCopy">
+            <h2>Ooops, haven't input your data!</h2>
+            <p>There is no data about transaction yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modalOverlay" id="modalOverlay">
     <div class="modal" id="modalBox"></div>
   </div>
   <div class="toast" id="toast"></div>
   <script src="knowledge-data.js"></script>
   <script src="knowledge-store.js"></script>
+  <script>
+/* Shared Knowledge Center sync patch: Firebase Realtime Database across devices. */
+(function(){
+  'use strict';
+  const localStore = window.KCStore;
+  if (!localStore || localStore.__sharedFirebaseSync) return;
+
+  const DATABASE_URL = 'https://prds-management-default-rtdb.asia-southeast1.firebasedatabase.app';
+  const STATE_URL = `${DATABASE_URL}/prieds_knowledge_center_v1/state.json`;
+  const IS_ADMIN = /Knowledge Center Admin/i.test(document.title);
+  const subscribers = new Set();
+  let pollTimer = null;
+  let lastRemoteStamp = '';
+  let remoteAvailable = true;
+  let remoteInitialized = false;
+
+  const stateStamp = state => String(state?.savedAt || state?.updatedAt || '');
+
+  async function firebaseRequest(url, options = {}) {
+    const response = await fetch(url, {
+      cache: 'no-store',
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+    });
+    if (!response.ok) throw new Error(`Firebase request failed (${response.status})`);
+    return response.json();
+  }
+
+  async function readRemoteState() {
+    const value = await firebaseRequest(`${STATE_URL}?t=${Date.now()}`);
+    remoteInitialized = !!(value && Array.isArray(value.data));
+    return remoteInitialized ? value : null;
+  }
+
+  async function writeRemoteState(state) {
+    const normalized = localStore.normalizeState(state, state?.data || []);
+    normalized.schemaVersion = localStore.schemaVersion || normalized.schemaVersion || 1;
+    normalized.savedAt = new Date().toISOString();
+    const saved = await firebaseRequest(STATE_URL, { method: 'PUT', body: JSON.stringify(normalized) });
+    remoteInitialized = true;
+    lastRemoteStamp = stateStamp(saved || normalized);
+    return localStore.normalizeState(saved || normalized, normalized.data || []);
+  }
+
+  async function load(defaultData) {
+    try {
+      const remote = await readRemoteState();
+      remoteAvailable = true;
+      if (remote) {
+        const normalized = localStore.normalizeState(remote, defaultData);
+        lastRemoteStamp = stateStamp(normalized);
+        try { await localStore.save(normalized); } catch (_) {}
+        return normalized;
+      }
+    } catch (error) {
+      remoteAvailable = false;
+      console.warn('Shared Knowledge Center state is temporarily unavailable; browser cache is used as fallback.', error);
+    }
+
+    const cached = await localStore.load(defaultData);
+    if (IS_ADMIN && remoteAvailable && !remoteInitialized) {
+      try {
+        const seeded = await writeRemoteState(cached);
+        try { await localStore.save(seeded); } catch (_) {}
+        return seeded;
+      } catch (error) {
+        console.warn('Initial Knowledge Center cloud migration could not be completed yet.', error);
+      }
+    }
+    return cached;
+  }
+
+  async function save(state) {
+    try {
+      // A public/stale browser is never allowed to initialize an empty cloud database.
+      // The Admin page is the authoritative first-time migration source.
+      if (!IS_ADMIN && !remoteInitialized) {
+        const current = await readRemoteState();
+        if (!current) {
+          console.warn('Cloud Knowledge Center is not initialized yet. Saving only to browser cache until Admin seeds the shared state.');
+          return localStore.save(state);
+        }
+      }
+      const saved = await writeRemoteState(state);
+      try { await localStore.save(saved); } catch (_) {}
+      subscribers.forEach(callback => { try { callback(); } catch (_) {} });
+      return saved;
+    } catch (error) {
+      remoteAvailable = false;
+      console.error('Shared Knowledge Center save failed. Browser cache is used as fallback.', error);
+      return localStore.save(state);
+    }
+  }
+
+  async function reset(defaultData) {
+    const state = localStore.normalizeState(null, defaultData);
+    return save(state);
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(async () => {
+      if (!subscribers.size || document.hidden) return;
+      try {
+        const remote = await readRemoteState();
+        remoteAvailable = true;
+        if (!remote) return;
+        const stamp = stateStamp(remote);
+        if (lastRemoteStamp && stamp && stamp !== lastRemoteStamp) {
+          lastRemoteStamp = stamp;
+          try { await localStore.save(localStore.normalizeState(remote, remote.data || [])); } catch (_) {}
+          subscribers.forEach(callback => { try { callback(); } catch (_) {} });
+        } else if (!lastRemoteStamp) {
+          lastRemoteStamp = stamp;
+        }
+      } catch (error) {
+        remoteAvailable = false;
+        console.warn('Knowledge Center background synchronization is temporarily unavailable.', error);
+      }
+    }, 3000);
+  }
+
+  function subscribe(callback) {
+    subscribers.add(callback);
+    const unsubscribeLocal = localStore.subscribe(() => {
+      if (!remoteAvailable) {
+        try { callback(); } catch (_) {}
+      }
+    });
+    startPolling();
+    return () => {
+      subscribers.delete(callback);
+      try { unsubscribeLocal?.(); } catch (_) {}
+      if (!subscribers.size && pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+  }
+
+  window.KCStore = {
+    ...localStore,
+    load,
+    save,
+    reset,
+    subscribe,
+    __sharedFirebaseSync: true,
+    sharedDatabaseUrl: DATABASE_URL
+  };
+})();
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script type="module">
     let state = await window.KCStore.load(window.KC_DEFAULT_DATA); let pendingAssets = {}; let draftBlocks = []; let editing = null; let dragUid = null; let arrangementContext = null; const PAGE_SIZE = 10; let guidePage = 1; let arrangementPage = 1;
     const $ = id => document.getElementById(id); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const clone = x => JSON.parse(JSON.stringify(x)); const fmt = v => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v)); const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const SHARED_AI_REPORT_ASSET_KEY = '__prieds_kc_ai_report_v1';
+    const SHARED_AI_REPORT_LIMIT = 300;
+
+    // Import Excel: screenshots keep their original bytes. Shared Firebase storage is the
+    // source of truth across laptops; IndexedDB remains only as a local cache/migration fallback.
+    const KC_IMPORT_ASSET_PREFIX = 'kc-import-asset://';
+    const KC_IMPORT_ASSET_DB = 'prieds-kc-import-assets-v1';
+    const KC_IMPORT_ASSET_STORE = 'assets';
+    const KC_SHARED_DATABASE_URL = window.KCStore.sharedDatabaseUrl || 'https://prds-management-default-rtdb.asia-southeast1.firebasedatabase.app';
+    const KC_SHARED_IMPORT_ASSET_ROOT = 'prieds_knowledge_center_v1/import_assets';
+    let kcImportAssetDbPromise = null;
+    const kcImportAssetObjectUrls = new Map();
+
+    function openKcImportAssetDb() {
+      if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB is not supported by this browser.'));
+      if (kcImportAssetDbPromise) return kcImportAssetDbPromise;
+      kcImportAssetDbPromise = new Promise((resolve, reject) => {
+        const request = indexedDB.open(KC_IMPORT_ASSET_DB, 1);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(KC_IMPORT_ASSET_STORE)) db.createObjectStore(KC_IMPORT_ASSET_STORE, { keyPath: 'id' });
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error || new Error('High-resolution image cache could not be opened.'));
+        request.onblocked = () => reject(new Error('High-resolution image cache is blocked by another browser tab.'));
+      }).catch(error => {
+        kcImportAssetDbPromise = null;
+        throw error;
+      });
+      return kcImportAssetDbPromise;
+    }
+
+    function importAssetIdFromReference(value) {
+      const source = String(value || '');
+      if (!source.startsWith(KC_IMPORT_ASSET_PREFIX)) return '';
+      try { return decodeURIComponent(source.slice(KC_IMPORT_ASSET_PREFIX.length)); }
+      catch (_) { return source.slice(KC_IMPORT_ASSET_PREFIX.length); }
+    }
+
+    function sharedImportAssetUrl(assetId) {
+      return `${KC_SHARED_DATABASE_URL}/${KC_SHARED_IMPORT_ASSET_ROOT}/${encodeURIComponent(assetId)}.json`;
+    }
+
+    async function readSharedImportAsset(assetId) {
+      const response = await fetch(`${sharedImportAssetUrl(assetId)}?t=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Shared screenshot request failed (${response.status}).`);
+      const value = await response.json();
+      return typeof value === 'string' ? value : '';
+    }
+
+    async function writeSharedImportAsset(assetId, dataUrl) {
+      const response = await fetch(sharedImportAssetUrl(assetId), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(String(dataUrl || ''))
+      });
+      if (!response.ok) throw new Error(`Shared screenshot upload failed (${response.status}).`);
+      return true;
+    }
+
+    function dataUrlToOriginalBlob(dataUrl) {
+      const match = String(dataUrl || '').match(/^data:([^;,]+)?(;base64)?,(.*)$/s);
+      if (!match) throw new Error('The Excel screenshot data is invalid.');
+      const mime = match[1] || 'application/octet-stream';
+      const binary = match[2] ? atob(match[3]) : decodeURIComponent(match[3]);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+      return new Blob([bytes], { type: mime });
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('Screenshot cache could not be converted.'));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function cacheOriginalImportAsset(assetId, dataUrl) {
+      try {
+        const db = await openKcImportAssetDb();
+        const blob = dataUrlToOriginalBlob(dataUrl);
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction(KC_IMPORT_ASSET_STORE, 'readwrite');
+          transaction.objectStore(KC_IMPORT_ASSET_STORE).put({ id: assetId, blob, type: blob.type, size: blob.size, updatedAt: new Date().toISOString() });
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error || new Error(`Screenshot ${assetId} could not be cached.`));
+          transaction.onabort = () => reject(transaction.error || new Error(`Screenshot ${assetId} cache was cancelled.`));
+        });
+      } catch (error) {
+        console.warn('Local screenshot cache could not be updated.', error);
+      }
+    }
+
+    async function saveOriginalImportAsset(assetId, dataUrl) {
+      // Upload the untouched data URL to shared storage first; no canvas/recompression is used.
+      await writeSharedImportAsset(assetId, dataUrl);
+      await cacheOriginalImportAsset(assetId, dataUrl);
+      kcImportAssetObjectUrls.set(assetId, dataUrl);
+      return `${KC_IMPORT_ASSET_PREFIX}${encodeURIComponent(assetId)}`;
+    }
+
+    async function loadOriginalImportAsset(reference) {
+      const assetId = importAssetIdFromReference(reference);
+      if (!assetId) return String(reference || '');
+      if (kcImportAssetObjectUrls.has(assetId)) return kcImportAssetObjectUrls.get(assetId);
+
+      try {
+        const shared = await readSharedImportAsset(assetId);
+        if (shared) {
+          kcImportAssetObjectUrls.set(assetId, shared);
+          cacheOriginalImportAsset(assetId, shared);
+          return shared;
+        }
+      } catch (error) {
+        console.warn('Shared imported screenshot could not be loaded; trying the old browser cache.', error);
+      }
+
+      // One-time self-healing migration for images imported before shared storage existed.
+      try {
+        const db = await openKcImportAssetDb();
+        const record = await new Promise((resolve, reject) => {
+          const transaction = db.transaction(KC_IMPORT_ASSET_STORE, 'readonly');
+          const request = transaction.objectStore(KC_IMPORT_ASSET_STORE).get(assetId);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error || new Error(`Screenshot ${assetId} could not be read.`));
+        });
+        if (!record?.blob) return '';
+        const dataUrl = await blobToDataUrl(record.blob);
+        if (dataUrl) {
+          await writeSharedImportAsset(assetId, dataUrl);
+          kcImportAssetObjectUrls.set(assetId, dataUrl);
+          return dataUrl;
+        }
+      } catch (error) {
+        console.warn(`Legacy screenshot ${assetId} could not be migrated to shared storage.`, error);
+      }
+      return '';
+    }
+
+    function collectImportAssetReferences(currentState = state) {
+      const refs = new Set();
+      const assets = currentState?.assets || {};
+      Object.values(assets).forEach(value => {
+        if (String(value || '').startsWith(KC_IMPORT_ASSET_PREFIX)) refs.add(String(value));
+      });
+      (currentState?.data || []).forEach(module => (module?.topics || []).forEach(topic => {
+        Object.values(topic?.blocks || {}).forEach(blocks => (Array.isArray(blocks) ? blocks : []).forEach(block => {
+          if (block?.type !== 'image') return;
+          const value = assets?.[block.asset] || block.asset;
+          if (String(value || '').startsWith(KC_IMPORT_ASSET_PREFIX)) refs.add(String(value));
+        }));
+      }));
+      return [...refs];
+    }
+
+    async function migrateLegacyImportAssetsToSharedStorage(currentState = state) {
+      const references = collectImportAssetReferences(currentState);
+      if (!references.length) return;
+      let cursor = 0;
+      const worker = async () => {
+        while (cursor < references.length) {
+          const reference = references[cursor++];
+          try { await loadOriginalImportAsset(reference); } catch (_) {}
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(4, references.length) }, worker));
+    }
+
+    async function persistHighResolutionImportAssets(assetMap, button) {
+      const entries = Object.entries(assetMap || {});
+      if (!entries.length) return {};
+      let completed = 0;
+      const stored = [];
+      for (const [assetId, source] of entries) {
+        let reference = source;
+        if (String(source || '').startsWith('data:image/')) reference = await saveOriginalImportAsset(assetId, source);
+        completed++;
+        if (button) button.innerHTML = `<span aria-hidden="true">…</span> Saving images ${completed}/${entries.length}`;
+        stored.push([assetId, reference]);
+      }
+      return Object.fromEntries(stored);
+    }
+
+    function hydrateHighResolutionImportImages(root = document) {
+      root.querySelectorAll('img[data-kc-import-asset]').forEach(async image => {
+        const reference = image.dataset.kcImportAsset || '';
+        try {
+          const source = await loadOriginalImportAsset(reference);
+          if (!source) throw new Error('Screenshot was not found in shared or browser storage.');
+          image.src = source;
+          const button = image.closest('[data-asset]');
+          if (button) button.dataset.asset = source;
+          image.removeAttribute('data-kc-import-asset');
+        } catch (error) {
+          console.error('Imported screenshot could not be displayed:', error);
+          image.alt = 'Imported screenshot could not be loaded.';
+        }
+      });
+    }
+
+    // Migrate screenshots that were imported before this shared-sync fix. It runs in the background
+    // from the Admin laptop and does not change article content or UI.
+    setTimeout(() => migrateLegacyImportAssetsToSharedStorage(state).catch(error => console.warn('Legacy screenshot migration incomplete.', error)), 0);
+    let sharedAiReportCache = { questions: [], feedback: [], updatedAt: null };
+    let sharedReportRefreshPromise = null;
+
+    function utf8ToBase64(value) {
+      const bytes = new TextEncoder().encode(String(value || ''));
+      let binary = '';
+      const chunk = 0x8000;
+      for (let index = 0; index < bytes.length; index += chunk) binary += String.fromCharCode(...bytes.subarray(index, index + chunk));
+      return btoa(binary);
+    }
+
+    function base64ToUtf8(value) {
+      const binary = atob(String(value || ''));
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    function normalizeSharedAiReport(value) {
+      const report = value && typeof value === 'object' ? value : {};
+      return {
+        questions: Array.isArray(report.questions) ? report.questions.slice(0, SHARED_AI_REPORT_LIMIT) : [],
+        feedback: Array.isArray(report.feedback) ? report.feedback.slice(0, SHARED_AI_REPORT_LIMIT) : [],
+        updatedAt: report.updatedAt || null
+      };
+    }
+
+    function sharedAiReportFromState(currentState = state) {
+      if (currentState?.aiReport && typeof currentState.aiReport === 'object') return normalizeSharedAiReport(currentState.aiReport);
+      const encoded = currentState?.assets?.[SHARED_AI_REPORT_ASSET_KEY];
+      if (!encoded) return normalizeSharedAiReport(null);
+      try {
+        const payload = String(encoded).startsWith('data:application/json;base64,') ? String(encoded).split(',').slice(1).join(',') : String(encoded);
+        return normalizeSharedAiReport(JSON.parse(base64ToUtf8(payload)));
+      } catch (error) {
+        console.warn('Shared Tanya AI report could not be decoded:', error);
+        return normalizeSharedAiReport(null);
+      }
+    }
+
+    function writeSharedAiReportToState(currentState, report) {
+      const normalized = normalizeSharedAiReport({ ...report, updatedAt: new Date().toISOString() });
+      currentState.aiReport = normalized;
+      currentState.assets = { ...(currentState.assets || {}), [SHARED_AI_REPORT_ASSET_KEY]: `data:application/json;base64,${utf8ToBase64(JSON.stringify(normalized))}` };
+      return normalized;
+    }
+
+    function knowledgeContentFingerprint(currentState) {
+      const assets = { ...(currentState?.assets || {}) };
+      delete assets[SHARED_AI_REPORT_ASSET_KEY];
+      return JSON.stringify({ data: currentState?.data || [], assets });
+    }
+
+    let knowledgeFingerprint = knowledgeContentFingerprint(state);
+    sharedAiReportCache = sharedAiReportFromState(state);
+
+    async function refreshSharedState({ refreshGuides = false } = {}) {
+      if (sharedReportRefreshPromise) return sharedReportRefreshPromise;
+      sharedReportRefreshPromise = (async () => {
+        try {
+          const latest = await window.KCStore.load(window.KC_DEFAULT_DATA);
+          sharedAiReportCache = sharedAiReportFromState(latest);
+          if (refreshGuides || knowledgeContentFingerprint(latest) !== knowledgeFingerprint) {
+            state = latest;
+            knowledgeFingerprint = knowledgeContentFingerprint(state);
+          }
+          return latest;
+        } catch (error) {
+          console.warn('Shared Knowledge Center data could not be refreshed:', error);
+          return state;
+        } finally {
+          sharedReportRefreshPromise = null;
+        }
+      })();
+      return sharedReportRefreshPromise;
+    }
+
     function allAssets() { return { ...window.KC_DEFAULT_ASSETS, ...(state.assets || {}), ...pendingAssets } }
     function allArticles() { return state.data.flatMap((m, mi) => m.topics.map((t, ti) => ({ module: m, topic: t, mi, ti }))) }
     function pageName(t, lang = 'id') { return t.pageMenu?.[lang] || t.pageMenu?.id || t.pageMenu?.en || 'General' }
     function toast(msg) { $('toast').textContent = msg; $('toast').classList.add('show'); clearTimeout(window.__tt); window.__tt = setTimeout(() => $('toast').classList.remove('show'), 1800) }
     function setSynced(label = 'Synced') { $('syncStatus').textContent = label }
-    async function persist(message) { setSynced('Saving…'); try { state.assets = { ...(state.assets || {}), ...pendingAssets }; state = await window.KCStore.save(state); pendingAssets = {}; setSynced('Synced'); if (message) toast(message); renderAll(); return true } catch (error) { console.error('Knowledge Center storage save failed:', error); setSynced('Save failed'); toast('Data gagal disimpan. Periksa knowledge-store.js dan storage browser.'); return false } }
+    async function persist(message, options = {}) {
+      setSynced('Saving…');
+      try {
+        state.assets = { ...(state.assets || {}), ...pendingAssets };
+        // Ambil laporan terbaru terlebih dahulu agar penyimpanan guide tidak menimpa data Tanya AI dari perangkat lain.
+        // Import/arrangement dapat melewati load kedua karena caller sudah memakai state terbaru.
+        if (!options.skipReportRefresh) {
+          try {
+            const latestReportState = await window.KCStore.load(window.KC_DEFAULT_DATA);
+            sharedAiReportCache = sharedAiReportFromState(latestReportState);
+          } catch (_) { }
+        }
+        if (sharedAiReportCache) writeSharedAiReportToState(state, sharedAiReportCache);
+        state = await window.KCStore.save(state);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+        pendingAssets = {};
+        setSynced('Synced');
+        if (message) toast(message);
+        renderAll();
+        return true;
+      } catch (error) {
+        console.error('Knowledge Center storage save failed:', error);
+        setSynced('Save failed');
+        toast('Data gagal disimpan. Periksa knowledge-store.js dan storage browser.');
+        return false;
+      }
+    }
     function moduleOptions(includeAll = false, includeNew = false) { let h = includeAll ? '<option value="">All Main Menu</option>' : ''; h += state.data.map(m => `<option value="${esc(m.id)}">${esc(m.name.id)}</option>`).join(''); if (includeNew) h += '<option value="__new__">+ Create New Main Menu</option>'; return h }
     function uniquePages(moduleId = '') { const arr = allArticles().filter(x => !moduleId || x.module.id === moduleId).map(x => pageName(x.topic)); return [...new Set(arr)].sort((a, b) => a.localeCompare(b)) }
     function pageOptions(moduleId, includeAll = false, includeNew = false) { let h = includeAll ? '<option value="">All Page Menu</option>' : ''; h += uniquePages(moduleId).map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join(''); if (includeNew) h += '<option value="__new__">+ Create New Page Menu</option>'; return h }
-    function initSelects() { $('mainMenu').innerHTML = moduleOptions(false, true); ['filterMain', 'arrMain'].forEach(id => $(id).innerHTML = moduleOptions(true)); $('mainMenu').value = state.data[0]?.id || '__new__'; $('pageMenu').innerHTML = pageOptions($('mainMenu').value, false, true); $('filterPage').innerHTML = pageOptions('', true); $('arrPage').innerHTML = pageOptions('', true); refreshEditors() }
+    function initSelects() { $('mainMenu').innerHTML = moduleOptions(false, true); ['filterMain', 'arrMain'].forEach(id => $(id).innerHTML = moduleOptions(true)); $('mainMenu').value = state.data[0]?.id || '__new__'; $('pageMenu').innerHTML = pageOptions($('mainMenu').value, false, true); $('filterPage').innerHTML = pageOptions('', true); $('arrPage').innerHTML = pageOptions('', true); refreshEditors(); if (typeof syncTocDeleteButtons === 'function') syncTocDeleteButtons() }
     function syncNewPageMenuField() { const isNewPage = $('pageMenu').value === '__new__'; $('newPageMenu').style.display = isNewPage ? '' : 'none'; if (!isNewPage) $('newPageMenu').value = '' }
     function syncCreateMenuFields() { const isNewMain = $('mainMenu').value === '__new__'; $('newMainMenu').style.display = isNewMain ? '' : 'none'; if (!isNewMain) $('newMainMenu').value = ''; $('pageMenu').innerHTML = isNewMain ? '<option value="__new__">+ Create New Page Menu</option>' : pageOptions($('mainMenu').value, false, true); if (isNewMain) $('pageMenu').value = '__new__'; syncNewPageMenuField() }
     $('mainMenu').onchange = syncCreateMenuFields;
     $('pageMenu').onchange = syncNewPageMenuField;
     function refreshEditors() { const editors = [...new Set(allArticles().map(x => String(x.topic.editor || '').trim()).filter(Boolean))].sort(); $('filterEditor').innerHTML = '<option value="">All Editor</option>' + editors.map(x => `<option>${esc(x)}</option>`).join('') }
-    function switchTab(name) { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name)); document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + name)); if (name === 'list') renderGuideList(); if (name === 'arrange') renderArrangement(); if (name === 'feedback') renderFeedbackReport() }
+    async function switchTab(name) { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name)); document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + name)); await refreshSharedState({ refreshGuides: true }); if (name === 'list') renderGuideList(); if (name === 'arrange') renderArrangement(); if (name === 'feedback') renderFeedbackReport({ skipRefresh: true }) }
     document.querySelectorAll('.tab').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
     $('toggleConfigTable').addEventListener('change', (e) => {
         $('configTableWrapper').style.display = e.target.checked ? 'block' : 'none';
@@ -1775,11 +2581,11 @@
       return normalizeGuideSearch(values.join(' '));
     }
     function renderPagination(containerId, currentPage, totalPages, totalRows, onChange) { const el = $(containerId); if (!el) return; if (!totalRows) { el.innerHTML = ''; return } el.innerHTML = `<button class="pageBtn" type="button" data-page="${currentPage - 1}" ${currentPage <= 1 ? 'disabled' : ''}>‹ Previous</button><span class="paginationInfo">Page ${currentPage} of ${totalPages} • ${totalRows} result${totalRows === 1 ? '' : 's'}</span><button class="pageBtn" type="button" data-page="${currentPage + 1}" ${currentPage >= totalPages ? 'disabled' : ''}>Next ›</button>`; el.querySelectorAll('[data-page]').forEach(btn => btn.onclick = () => { const next = Number(btn.dataset.page); if (next >= 1 && next <= totalPages) onChange(next) }) }
-    function renderGuideList() { const f = filters(); const query = normalizeGuideSearch(f.title); const rows = allArticles().filter(x => (!query || guideSearchText(x).includes(query)) && inRange(x.topic.createdAt, f.cf, f.ct) && inRange(x.topic.updatedAt, f.uf, f.ut) && (!f.main || x.module.id === f.main) && (!f.page || pageName(x.topic) === f.page) && (!f.editor || (x.topic.editor || '') === f.editor)); const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE)); guidePage = Math.min(guidePage, totalPages); const pageRows = rows.slice((guidePage - 1) * PAGE_SIZE, guidePage * PAGE_SIZE); $('guideRows').innerHTML = rows.length ? pageRows.map(x => `<tr><td>${fmt(x.topic.createdAt)}<div class="muted">Updated: ${fmt(x.topic.updatedAt)}</div></td><td>${esc(x.module.name.id)}</td><td>${esc(pageName(x.topic))}</td><td><strong>${esc(x.topic.title.id)}</strong><div class="muted">${esc(x.topic.title.en)}</div></td><td>${esc(x.topic.editor || '—')}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-menu="${x.module.id}|${x.topic.id}">⋮</button><div class="actionDropdown"><button type="button" data-edit="${x.module.id}|${x.topic.id}">Edit</button><button type="button" data-preview="${x.module.id}|${x.ti}">Preview</button><button type="button" data-split="${x.module.id}|${x.topic.id}">Split Guide</button><button type="button" data-remove="${x.module.id}|${x.topic.id}">Delete</button></div></div></td></tr>`).join('') : `<tr><td colspan="6" class="empty">No guides match the selected filters.</td></tr>`; $('listSummary').innerHTML = `<span>${pageRows.length} guides shown</span><span>${allArticles().length} total guides</span>`; renderPagination('listPagination', guidePage, totalPages, rows.length, next => { guidePage = next; renderGuideList() }); bindListActions() }
+    function renderGuideList() { const f = filters(); const query = normalizeGuideSearch(f.title); const rows = allArticles().filter(x => (!query || guideSearchText(x).includes(query)) && inRange(x.topic.createdAt, f.cf, f.ct) && inRange(x.topic.updatedAt, f.uf, f.ut) && (!f.main || x.module.id === f.main) && (!f.page || pageName(x.topic) === f.page) && (!f.editor || (x.topic.editor || '') === f.editor)); const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE)); guidePage = Math.min(guidePage, totalPages); const pageRows = rows.slice((guidePage - 1) * PAGE_SIZE, guidePage * PAGE_SIZE); $('guideRows').innerHTML = rows.length ? pageRows.map(x => `<tr><td>${fmt(x.topic.createdAt)}<div class="muted">Updated: ${fmt(x.topic.updatedAt)}</div></td><td>${esc(x.module.name.id)}</td><td>${esc(pageName(x.topic))}</td><td><strong>${esc(x.topic.title.id)}</strong><div class="muted">${esc(x.topic.title.en)}</div></td><td>${esc(x.topic.editor || '—')}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-menu="${x.module.id}|${x.topic.id}">⋮</button><div class="actionDropdown"><button type="button" data-edit="${x.module.id}|${x.topic.id}">Edit</button><button type="button" data-duplicate="${x.module.id}|${x.topic.id}">Duplicate</button><button type="button" data-preview="${x.module.id}|${x.ti}">Preview</button><button type="button" data-split="${x.module.id}|${x.topic.id}">Split Guide</button><button type="button" data-remove="${x.module.id}|${x.topic.id}">Delete</button></div></div></td></tr>`).join('') : `<tr><td colspan="6" class="empty">No guides match the selected filters.</td></tr>`; $('listSummary').innerHTML = `<span>${pageRows.length} guides shown</span><span>${allArticles().length} total guides</span>`; renderPagination('listPagination', guidePage, totalPages, rows.length, next => { guidePage = next; renderGuideList() }); bindListActions() }
     function positionActionDropdown(menu) { const trigger = menu.querySelector('.actionMenuBtn'), dropdown = menu.querySelector('.actionDropdown'); if (!trigger || !dropdown) return; const triggerRect = trigger.getBoundingClientRect(), dropdownRect = dropdown.getBoundingClientRect(), gap = 5, pad = 8; let left = triggerRect.right - dropdownRect.width; let top = triggerRect.bottom + gap; if (left < pad) left = pad; if (left + dropdownRect.width > window.innerWidth - pad) left = window.innerWidth - dropdownRect.width - pad; if (top + dropdownRect.height > window.innerHeight - pad && triggerRect.top - dropdownRect.height - gap >= pad) top = triggerRect.top - dropdownRect.height - gap; top = Math.max(pad, Math.min(top, window.innerHeight - dropdownRect.height - pad)); dropdown.style.left = `${Math.round(left)}px`; dropdown.style.top = `${Math.round(top)}px` }
     function closeGuideActionMenus(except = null) { document.querySelectorAll('.actionMenu.open').forEach(menu => { if (menu !== except) { menu.classList.remove('open'); const trigger = menu.querySelector('.actionMenuBtn'), dropdown = menu.querySelector('.actionDropdown'); if (trigger) trigger.setAttribute('aria-expanded', 'false'); if (dropdown) { dropdown.style.left = ''; dropdown.style.top = '' } } }) }
     function toggleActionMenu(button, event) { event.stopPropagation(); const menu = button.closest('.actionMenu'), willOpen = !menu.classList.contains('open'); closeGuideActionMenus(menu); menu.classList.toggle('open', willOpen); button.setAttribute('aria-expanded', String(willOpen)); if (willOpen) positionActionDropdown(menu) }
-    function bindListActions() { const rows = $('guideRows'); rows.querySelectorAll('[data-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); rows.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.edit.split('|'); editGuide(mid, id) }); rows.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, idx] = b.dataset.preview.split('|'); window.open(`index.html#${mid}-${idx}`, '_blank') }); rows.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => { 
+    function bindListActions() { const rows = $('guideRows'); rows.querySelectorAll('[data-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); rows.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.edit.split('|'); editGuide(mid, id) }); rows.querySelectorAll('[data-duplicate]').forEach(b => {b.onclick = () => {closeGuideActionMenus(); const [mid, id] = b.dataset.duplicate.split('|'); duplicateGuide(mid, id) }; }); rows.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, idx] = b.dataset.preview.split('|'); window.open(`index.html#${mid}-${idx}`, '_blank') }); rows.querySelectorAll('[data-remove]').forEach(b => b.onclick = () => { 
       closeGuideActionMenus(); 
       const [mid, id] = b.dataset.remove.split('|'); 
       const a = allArticles().find(x => x.module.id === mid && x.topic.id === id); 
@@ -1795,23 +2601,1104 @@
         successModal('Guide successfully deleted and synchronized with the Knowledge Center.') 
       }) 
     }); rows.querySelectorAll('[data-split]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const [mid, id] = b.dataset.split.split('|'); openSplitModal(mid, id); }); if (!document.body.dataset.guideActionOutsideBound) { document.addEventListener('click', () => closeGuideActionMenus()); window.addEventListener('resize', () => closeGuideActionMenus()); window.addEventListener('scroll', () => closeGuideActionMenus(), true); document.body.dataset.guideActionOutsideBound = 'true' } }
+    function duplicateTitle(baseTitle, lang) {const original = String(baseTitle || (lang === 'id' ? 'Panduan' : 'Guide')).trim(); const label = lang === 'id' ? 'Salinan': 'Copy'; const usedTitles = new Set(allArticles().map(x => String(x.topic.title?.[lang] || '').trim().toLowerCase())); let number = 1; let candidate = `${original} (${label})`; while (usedTitles.has(candidate.toLowerCase())) {number += 1; candidate = `${original} (${label} ${number})`;} return candidate;}
+    function duplicateGuide(mid, id) {
+      const current = allArticles().find(
+        x => x.module.id === mid && x.topic.id === id
+      );
+    
+      if (!current) {
+        toast('Guide not found.');
+        return;
+      }
+    
+      confirmModal(
+        `Duplicate “${current.topic.title.id}”? ` +
+        `The copy will be created in the same Main Menu and Page Menu.`,
+    
+        async () => {
+          // Ambil versi data terbaru sebelum melakukan perubahan.
+          state = await window.KCStore.load(
+            window.KC_DEFAULT_DATA
+          );
+    
+          const m = state.data.find(
+            x => x.id === mid
+          );
+    
+          const sourceIndex =
+            m?.topics.findIndex(x => x.id === id) ?? -1;
+    
+          const sourceTopic =
+            sourceIndex >= 0
+              ? m.topics[sourceIndex]
+              : null;
+    
+          if (!m || !sourceTopic) {
+            toast('Guide not found.');
+            return;
+          }
+    
+          // Deep clone agar perubahan salinan tidak memengaruhi guide asli.
+          const copiedTopic = clone(sourceTopic);
+    
+          const stamp = new Date().toISOString();
+    
+          // Buat judul ID dan English yang unik.
+          const titleId = duplicateTitle(
+            sourceTopic.title?.id,
+            'id'
+          );
+    
+          const titleEn = duplicateTitle(
+            sourceTopic.title?.en ||
+            sourceTopic.title?.id,
+            'en'
+          );
+    
+          // Ambil seluruh ID yang telah digunakan.
+          const usedIds = new Set(
+            allArticles().map(x => x.topic.id)
+          );
+    
+          let copiedId = `${sourceTopic.id}-copy`;
+          let number = 2;
+    
+          // Pastikan ID hasil duplicate tidak sama.
+          while (usedIds.has(copiedId)) {
+            copiedId =
+              `${sourceTopic.id}-copy-${number++}`;
+          }
+    
+          // Hanya data identitas dan waktu yang diubah.
+          Object.assign(copiedTopic, {
+            id: copiedId,
+    
+            title: {
+              id: titleId,
+              en: titleEn
+            },
+    
+            createdAt: stamp,
+            updatedAt: stamp
+          });
+    
+          // Letakkan duplicate tepat setelah guide asli.
+          m.topics.splice(
+            sourceIndex + 1,
+            0,
+            copiedTopic
+          );
+    
+          // Simpan ke storage existing.
+          await persist();
+    
+          successModal(
+            `Guide “${sourceTopic.title.id}” ` +
+            `successfully duplicated as “${titleId}”.`
+          );
+        }
+      );
+    }
     function editGuide(mid, id) { const m = state.data.find(x => x.id === mid), t = m?.topics.find(x => x.id === id); if (!t) return; editing = { moduleId: mid, topicId: id }; $('mainMenu').value = mid; $('newMainMenu').value = ''; $('newMainMenu').style.display = 'none'; $('pageMenu').innerHTML = pageOptions(mid, false, true); const pm = pageName(t); if (![...$('pageMenu').options].some(o => o.value === pm)) $('pageMenu').insertAdjacentHTML('afterbegin', `<option value="${esc(pm)}">${esc(pm)}</option>`); $('pageMenu').value = pm; $('newPageMenu').value = ''; syncNewPageMenuField(); $('titleId').value = t.title.id; $('titleEn').value = t.title.en; let tmId = '', tmEn = ''; if (t.tabMenu) { if (typeof t.tabMenu === 'string') { tmId = t.tabMenu; tmEn = t.tabMenu; } else { tmId = t.tabMenu.id || ''; tmEn = t.tabMenu.en || tmId; } } $('tabMenuId').value = tmId; $('tabMenuEn').value = tmEn; $('editor').value = t.editor || ''; $('purposeId').value = t.purpose?.id || ''; $('purposeEn').value = t.purpose?.en || ''; $('source').value = 'Knowledge Center'; clearTitleErrors(); $('submitGuide').disabled = false; draftBlocks = existingToDraft(t); renderBuilder(); $('submitGuide').textContent = 'Update Guide'; $('cancelEdit').style.display = 'inline-flex'; $('createSubmitBar').classList.add('editCtaFixed'); switchTab('create'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
-    ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1 }); function openFilterDrawer() { $('filterDrawerOverlay').classList.add('show') } function closeFilterDrawer() { $('filterDrawerOverlay').classList.remove('show') } $('applyFilter').onclick = () => { guidePage = 1; renderGuideList() }; $('moreFilter').onclick = openFilterDrawer; $('closeFilterDrawer').onclick = closeFilterDrawer; $('filterDrawerOverlay').onclick = e => { if (e.target === $('filterDrawerOverlay')) closeFilterDrawer() }; $('applyMoreFilter').onclick = () => { guidePage = 1; renderGuideList(); closeFilterDrawer() }; $('resetFilter').onclick = () => { ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach(id => $(id).value = ''); $('filterMain').value = ''; $('filterPage').innerHTML = pageOptions('', true); $('filterEditor').value = ''; guidePage = 1; renderGuideList() }; $('filterTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { guidePage = 1; renderGuideList() } });
+    function syncTocDeleteButtons() {
+      if (!$('deleteTocMain') || !$('deleteTocPage')) return;
+      const mainId = $('arrMain').value;
+      const page = $('arrPage').value;
+      $('deleteTocMain').disabled = !mainId;
+      $('deleteTocPage').disabled = !mainId || !page;
+    }
+
+    async function deleteSelectedPageMenu() {
+      const mainId = $('arrMain').value;
+      const page = $('arrPage').value;
+      const module = state.data.find(item => item.id === mainId);
+      if (!module || !page) { toast('Pilih Main Menu dan Page Menu yang ingin dihapus.'); return }
+      const count = module.topics.filter(topic => pageName(topic) === page).length;
+      if (!count) { toast('Page Menu tidak memiliki guide.'); return }
+      confirmModal(`Delete Page Menu “${page}” and all ${count} guide(s) inside it?`, async () => {
+        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        const latestModule = state.data.find(item => item.id === mainId);
+        if (!latestModule) { toast('Main Menu tidak ditemukan.'); return }
+        latestModule.topics = latestModule.topics.filter(topic => pageName(topic) !== page);
+        const saved = await persist();
+        if (!saved) return;
+        arrangementPage = 1;
+        successModal(`Page Menu “${page}” and ${count} guide(s) have been deleted.`);
+      });
+    }
+
+    async function deleteSelectedMainMenu() {
+      const mainId = $('arrMain').value;
+      const module = state.data.find(item => item.id === mainId);
+      if (!module) { toast('Pilih Main Menu yang ingin dihapus.'); return }
+      const count = module.topics.length;
+      confirmModal(`Delete Main Menu “${module.name?.id || mainId}” and all ${count} guide(s) inside it?`, async () => {
+        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        const latestModule = state.data.find(item => item.id === mainId);
+        if (!latestModule) { toast('Main Menu tidak ditemukan.'); return }
+        state.data = state.data.filter(item => item.id !== mainId);
+        const saved = await persist();
+        if (!saved) return;
+        arrangementPage = 1;
+        successModal(`Main Menu “${latestModule.name?.id || mainId}” and ${count} guide(s) have been deleted.`);
+      });
+    }
+
+    ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1; syncTocDeleteButtons() });
+    $('arrPage').onchange = syncTocDeleteButtons;
+    $('deleteTocPage').onclick = deleteSelectedPageMenu;
+    $('deleteTocMain').onclick = deleteSelectedMainMenu;
+    function openFilterDrawer() { $('filterDrawerOverlay').classList.add('show') } function closeFilterDrawer() { $('filterDrawerOverlay').classList.remove('show') } $('applyFilter').onclick = () => { guidePage = 1; renderGuideList() }; $('moreFilter').onclick = openFilterDrawer; $('closeFilterDrawer').onclick = closeFilterDrawer; $('filterDrawerOverlay').onclick = e => { if (e.target === $('filterDrawerOverlay')) closeFilterDrawer() }; $('applyMoreFilter').onclick = () => { guidePage = 1; renderGuideList(); closeFilterDrawer() }; $('resetFilter').onclick = () => { ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach(id => $(id).value = ''); $('filterMain').value = ''; $('filterPage').innerHTML = pageOptions('', true); $('filterEditor').value = ''; guidePage = 1; renderGuideList() }; $('filterTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { guidePage = 1; renderGuideList() } });
+
+
+    // Guide List — Import Excel
+    let importExcelDraft = null;
+
+    function importEmptyHtml() {
+      return `<div class="importEmptyState"><div class="importEmptyIcon" aria-hidden="true"></div><div class="importEmptyCopy"><h2>Ooops, haven't input your data!</h2><p>There is no data about transaction yet</p></div></div>`;
+    }
+
+    function openImportExcelModal() {
+      importExcelDraft = null;
+      $('importExcelFile').value = '';
+      $('saveGuideImport').disabled = true;
+      $('saveGuideImport').innerHTML = '<span aria-hidden="true">➤</span> Save Import';
+      $('importExcelBody').innerHTML = importEmptyHtml();
+      $('importModalOverlay').classList.add('show');
+      $('importModalOverlay').setAttribute('aria-hidden', 'false');
+    }
+
+    function closeImportExcelModal() {
+      $('importModalOverlay').classList.remove('show');
+      $('importModalOverlay').setAttribute('aria-hidden', 'true');
+    }
+
+    function normalizeImportHeader(value) {
+      return String(value ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    }
+
+    function excelCellText(cell) {
+      const value = cell?.value;
+      if (value === null || value === undefined) return '';
+      if (value instanceof Date) return value.toISOString();
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+      if (Array.isArray(value.richText)) return value.richText.map(part => part.text || '').join('');
+      if (value.hyperlink) return String(value.hyperlink || value.text || '');
+      if (value.formula) {
+        const imageMatch = String(value.formula).match(/IMAGE\s*\(\s*["']([^"']+)["']/i);
+        if (imageMatch) return imageMatch[1];
+      }
+      if (value.text !== undefined) return String(value.text ?? '');
+      if (value.result !== undefined && value.result !== null) return String(value.result);
+      return String(value);
+    }
+
+    function findImportColumn(headers, aliases) {
+      const wanted = aliases.map(normalizeImportHeader);
+      const exact = headers.findIndex(header => wanted.includes(header));
+      if (exact >= 0) return exact + 1;
+      const partial = headers.findIndex(header => header && wanted.some(alias => header.includes(alias) || alias.includes(header)));
+      return partial >= 0 ? partial + 1 : 0;
+    }
+
+    function importImageRow(image) {
+      const range = image?.range;
+      if (!range) return 0;
+      if (typeof range === 'string') {
+        const match = range.match(/[A-Z]+(\d+)/i);
+        return match ? Number(match[1]) : 0;
+      }
+      const tl = range.tl || range;
+      if (Number.isFinite(tl.nativeRow)) return Math.floor(tl.nativeRow) + 1;
+      if (Number.isFinite(tl.row)) return Math.floor(tl.row) + 1;
+      return 0;
+    }
+
+    function bytesToBase64(bytes) {
+      const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < source.length; i += chunk) {
+        binary += String.fromCharCode(...source.subarray(i, i + chunk));
+      }
+      return btoa(binary);
+    }
+
+    function excelMediaToDataUrl(media) {
+      if (!media) return '';
+      const extension = String(media.extension || media.type || media.name?.split('.').pop() || 'png').toLowerCase().replace('jpg', 'jpeg');
+      const mime = extension === 'svg' ? 'image/svg+xml' : `image/${extension}`;
+      if (media.base64) return String(media.base64).startsWith('data:') ? String(media.base64) : `data:${mime};base64,${media.base64}`;
+      if (media.buffer) return `data:${mime};base64,${bytesToBase64(media.buffer)}`;
+      return '';
+    }
+
+    function embeddedImagesByRow(workbook, worksheet) {
+      const byRow = new Map();
+      const drawings = typeof worksheet.getImages === 'function' ? worksheet.getImages() : [];
+      const mediaList = workbook.model?.media || [];
+      drawings.forEach(drawing => {
+        const rowNumber = importImageRow(drawing);
+        if (!rowNumber) return;
+        const media = mediaList.find(item => item.index === drawing.imageId || item.index === drawing.imageId + 1)
+          || mediaList[drawing.imageId]
+          || mediaList[Math.max(0, drawing.imageId - 1)]
+          || (typeof workbook.getImage === 'function' ? workbook.getImage(drawing.imageId) : null);
+        const dataUrl = excelMediaToDataUrl(media);
+        if (!dataUrl) return;
+        if (!byRow.has(rowNumber)) byRow.set(rowNumber, []);
+        byRow.get(rowNumber).push(dataUrl);
+      });
+      return byRow;
+    }
+
+    function splitImportedDescription(value) {
+      const text = String(value || '').trim();
+      if (!text) return { purpose: '', content: '' };
+      const marker = /(?:^|\n)\s*DESKRIPSI\s*:\s*/i.exec(text);
+      if (!marker) return { purpose: '', content: text };
+      const before = text.slice(0, marker.index).trim();
+      const afterStart = marker.index + marker[0].length;
+      const after = text.slice(afterStart);
+      const nextSection = /\n\s*(?=(?:✅|LANGKAH(?:-LANGKAH)?\s+DAN\s+HASIL\s*:|[A-Z]\.\s*FLOW\s+PROCESS))/i.exec(after);
+      const purpose = (nextSection ? after.slice(0, nextSection.index) : after).trim();
+      const remainder = (nextSection ? after.slice(nextSection.index) : '').trim();
+      return { purpose, content: [before, remainder].filter(Boolean).join('\n\n') };
+    }
+
+
+    function importedContentBlocks(value) {
+      const original = String(value || '').replace(/\r/g, '').replace(/\u00a0/g, ' ').trim();
+      if (!original) return [];
+
+      // Excel cells often contain several numbered points in one long line. Insert a safe line break
+      // before those markers, then convert them into separate step blocks without changing their order.
+      const prepared = original
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n[ \t]+/g, '\n')
+        .replace(/([^\n])\s+(?=(?:\d{1,3})[.)]\s+(?=[A-Za-zÀ-ÿ]))/g, '$1\n')
+        .replace(/([^\n])\s+(?=[a-z][.)]\s+(?=[A-ZÀ-Ý]))/g, '$1\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+      const lines = prepared.split('\n');
+      const hasNumberedPoint = lines.some(line => /^\s*\d{1,3}[.)]\s+/.test(line));
+      if (!hasNumberedPoint) return [{ type: 'step', text: prepared }];
+
+      const blocks = [];
+      let current = null;
+      const pushCurrent = () => {
+        if (!current) return;
+        current.text = String(current.text || '').trim();
+        if (current.text) blocks.push(current);
+        current = null;
+      };
+
+      lines.forEach(rawLine => {
+        const line = String(rawLine || '').trim();
+        if (!line) {
+          pushCurrent();
+          return;
+        }
+        const numbered = line.match(/^\d{1,3}[.)]\s*(.+)$/);
+        if (numbered) {
+          pushCurrent();
+          current = { type: 'step', text: numbered[1].trim() };
+          return;
+        }
+        const heading = /^(?:[A-Z][.)]\s*)?[A-ZÀ-Ý][A-ZÀ-Ý0-9 /&+_\-]{4,}:?$/.test(line);
+        if (heading) {
+          pushCurrent();
+          blocks.push({ type: 'subheading', text: line.replace(/^[A-Z][.)]\s*/, '').replace(/:$/, '').trim() });
+          return;
+        }
+        if (current?.type === 'step') {
+          current.text += `\n${line}`;
+        } else {
+          pushCurrent();
+          current = { type: 'p', text: line };
+        }
+      });
+      pushCurrent();
+      return blocks.length ? blocks : [{ type: 'step', text: prepared }];
+    }
+
+    function importStatusForGuide(guide) {
+      const normalizeValue = value => String(value || '').trim().toLowerCase();
+      const moduleName = normalizeValue(guide.moduleName);
+      const module = state.data.find(item => {
+        const names = [item.name?.id, item.name?.en, item.id].map(normalizeValue);
+        return item.id === guide.moduleIdHint || names.includes(moduleName) || item.id === window.KCStore.slugify(guide.moduleName);
+      });
+      if (!module) return 'new';
+      const pageValue = normalizeValue(guide.pageName);
+      const titleValue = normalizeValue(guide.titleId || guide.titleEn);
+      const existing = module.topics.find(topic => {
+        const pages = [pageName(topic, 'id'), pageName(topic, 'en')].map(normalizeValue);
+        const titles = [topic.title?.id, topic.title?.en].map(normalizeValue);
+        return pages.includes(pageValue) && titles.includes(titleValue);
+      });
+      return existing ? 'update' : 'new';
+    }
+
+    function renderImportPreview() {
+      if (!importExcelDraft) {
+        $('importExcelBody').innerHTML = importEmptyHtml();
+        $('saveGuideImport').disabled = true;
+        return;
+      }
+      const guides = importExcelDraft.guides;
+      const errorHtml = importExcelDraft.errors.length
+        ? `<div class="importErrorBox"><strong>Import validation:</strong><br>${importExcelDraft.errors.map(esc).join('<br>')}</div>`
+        : '';
+      const rows = guides.map((guide, index) => {
+        const status = importStatusForGuide(guide);
+        guide.importStatus = status;
+        return `<tr><td>${index + 1}</td><td>${esc(guide.moduleName)}</td><td>${esc(guide.pageName)}</td><td><strong>${esc(guide.titleId)}</strong><div class="muted">${esc(guide.titleEn)}</div></td><td>${guide.sourceRowCount}</td><td>${guide.imageCount}</td><td><span class="importStatus ${status}">${status === 'update' ? 'Will Update' : 'New Guide'}</span></td></tr>`;
+      }).join('');
+      $('importExcelBody').innerHTML = `${errorHtml}<div class="importFileSummary"><div><strong>${esc(importExcelDraft.fileName)}</strong><span>Sheet: ${esc(importExcelDraft.sheetName)} • Header row ${importExcelDraft.headerRow}</span></div><div class="importStats"><b>${guides.length} guide(s)</b><b>${importExcelDraft.dataRowCount} data row(s)</b><b>${importExcelDraft.imageCount} image(s)</b></div></div><div class="tableWrap"><table class="importPreviewTable"><thead><tr><th>No.</th><th>Main Menu</th><th>Page Menu</th><th>Guide Title</th><th>Rows</th><th>Images</th><th>Import Result</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">No valid guide data found.</td></tr>'}</tbody></table></div>`;
+      $('saveGuideImport').disabled = Boolean(importExcelDraft.errors.length || !guides.length);
+    }
+
+    function xmlElementsByLocalName(root, localName) {
+      return [...root.getElementsByTagName('*')].filter(node => node.localName === localName);
+    }
+
+    function firstXmlElement(root, localName) {
+      return xmlElementsByLocalName(root, localName)[0] || null;
+    }
+
+    function parseXml(text, label) {
+      const documentXml = new DOMParser().parseFromString(String(text || ''), 'application/xml');
+      const parserError = documentXml.querySelector('parsererror');
+      if (parserError) throw new Error(`${label || 'Excel XML'} could not be parsed.`);
+      return documentXml;
+    }
+
+    function normalizeZipPath(path) {
+      const parts = [];
+      String(path || '').replace(/^\/+/, '').split('/').forEach(part => {
+        if (!part || part === '.') return;
+        if (part === '..') parts.pop();
+        else parts.push(part);
+      });
+      return parts.join('/');
+    }
+
+    function resolveZipPath(basePath, target) {
+      if (String(target || '').startsWith('/')) return normalizeZipPath(target);
+      const base = String(basePath || '').split('/');
+      base.pop();
+      return normalizeZipPath([...base, String(target || '')].join('/'));
+    }
+
+    function relationshipMap(documentXml, basePath) {
+      const map = new Map();
+      xmlElementsByLocalName(documentXml, 'Relationship').forEach(node => {
+        const id = node.getAttribute('Id');
+        const target = node.getAttribute('Target');
+        if (id && target) map.set(id, resolveZipPath(basePath, target));
+      });
+      return map;
+    }
+
+    function excelColumnNumber(reference) {
+      const letters = String(reference || '').match(/[A-Z]+/i)?.[0]?.toUpperCase() || '';
+      let value = 0;
+      for (const letter of letters) value = value * 26 + letter.charCodeAt(0) - 64;
+      return value;
+    }
+
+    function excelRowNumber(reference) {
+      return Number(String(reference || '').match(/\d+/)?.[0] || 0);
+    }
+
+    function cellXmlText(cell, sharedStrings) {
+      const type = cell.getAttribute('t') || '';
+      const textNodes = xmlElementsByLocalName(cell, 't');
+      if (type === 'inlineStr' && textNodes.length) return textNodes.map(node => node.textContent || '').join('');
+      const value = firstXmlElement(cell, 'v')?.textContent ?? '';
+      if (type === 's') return sharedStrings[Number(value)] || '';
+      if (type === 'b') return value === '1' ? 'TRUE' : 'FALSE';
+      if (textNodes.length && !value) return textNodes.map(node => node.textContent || '').join('');
+      return value;
+    }
+
+    async function sharedStringsFromZip(zip) {
+      const file = zip.file('xl/sharedStrings.xml');
+      if (!file) return [];
+      const documentXml = parseXml(await file.async('text'), 'Shared strings');
+      return xmlElementsByLocalName(documentXml, 'si').map(item => xmlElementsByLocalName(item, 't').map(node => node.textContent || '').join(''));
+    }
+
+    function worksheetRowsFromXml(documentXml, sharedStrings) {
+      const rows = new Map();
+      xmlElementsByLocalName(documentXml, 'row').forEach(rowNode => {
+        const fallbackRow = rows.size + 1;
+        const rowNumber = Number(rowNode.getAttribute('r') || fallbackRow);
+        const cells = new Map();
+        xmlElementsByLocalName(rowNode, 'c').forEach(cell => {
+          const reference = cell.getAttribute('r') || '';
+          const column = excelColumnNumber(reference);
+          if (column) cells.set(column, cellXmlText(cell, sharedStrings));
+        });
+        rows.set(rowNumber, cells);
+      });
+      return rows;
+    }
+
+    function worksheetRowCount(rows) {
+      return rows.size ? Math.max(...rows.keys()) : 0;
+    }
+
+    async function embeddedImagesByRowFromZip(zip, sheetPath, sheetDocument) {
+      const result = new Map();
+      const sheetRelsPath = normalizeZipPath(`${sheetPath.replace(/\/[^/]+$/, '')}/_rels/${sheetPath.split('/').pop()}.rels`);
+      const sheetRelsFile = zip.file(sheetRelsPath);
+      if (!sheetRelsFile) return result;
+      const sheetRels = relationshipMap(parseXml(await sheetRelsFile.async('text'), 'Worksheet relationships'), sheetPath);
+      const drawingNode = firstXmlElement(sheetDocument, 'drawing');
+      const drawingRelId = drawingNode?.getAttribute('r:id') || drawingNode?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+      const drawingPath = sheetRels.get(drawingRelId);
+      if (!drawingPath || !zip.file(drawingPath)) return result;
+
+      const drawingDocument = parseXml(await zip.file(drawingPath).async('text'), 'Worksheet drawing');
+      const drawingRelsPath = normalizeZipPath(`${drawingPath.replace(/\/[^/]+$/, '')}/_rels/${drawingPath.split('/').pop()}.rels`);
+      const drawingRelsFile = zip.file(drawingRelsPath);
+      const drawingRels = drawingRelsFile ? relationshipMap(parseXml(await drawingRelsFile.async('text'), 'Drawing relationships'), drawingPath) : new Map();
+
+      const anchors = [...xmlElementsByLocalName(drawingDocument, 'twoCellAnchor'), ...xmlElementsByLocalName(drawingDocument, 'oneCellAnchor')];
+      for (const anchor of anchors) {
+        const from = firstXmlElement(anchor, 'from');
+        const rowNumber = Number(firstXmlElement(from, 'row')?.textContent || -1) + 1;
+        const columnNumber = Number(firstXmlElement(from, 'col')?.textContent || -1) + 1;
+        if (rowNumber <= 0 || columnNumber <= 0) continue;
+        const blip = firstXmlElement(anchor, 'blip');
+        const embed = blip?.getAttribute('r:embed') || blip?.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed');
+        const imagePath = drawingRels.get(embed);
+        const imageFile = imagePath ? zip.file(imagePath) : null;
+        if (!imageFile) continue;
+        const extension = imagePath.split('.').pop().toLowerCase().replace('jpg', 'jpeg');
+        const mime = extension === 'svg' ? 'image/svg+xml' : `image/${extension}`;
+        const dataUrl = `data:${mime};base64,${await imageFile.async('base64')}`;
+        if (!result.has(rowNumber)) result.set(rowNumber, []);
+        result.get(rowNumber).push(dataUrl);
+      }
+      return result;
+    }
+
+    async function parseGuideImportFile(file) {
+      if (!window.JSZip) throw new Error('Excel ZIP reader failed to load. Refresh the page and try again.');
+      if (!file || !/\.xlsx$/i.test(file.name)) throw new Error('Please select an Excel .xlsx file.');
+      const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
+      const workbookFile = zip.file('xl/workbook.xml');
+      const workbookRelsFile = zip.file('xl/_rels/workbook.xml.rels');
+      if (!workbookFile || !workbookRelsFile) throw new Error('The Excel workbook structure is incomplete.');
+
+      const workbookDocument = parseXml(await workbookFile.async('text'), 'Workbook');
+      const workbookRels = relationshipMap(parseXml(await workbookRelsFile.async('text'), 'Workbook relationships'), 'xl/workbook.xml');
+      const sharedStrings = await sharedStringsFromZip(zip);
+      const sheetDefinitions = xmlElementsByLocalName(workbookDocument, 'sheet').map(sheet => {
+        const relId = sheet.getAttribute('r:id') || sheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+        return { name: sheet.getAttribute('name') || 'Sheet', path: workbookRels.get(relId) };
+      }).filter(sheet => sheet.path && zip.file(sheet.path));
+      if (!sheetDefinitions.length) throw new Error('The Excel file does not contain a readable worksheet.');
+
+      let worksheet = null;
+      let headerRow = 0;
+      let headers = [];
+      for (const candidate of sheetDefinitions) {
+        const documentXml = parseXml(await zip.file(candidate.path).async('text'), `Worksheet ${candidate.name}`);
+        const rows = worksheetRowsFromXml(documentXml, sharedStrings);
+        for (let rowNumber = 1; rowNumber <= Math.min(12, worksheetRowCount(rows) || 12); rowNumber++) {
+          const current = [];
+          const row = rows.get(rowNumber) || new Map();
+          for (let column = 1; column <= 20; column++) current.push(normalizeImportHeader(row.get(column) || ''));
+          const hasModule = current.some(value => ['module name', 'main menu', 'module'].includes(value));
+          const hasPage = current.some(value => ['page name', 'page menu', 'page'].includes(value));
+          const hasDescription = current.some(value => ['step by step description', 'step description', 'description', 'content'].includes(value));
+          const hasImage = current.some(value => ['image', 'attachment', 'screenshot'].includes(value));
+          if (hasModule && hasPage && hasDescription && hasImage) {
+            worksheet = { ...candidate, documentXml, rows };
+            headerRow = rowNumber;
+            headers = current;
+            break;
+          }
+        }
+        if (worksheet) break;
+      }
+      if (!worksheet || !headerRow) throw new Error('Template columns were not found. Required columns: Module Name, Page Name, Step by Step Description, and Image.');
+
+      const columns = {
+        module: findImportColumn(headers, ['module name', 'main menu', 'module']),
+        page: findImportColumn(headers, ['page name', 'page menu', 'page']),
+        description: findImportColumn(headers, ['step by step description', 'step description', 'description', 'content']),
+        image: findImportColumn(headers, ['image', 'attachment', 'screenshot']),
+        titleId: findImportColumn(headers, ['title bahasa indonesia', 'title id', 'guide title id']),
+        titleEn: findImportColumn(headers, ['title english', 'title en', 'guide title en']),
+        descriptionEn: findImportColumn(headers, ['step by step description english', 'step description english', 'description english', 'content english']),
+        editor: findImportColumn(headers, ['editor', 'pic']),
+        purposeId: findImportColumn(headers, ['fungsi halaman bahasa indonesia', 'page purpose id', 'purpose id']),
+        purposeEn: findImportColumn(headers, ['page purpose english', 'purpose en']),
+        sidebarId: findImportColumn(headers, ['sidebar label id', 'tab menu id']),
+        sidebarEn: findImportColumn(headers, ['sidebar label en', 'tab menu en'])
+      };
+      if (!columns.module || !columns.page || !columns.description || !columns.image) throw new Error('Required columns: Module Name, Page Name, Step by Step Description, and Image.');
+
+      const embedded = await embeddedImagesByRowFromZip(zip, worksheet.path, worksheet.documentXml);
+      const groups = new Map();
+      const assets = {};
+      const errors = [];
+      let dataRowCount = 0;
+      let imageCount = 0;
+      let lastModuleName = '';
+      let lastPageName = '';
+      const maxRow = worksheetRowCount(worksheet.rows);
+
+      for (let rowNumber = headerRow + 1; rowNumber <= maxRow; rowNumber++) {
+        const row = worksheet.rows.get(rowNumber) || new Map();
+        const get = column => column ? String(row.get(column) || '').trim() : '';
+        const rawModuleName = get(columns.module);
+        const rawPageName = get(columns.page);
+        const descriptionId = get(columns.description);
+        const descriptionEn = get(columns.descriptionEn);
+        const imageCell = get(columns.image);
+        const rowImages = embedded.get(rowNumber) || [];
+        if (!rawModuleName && !rawPageName && !descriptionId && !descriptionEn && !imageCell && !rowImages.length) continue;
+        if (rawModuleName) lastModuleName = rawModuleName;
+        if (rawPageName) lastPageName = rawPageName;
+        const moduleName = rawModuleName || lastModuleName;
+        const pageNameValue = rawPageName || lastPageName;
+        dataRowCount++;
+        if (!moduleName || !pageNameValue) {
+          errors.push(`Row ${rowNumber}: Module Name and Page Name are required on the first row of each guide.`);
+          continue;
+        }
+
+        const titleId = get(columns.titleId) || pageNameValue;
+        const titleEn = get(columns.titleEn) || titleId;
+        const key = [moduleName, pageNameValue, titleId].map(value => value.toLowerCase()).join('||');
+        if (!groups.has(key)) {
+          groups.set(key, {
+            moduleName, pageName: pageNameValue, titleId, titleEn,
+            editor: get(columns.editor) || 'Prieds Learning Center',
+            purposeId: get(columns.purposeId), purposeEn: get(columns.purposeEn),
+            sidebarId: get(columns.sidebarId) || pageNameValue,
+            sidebarEn: get(columns.sidebarEn) || get(columns.sidebarId) || pageNameValue,
+            blocksId: [], blocksEn: [], sourceRowCount: 0, imageCount: 0
+          });
+        }
+        const guide = groups.get(key);
+        guide.sourceRowCount++;
+        if (!guide.editor && get(columns.editor)) guide.editor = get(columns.editor);
+
+        const parsedId = splitImportedDescription(descriptionId || descriptionEn);
+        const parsedEn = splitImportedDescription(descriptionEn || descriptionId);
+        if (parsedId.purpose && !guide.purposeId) guide.purposeId = parsedId.purpose;
+        if (parsedEn.purpose && !guide.purposeEn) guide.purposeEn = parsedEn.purpose;
+        if (!guide.purposeEn && guide.purposeId) guide.purposeEn = guide.purposeId;
+        if (parsedId.content || parsedEn.content) {
+          const textId = parsedId.content || parsedEn.content;
+          const textEn = parsedEn.content || parsedId.content;
+          const idBlocks = importedContentBlocks(textId);
+          const enBlocks = importedContentBlocks(textEn);
+          guide.blocksId.push(...idBlocks);
+          guide.blocksEn.push(...enBlocks);
+        }
+
+        const imageSources = [...rowImages];
+        if (imageCell) imageSources.push(imageCell);
+        imageSources.forEach((source, imageIndex) => {
+          let asset = source;
+          if (String(source).startsWith('data:image/')) {
+            asset = `import-${Date.now().toString(36)}-${rowNumber}-${imageIndex}-${uid()}`;
+            assets[asset] = source;
+          }
+          guide.blocksId.push({ type: 'image', asset, caption: '', scale: '', align: 'center' });
+          guide.blocksEn.push({ type: 'image', asset, caption: '', scale: '', align: 'center' });
+          guide.imageCount++;
+          imageCount++;
+        });
+      }
+
+      const guides = [...groups.values()].filter(guide => guide.blocksId.length || guide.purposeId || guide.purposeEn);
+      if (!dataRowCount) errors.push('No data rows were found below the template header.');
+      if (!guides.length) errors.push('No valid guides could be created from this file.');
+      return { fileName: file.name, sheetName: worksheet.name, headerRow, dataRowCount, imageCount, guides, assets, errors };
+    }
+
+    async function handleGuideImportFile(file) {
+      $('saveGuideImport').disabled = true;
+      $('importExcelBody').innerHTML = '<div class="importLoading">Reading Excel data and attachments…</div>';
+      try {
+        importExcelDraft = await parseGuideImportFile(file);
+        renderImportPreview();
+      } catch (error) {
+        console.error('Guide import failed:', error);
+        importExcelDraft = null;
+        $('importExcelBody').innerHTML = `<div class="importErrorBox"><strong>Import failed.</strong><br>${esc(error.message || 'The Excel file could not be read.')}</div>${importEmptyHtml()}`;
+        $('saveGuideImport').disabled = true;
+      }
+    }
+
+    function uniqueModuleIdForImport(name, usedIds) {
+      const base = window.KCStore.slugify(name) || 'main-menu';
+      let candidate = base;
+      let number = 2;
+      while (usedIds.has(candidate)) candidate = `${base}-${number++}`;
+      usedIds.add(candidate);
+      return candidate;
+    }
+
+    function uniqueTopicIdForImport(moduleId, title, usedIds) {
+      const base = `${moduleId}-${window.KCStore.slugify(title) || 'guide'}`;
+      let candidate = base;
+      let number = 2;
+      while (usedIds.has(candidate)) candidate = `${base}-${number++}`;
+      usedIds.add(candidate);
+      return candidate;
+    }
+
+    const importTranslationCache = new Map();
+    const IMPORT_TRANSLATION_CONCURRENCY = 4;
+    const IMPORT_TRANSLATION_TIMEOUT_MS = 12000;
+    const IMPORT_TRANSLATION_CHUNK_SIZE = 1200;
+    let importTranslationActive = 0;
+    const importTranslationQueue = [];
+
+    function runImportTranslationTask(task) {
+      return new Promise((resolve, reject) => {
+        importTranslationQueue.push({ task, resolve, reject });
+        const drain = () => {
+          while (importTranslationActive < IMPORT_TRANSLATION_CONCURRENCY && importTranslationQueue.length) {
+            const item = importTranslationQueue.shift();
+            importTranslationActive++;
+            Promise.resolve()
+              .then(item.task)
+              .then(item.resolve, item.reject)
+              .finally(() => {
+                importTranslationActive--;
+                drain();
+              });
+          }
+        };
+        drain();
+      });
+    }
+
+    function importNormalizedValue(value) {
+      return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function importBlocksSignature(blocks) {
+      return (blocks || []).map(block => {
+        const rows = Array.isArray(block?.rows) ? JSON.stringify(block.rows) : '';
+        return [block?.type || '', block?.text || '', block?.caption || '', rows].join('|');
+      }).join('\n');
+    }
+
+    function importGuideLanguageSample(guide) {
+      const blockText = [...(guide.blocksId || []), ...(guide.blocksEn || [])]
+        .filter(block => typeof block?.text === 'string')
+        .map(block => block.text)
+        .join('\n');
+      return [guide.moduleName, guide.pageName, guide.titleId, guide.titleEn, guide.purposeId, guide.purposeEn, blockText]
+        .filter(Boolean)
+        .join('\n');
+    }
+
+    function splitImportedTranslationText(value) {
+      const source = String(value || '');
+      if (source.length <= IMPORT_TRANSLATION_CHUNK_SIZE) return [source];
+      const tokens = source.match(/[^\n]+|\n+/g) || [source];
+      const chunks = [];
+      let current = '';
+      const pushCurrent = () => { if (current) chunks.push(current); current = ''; };
+      tokens.forEach(token => {
+        if (token.length > IMPORT_TRANSLATION_CHUNK_SIZE) {
+          pushCurrent();
+          for (let index = 0; index < token.length; index += IMPORT_TRANSLATION_CHUNK_SIZE) chunks.push(token.slice(index, index + IMPORT_TRANSLATION_CHUNK_SIZE));
+          return;
+        }
+        if (current && current.length + token.length > IMPORT_TRANSLATION_CHUNK_SIZE) pushCurrent();
+        current += token;
+      });
+      pushCurrent();
+      return chunks;
+    }
+
+    function importTranslationWithTimeout(task, fallback) {
+      return Promise.race([
+        Promise.resolve().then(task),
+        new Promise(resolve => setTimeout(() => resolve(fallback), IMPORT_TRANSLATION_TIMEOUT_MS))
+      ]);
+    }
+
+    async function translateImportedText(value, targetLanguage, sourceLanguage) {
+      const textValue = String(value || '').trim();
+      if (!textValue || targetLanguage === sourceLanguage) return textValue;
+      const key = `${sourceLanguage}|${targetLanguage}|${textValue}`;
+      if (!importTranslationCache.has(key)) {
+        const request = Promise.all(splitImportedTranslationText(textValue).map(chunk => {
+          if (!chunk.trim()) return Promise.resolve(chunk);
+          return runImportTranslationTask(async () => {
+            const translated = await importTranslationWithTimeout(
+              () => translateText(chunk, targetLanguage, sourceLanguage),
+              chunk
+            );
+            return String(translated || chunk);
+          });
+        })).then(chunks => chunks.join('').trim() || textValue);
+        importTranslationCache.set(key, request);
+      }
+      try {
+        return await importTranslationCache.get(key);
+      } catch (error) {
+        importTranslationCache.delete(key);
+        console.warn('Imported text translation failed:', error);
+        return textValue;
+      }
+    }
+
+    async function translateImportedBlocks(blocks, targetLanguage, sourceLanguage) {
+      return Promise.all(clone(blocks || []).map(async originalBlock => {
+        const block = { ...originalBlock };
+        const jobs = [];
+        if (typeof block.text === 'string' && block.text.trim()) {
+          jobs.push(translateImportedText(block.text, targetLanguage, sourceLanguage).then(value => { block.text = value; }));
+        }
+        if (typeof block.caption === 'string' && block.caption.trim()) {
+          jobs.push(translateImportedText(block.caption, targetLanguage, sourceLanguage).then(value => { block.caption = value; }));
+        }
+        if (Array.isArray(block.rows)) {
+          jobs.push(Promise.all(block.rows.map(row => Promise.all((row || []).map(cell => translateImportedText(cell, targetLanguage, sourceLanguage))))).then(rows => { block.rows = rows; }));
+        }
+        await Promise.all(jobs);
+        return block;
+      }));
+    }
+
+    async function makeImportedGuideBilingual(guide) {
+      const sourceLanguage = normalizeAiContentLanguage('', importGuideLanguageSample(guide));
+      const sourceIsIndonesian = sourceLanguage === 'id';
+      const targetLanguage = sourceIsIndonesian ? 'en' : 'id';
+      const sourceModule = String(guide.moduleName || '').trim();
+      const sourcePage = String(guide.pageName || '').trim();
+
+      const sourceTitle = String(sourceIsIndonesian ? (guide.titleId || guide.titleEn || sourcePage) : (guide.titleEn || guide.titleId || sourcePage)).trim();
+      const currentTargetTitle = String(sourceIsIndonesian ? guide.titleEn : guide.titleId).trim();
+      const titleNeedsTranslation = !currentTargetTitle || importNormalizedValue(currentTargetTitle) === importNormalizedValue(sourceTitle);
+
+      const sourceSidebar = String(sourceIsIndonesian
+        ? (guide.sidebarId || guide.sidebarEn || sourcePage)
+        : (guide.sidebarEn || guide.sidebarId || sourcePage)).trim();
+      const currentTargetSidebar = String(sourceIsIndonesian ? guide.sidebarEn : guide.sidebarId).trim();
+      const sidebarNeedsTranslation = !currentTargetSidebar || importNormalizedValue(currentTargetSidebar) === importNormalizedValue(sourceSidebar);
+
+      const sourcePurpose = String(sourceIsIndonesian
+        ? (guide.purposeId || guide.purposeEn || '')
+        : (guide.purposeEn || guide.purposeId || '')).trim();
+      const currentTargetPurpose = String(sourceIsIndonesian ? guide.purposeEn : guide.purposeId).trim();
+      const purposeNeedsTranslation = sourcePurpose && (!currentTargetPurpose || importNormalizedValue(currentTargetPurpose) === importNormalizedValue(sourcePurpose));
+
+      const sourceBlocks = clone(sourceIsIndonesian ? guide.blocksId : guide.blocksEn);
+      const currentTargetBlocks = clone(sourceIsIndonesian ? guide.blocksEn : guide.blocksId);
+      const blocksNeedTranslation = !currentTargetBlocks.length
+        || importNormalizedValue(importBlocksSignature(currentTargetBlocks)) === importNormalizedValue(importBlocksSignature(sourceBlocks));
+
+      const [translatedTitle, translatedSidebar, translatedPurpose, translatedBlocks, translatedModule, translatedPage] = await Promise.all([
+        titleNeedsTranslation ? translateImportedText(sourceTitle, targetLanguage, sourceLanguage) : Promise.resolve(currentTargetTitle),
+        sidebarNeedsTranslation ? translateImportedText(sourceSidebar, targetLanguage, sourceLanguage) : Promise.resolve(currentTargetSidebar),
+        purposeNeedsTranslation ? translateImportedText(sourcePurpose, targetLanguage, sourceLanguage) : Promise.resolve(currentTargetPurpose),
+        blocksNeedTranslation ? translateImportedBlocks(sourceBlocks, targetLanguage, sourceLanguage) : Promise.resolve(currentTargetBlocks),
+        translateImportedText(sourceModule, targetLanguage, sourceLanguage),
+        translateImportedText(sourcePage, targetLanguage, sourceLanguage)
+      ]);
+
+      return {
+        ...guide,
+        sourceLanguage,
+        moduleNameId: sourceIsIndonesian ? sourceModule : translatedModule,
+        moduleNameEn: sourceIsIndonesian ? translatedModule : sourceModule,
+        pageNameId: sourceIsIndonesian ? sourcePage : translatedPage,
+        pageNameEn: sourceIsIndonesian ? translatedPage : sourcePage,
+        titleId: sourceIsIndonesian ? sourceTitle : translatedTitle,
+        titleEn: sourceIsIndonesian ? translatedTitle : sourceTitle,
+        sidebarId: sourceIsIndonesian ? sourceSidebar : translatedSidebar,
+        sidebarEn: sourceIsIndonesian ? translatedSidebar : sourceSidebar,
+        purposeId: sourceIsIndonesian ? sourcePurpose : translatedPurpose,
+        purposeEn: sourceIsIndonesian ? translatedPurpose : sourcePurpose,
+        blocksId: sourceIsIndonesian ? sourceBlocks : translatedBlocks,
+        blocksEn: sourceIsIndonesian ? translatedBlocks : sourceBlocks
+      };
+    }
+
+    function findImportedModule(guide) {
+      const candidates = [guide.moduleName, guide.moduleNameId, guide.moduleNameEn]
+        .map(importNormalizedValue)
+        .filter(Boolean);
+      return state.data.find(module => {
+        const existingNames = [module.id, module.name?.id, module.name?.en]
+          .map(importNormalizedValue)
+          .filter(Boolean);
+        return candidates.some(candidate => existingNames.includes(candidate))
+          || module.id === window.KCStore.slugify(guide.moduleName)
+          || module.id === window.KCStore.slugify(guide.moduleNameId)
+          || module.id === window.KCStore.slugify(guide.moduleNameEn);
+      });
+    }
+
+    function findImportedTopic(module, guide) {
+      const pageCandidates = [guide.pageName, guide.pageNameId, guide.pageNameEn]
+        .map(importNormalizedValue)
+        .filter(Boolean);
+      const titleCandidates = [guide.titleId, guide.titleEn]
+        .map(importNormalizedValue)
+        .filter(Boolean);
+      return module.topics.find(topic => {
+        const existingPages = [pageName(topic, 'id'), pageName(topic, 'en')]
+          .map(importNormalizedValue)
+          .filter(Boolean);
+        const existingTitles = [topic.title?.id, topic.title?.en]
+          .map(importNormalizedValue)
+          .filter(Boolean);
+        return pageCandidates.some(value => existingPages.includes(value))
+          && titleCandidates.some(value => existingTitles.includes(value));
+      });
+    }
+
+
+    function importedGuideExistsInState(currentState, guide) {
+      const moduleCandidates = [guide.moduleName, guide.moduleNameId, guide.moduleNameEn].map(importNormalizedValue).filter(Boolean);
+      const module = (currentState?.data || []).find(item => {
+        const names = [item.id, item.name?.id, item.name?.en].map(importNormalizedValue).filter(Boolean);
+        return moduleCandidates.some(candidate => names.includes(candidate));
+      });
+      if (!module) return false;
+      const pageCandidates = [guide.pageName, guide.pageNameId, guide.pageNameEn].map(importNormalizedValue).filter(Boolean);
+      const titleCandidates = [guide.titleId, guide.titleEn].map(importNormalizedValue).filter(Boolean);
+      return (module.topics || []).some(topic => {
+        const pages = [pageName(topic, 'id'), pageName(topic, 'en')].map(importNormalizedValue).filter(Boolean);
+        const titles = [topic.title?.id, topic.title?.en].map(importNormalizedValue).filter(Boolean);
+        return pageCandidates.some(value => pages.includes(value)) && titleCandidates.some(value => titles.includes(value));
+      });
+    }
+
+    async function saveImportedGuides() {
+      if (!importExcelDraft || importExcelDraft.errors.length || !importExcelDraft.guides.length) return;
+      const button = $('saveGuideImport');
+      button.disabled = true;
+      importTranslationCache.clear();
+      try {
+        let translatedCount = 0;
+        const totalGuides = importExcelDraft.guides.length;
+        button.innerHTML = `<span aria-hidden="true">…</span> Translating 0/${totalGuides}`;
+        const bilingualGuides = await Promise.all(importExcelDraft.guides.map(async guide => {
+          const translatedGuide = await makeImportedGuideBilingual(guide);
+          translatedCount++;
+          button.innerHTML = `<span aria-hidden="true">…</span> Translating ${translatedCount}/${totalGuides}`;
+          return translatedGuide;
+        }));
+
+        button.innerHTML = '<span aria-hidden="true">…</span> Saving Import';
+        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+        const stamp = new Date().toISOString();
+        const usedModuleIds = new Set(state.data.map(module => module.id));
+        const usedTopicIds = new Set(state.data.flatMap(module => module.topics.map(topic => topic.id)));
+        let created = 0;
+        let updated = 0;
+
+        bilingualGuides.forEach(guide => {
+          let module = findImportedModule(guide);
+          if (!module) {
+            module = {
+              id: uniqueModuleIdForImport(guide.moduleNameId || guide.moduleNameEn || guide.moduleName, usedModuleIds),
+              name: {
+                id: guide.moduleNameId || guide.moduleName,
+                en: guide.moduleNameEn || guide.moduleName
+              },
+              topics: []
+            };
+            state.data.push(module);
+          } else {
+            module.name = module.name && typeof module.name === 'object' ? module.name : { id: String(module.name || ''), en: String(module.name || '') };
+            if (!module.name.id || importNormalizedValue(module.name.id) === importNormalizedValue(module.name.en)) module.name.id = guide.moduleNameId || module.name.id;
+            if (!module.name.en || importNormalizedValue(module.name.en) === importNormalizedValue(module.name.id)) module.name.en = guide.moduleNameEn || module.name.en;
+          }
+
+          const existing = findImportedTopic(module, guide);
+          const topicData = {
+            title: {
+              id: guide.titleId || guide.titleEn,
+              en: guide.titleEn || guide.titleId
+            },
+            tabMenu: {
+              id: guide.sidebarId || guide.pageNameId || guide.pageName,
+              en: guide.sidebarEn || guide.pageNameEn || guide.pageName
+            },
+            group: null,
+            pageMenu: {
+              id: guide.pageNameId || guide.pageName,
+              en: guide.pageNameEn || guide.pageName
+            },
+            source: 'Knowledge Center',
+            editor: guide.editor || 'Prieds Learning Center',
+            purpose: {
+              id: guide.purposeId || '',
+              en: guide.purposeEn || ''
+            },
+            originalLanguage: guide.sourceLanguage,
+            updatedAt: stamp,
+            blocks: {
+              id: clone(guide.blocksId),
+              en: clone(guide.blocksEn)
+            }
+          };
+          if (existing) {
+            Object.assign(existing, topicData);
+            updated++;
+          } else {
+            module.topics.push({
+              id: uniqueTopicIdForImport(module.id, guide.titleId || guide.titleEn, usedTopicIds),
+              createdAt: stamp,
+              ...topicData
+            });
+            created++;
+          }
+        });
+
+        button.innerHTML = '<span aria-hidden="true">…</span> Saving high-resolution images';
+        const storedAssets = await persistHighResolutionImportAssets(importExcelDraft.assets, button);
+        pendingAssets = { ...pendingAssets, ...storedAssets };
+
+        button.innerHTML = '<span aria-hidden="true">…</span> Saving articles';
+        const saved = await persist('', { skipReportRefresh: true });
+        if (!saved) throw new Error('Imported data could not be saved.');
+
+        button.innerHTML = '<span aria-hidden="true">…</span> Verifying import';
+        const verifiedState = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        const missingGuides = bilingualGuides.filter(guide => !importedGuideExistsInState(verifiedState, guide));
+        if (missingGuides.length) throw new Error(`${missingGuides.length} imported guide(s) could not be verified after saving.`);
+        state = verifiedState;
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+
+        closeImportExcelModal();
+        guidePage = 1;
+        await switchTab('list');
+        const successMessage = `${created} guide(s) created and ${updated} guide(s) updated. The articles are available in Indonesian and English, and the original Excel screenshot resolution has been retained.`;
+        toast('Import berhasil. Artikel Bahasa Indonesia dan English sudah terbentuk.');
+        successModal(successMessage);
+        importExcelDraft = null;
+      } catch (error) {
+        console.error('Save guide import failed:', error);
+        toast(error.message || 'Import data gagal disimpan.');
+        button.disabled = false;
+        button.innerHTML = '<span aria-hidden="true">➤</span> Save Import';
+      }
+    }
+
+    async function downloadGuideImportTemplate() {
+      if (!window.ExcelJS) {
+        toast('Excel template library failed to load.');
+        return;
+      }
+      const workbook = new window.ExcelJS.Workbook();
+      workbook.creator = 'Prieds Knowledge Center Admin';
+      const worksheet = workbook.addWorksheet('Sheet1');
+      worksheet.columns = [
+        { header: 'Module Name', key: 'module', width: 28 },
+        { header: 'Page Name', key: 'page', width: 30 },
+        { header: 'Step by Step Description', key: 'description', width: 90 },
+        { header: 'Image', key: 'image', width: 95 }
+      ];
+      worksheet.addRows([
+        { module: 'Inventory Management', page: 'Inventory', description: 'DESKRIPSI:\nHalaman Inventory digunakan untuk melihat dan mengelola stok barang pada setiap lokasi penyimpanan.', image: '' },
+        { module: 'Inventory Management', page: 'Inventory', description: 'LANGKAH-LANGKAH DAN HASIL:\n1. Buka menu Inventory Management lalu pilih Inventory.', image: '' },
+        { module: 'Inventory Management', page: 'Inventory', description: '2. Lanjutkan langkah berikutnya sesuai proses. Tempel screenshot pada kolom Image di baris yang sama.', image: '' }
+      ]);
+      worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+      worksheet.autoFilter = 'A1:D1';
+      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2187A5' } };
+      worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+      worksheet.eachRow((row, rowNumber) => {
+        row.alignment = { vertical: 'top', wrapText: true };
+        if (rowNumber > 1) row.height = 42;
+      });
+      // Template mengikuti struktur file contoh: satu sheet, empat kolom, dan gambar ditempel di kolom Image.
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Prieds-Knowledge-Center-Guide-Import-Template.xlsx';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    $('openImportExcel').onclick = openImportExcelModal;
+    $('closeImportExcel').onclick = closeImportExcelModal;
+    $('importModalOverlay').onclick = event => { if (event.target === $('importModalOverlay')) closeImportExcelModal(); };
+    $('importExcelFile').onchange = event => { const file = event.target.files?.[0]; if (file) handleGuideImportFile(file); };
+    $('downloadImportTemplate').onclick = downloadGuideImportTemplate;
+    $('saveGuideImport').onclick = saveImportedGuides;
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('importModalOverlay').classList.contains('show')) closeImportExcelModal(); });
+
+
     function groups() { const map = new Map(); allArticles().forEach(x => { const key = x.module.id + '||' + pageName(x.topic); if (!map.has(key)) map.set(key, { module: x.module, page: pageName(x.topic), items: [] }); map.get(key).items.push(x) }); return [...map.values()] }
     function renderArrangement() { const main = $('arrMain').value, page = $('arrPage').value; const gs = groups().filter(g => (!main || g.module.id === main) && (!page || g.page === page)); const totalPages = Math.max(1, Math.ceil(gs.length / PAGE_SIZE)); arrangementPage = Math.min(arrangementPage, totalPages); const pageGroups = gs.slice((arrangementPage - 1) * PAGE_SIZE, arrangementPage * PAGE_SIZE); $('arrRows').innerHTML = gs.length ? pageGroups.map(g => `<tr><td>${esc(g.module.name.id)}</td><td>${esc(g.page)}</td><td>${g.items.length}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-arr-menu="${g.module.id}|${esc(g.page)}">⋮</button><div class="actionDropdown"><button type="button" data-setup="${g.module.id}|${esc(g.page)}">Setup</button></div></div></td></tr>`).join('') : `<tr><td colspan="4" class="empty">No arrangement group found.</td></tr>`; renderPagination('arrPagination', arrangementPage, totalPages, gs.length, next => { arrangementPage = next; renderArrangement() }); $('arrRows').querySelectorAll('[data-arr-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); $('arrRows').querySelectorAll('[data-setup]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const p = b.dataset.setup.split('|'); openArrangement(p[0], p.slice(1).join('|')) }) }
     $('arrSearch').onclick = () => { arrangementPage = 1; renderArrangement() };
-    function openArrangement(mid, page) { const g = groups().find(x => x.module.id === mid && x.page === page); if (!g) return; arrangementContext = { mid, page, ids: g.items.map(x => x.topic.id), drag: null }; const cards = g.items.map(x => `<div class="sortItem" draggable="true" data-sort="${x.topic.id}"><div class="sortHead"><span class="sortHandle">⋮⋮</span><span>${esc(x.topic.title.id)}</span><span style="margin-left:auto;background:#EAF9FD;color:#087C9D;padding:5px 8px;border-radius:5px">${esc(page)}</span></div><div class="sortInfo">${(x.topic.blocks?.id || []).filter(b => b.type === 'step').length} Step Content • ${esc(x.topic.editor || '—')}</div></div>`).join(''); showModal(`<div class="modalHeader"><h2>Setup Content</h2><button class="closeModal" data-close>×</button></div><p class="helper">Drag and drop the cards to change the guide sequence in index.html.</p><div class="sortable" id="sortable">${cards}</div><div class="submitBar"><button class="primaryBtn" id="saveArrangement">Save Arrangement</button></div>`); bindSort(); $('saveArrangement').onclick = saveArrangement }
-    function bindSort() { $('sortable').querySelectorAll('[data-sort]').forEach(el => { el.ondragstart = () => arrangementContext.drag = el.dataset.sort; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const from = arrangementContext.ids.indexOf(arrangementContext.drag), to = arrangementContext.ids.indexOf(el.dataset.sort); if (from < 0 || to < 0 || from === to) return; const [v] = arrangementContext.ids.splice(from, 1); arrangementContext.ids.splice(to, 0, v); const nodes = [...$('sortable').children], node = nodes.find(n => n.dataset.sort === v), target = [...$('sortable').children].find(n => n.dataset.sort === el.dataset.sort); $('sortable').insertBefore(node, from < to ? target.nextSibling : target) } }) }
-    async function saveArrangement() { 
-      // --- TAMBAHKAN BARIS INI ---
-      state = await window.KCStore.load(window.KC_DEFAULT_DATA);
-      // ---------------------------
+    function openArrangement(mid, page) { const g = groups().find(x => x.module.id === mid && x.page === page); if (!g) return; const ids = g.items.map(x => x.topic.id); arrangementContext = { mid, page, ids: [...ids], originalIds: [...ids], drag: null }; const cards = g.items.map(x => `<div class="sortItem" draggable="true" data-sort="${x.topic.id}"><div class="sortHead"><span class="sortHandle">⋮⋮</span><span>${esc(x.topic.title.id)}</span><span style="margin-left:auto;background:#EAF9FD;color:#087C9D;padding:5px 8px;border-radius:5px">${esc(page)}</span></div><div class="sortInfo">${(x.topic.blocks?.id || []).filter(b => b.type === 'step').length} Step Content • ${esc(x.topic.editor || '—')}</div></div>`).join(''); showModal(`<div class="modalHeader"><h2>Setup Content</h2><button class="closeModal" data-close>×</button></div><p class="helper">Drag and drop the cards to change the guide sequence in index.html.</p><div class="sortable" id="sortable">${cards}</div><div class="submitBar"><button class="primaryBtn" id="saveArrangement" type="button">Save Arrangement</button></div>`); bindSort(); $('saveArrangement').onclick = saveArrangement }
+    function bindSort() { $('sortable').querySelectorAll('[data-sort]').forEach(el => { el.ondragstart = () => { arrangementContext.drag = el.dataset.sort; el.classList.add('dragging') }; el.ondragend = () => { arrangementContext.drag = null; el.classList.remove('dragging') }; el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); const from = arrangementContext.ids.indexOf(arrangementContext.drag), to = arrangementContext.ids.indexOf(el.dataset.sort); if (from < 0 || to < 0 || from === to) return; const [v] = arrangementContext.ids.splice(from, 1); arrangementContext.ids.splice(to, 0, v); const node = [...$('sortable').children].find(n => n.dataset.sort === v), target = [...$('sortable').children].find(n => n.dataset.sort === el.dataset.sort); $('sortable').insertBefore(node, from < to ? target.nextSibling : target); arrangementContext.drag = null } }) }
+    async function saveArrangement() {
+      if (!arrangementContext) return;
+      const button = $('saveArrangement');
+      button.disabled = true;
+      button.textContent = 'Saving…';
+      try {
+        const latestState = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        const module = latestState.data.find(item => item.id === arrangementContext.mid);
+        if (!module) throw new Error('Main Menu arrangement was not found.');
 
-      const m = state.data.find(x => x.id === arrangementContext.mid), set = new Set(arrangementContext.ids), ordered = arrangementContext.ids.map(id => m.topics.find(t => t.id === id)), i = 0; 
-      m.topics = m.topics.map(t => set.has(t.id) ? ordered[i++] : t); 
-      await persist(); 
-      hideModal(); 
-      successModal('Arrangement has been successfully updated and synchronized with the Knowledge Center.') 
+        const latestGroupIds = module.topics
+          .filter(topic => pageName(topic) === arrangementContext.page || arrangementContext.originalIds.includes(topic.id))
+          .map(topic => topic.id);
+        const orderedIds = [
+          ...arrangementContext.ids.filter(id => latestGroupIds.includes(id)),
+          ...latestGroupIds.filter(id => !arrangementContext.ids.includes(id))
+        ];
+        const topicById = new Map(module.topics.map(topic => [topic.id, topic]));
+        const orderedTopics = orderedIds.map(id => topicById.get(id)).filter(Boolean);
+        if (!orderedTopics.length) throw new Error('No article order could be saved.');
+
+        const groupSet = new Set(orderedTopics.map(topic => topic.id));
+        let orderIndex = 0;
+        module.topics = module.topics.map(topic => groupSet.has(topic.id) ? orderedTopics[orderIndex++] : topic);
+        state = latestState;
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+        const saved = await persist('', { skipReportRefresh: true });
+        if (!saved) throw new Error('Arrangement could not be saved.');
+
+        hideModal();
+        toast('Urutan artikel berhasil disimpan.');
+        successModal('Arrangement has been successfully updated and synchronized with the Knowledge Center.');
+      } catch (error) {
+        console.error('Save arrangement failed:', error);
+        toast(error.message || 'Arrangement gagal disimpan.');
+        button.disabled = false;
+        button.textContent = 'Save Arrangement';
+      }
     }
     function showModal(html, small = false) { $('modalBox').className = 'modal' + (small ? ' small' : ''); $('modalBox').innerHTML = html; $('modalOverlay').classList.add('show'); $('modalBox').querySelectorAll('[data-close]').forEach(x => x.onclick = hideModal) } function hideModal() { $('modalOverlay').classList.remove('show') }
     function successModal(message) { showModal(`<button class="closeModal" style="float:right" data-close>×</button><div class="successIcon">✓</div><h2>Success</h2><p>${esc(message)}</p><div class="modalActions"><button class="primaryBtn" data-close>Close</button></div>`, true) }
@@ -1820,17 +3707,705 @@
 
     const FEEDBACK_STORE_KEY = 'prieds_kc_ai_feedback_v1';
     const FEEDBACK_CHANNEL = 'prieds-kc-feedback';
-    function readFeedbackRows() { try { const rows = JSON.parse(localStorage.getItem(FEEDBACK_STORE_KEY) || '[]'); return Array.isArray(rows) ? rows : [] } catch (_) { return [] } }
-    function feedbackDate(value) { try { return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) } catch (_) { return value || '—' } }
-    function feedbackFilters() { return { from: $('feedbackFrom').value, to: $('feedbackTo').value, rating: $('feedbackRating').value, resolution: $('feedbackResolution').value, search: $('feedbackSearch').value.trim().toLowerCase() } }
-    function filteredFeedbackRows() { const f = feedbackFilters(); return readFeedbackRows().filter(row => { const date = String(row.submittedAt || '').slice(0, 10); const context = [row.articleContext?.moduleName, row.articleContext?.topicTitle, row.lastQuestion, row.comment, ...(row.messages || []).map(m => m.text)].join(' ').toLowerCase(); return (!f.from || date >= f.from) && (!f.to || date <= f.to) && (!f.rating || String(row.rating) === f.rating) && (!f.resolution || row.resolution === f.resolution) && (!f.search || context.includes(f.search)) }) }
-    function feedbackBadge(value, type) { const labels = { yes: 'Yes', no: 'No', resolved: 'Resolved', partial: 'Partially', unresolved: 'Unresolved' }; return `<span class="feedbackBadge ${esc(value || '')}">${labels[value] || esc(value || '—')}</span>` }
-    function ratingHtml(value) { const n = Math.max(0, Math.min(5, Number(value) || 0)); return `<span class="ratingStars">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span><div class="muted">${n}/5</div>` }
-    function renderFeedbackReport() { if (!$('feedbackRows')) return; const all = readFeedbackRows(), rows = filteredFeedbackRows(); const avg = rows.length ? rows.reduce((s, r) => s + (Number(r.rating) || 0), 0) / rows.length : 0; const helpful = rows.length ? Math.round(rows.filter(r => r.helpful === 'yes').length / rows.length * 100) : 0; const resolved = rows.length ? Math.round(rows.filter(r => r.resolution === 'resolved').length / rows.length * 100) : 0; $('feedbackSummary').innerHTML = `<div class="feedbackMetric"><small>Responses Shown</small><strong>${rows.length}</strong><div class="muted">${all.length} total stored</div></div><div class="feedbackMetric"><small>Average Rating</small><strong>${avg.toFixed(1)}</strong><div class="muted">out of 5.0</div></div><div class="feedbackMetric"><small>Helpful Answers</small><strong>${helpful}%</strong><div class="muted">answered Yes</div></div><div class="feedbackMetric"><small>Resolved</small><strong>${resolved}%</strong><div class="muted">fully resolved</div></div>`; $('feedbackRows').innerHTML = rows.length ? rows.map(row => `<tr><td>${feedbackDate(row.submittedAt)}<div class="muted">${esc(row.language || '—')} • ${Number(row.questionCount) || 0} question(s)</div></td><td><strong>${esc(row.articleContext?.topicTitle || 'All Knowledge Center')}</strong><div class="muted">${esc(row.articleContext?.moduleName || 'General context')}</div></td><td class="feedbackQuestion">${esc(row.lastQuestion || '—')}</td><td>${ratingHtml(row.rating)}</td><td>${feedbackBadge(row.helpful)}</td><td>${feedbackBadge(row.resolution)}</td><td class="feedbackComment">${esc(row.comment || '—')}</td><td><button class="tiny blue" data-feedback-detail="${esc(row.id)}">Detail</button></td></tr>`).join('') : `<tr><td colspan="8" class="feedbackEmpty">No feedback survey data matches the selected filters.</td></tr>`; $('feedbackRows').querySelectorAll('[data-feedback-detail]').forEach(btn => btn.onclick = () => openFeedbackDetail(btn.dataset.feedbackDetail)) }
-    function openFeedbackDetail(id) { const row = readFeedbackRows().find(x => x.id === id); if (!row) return; const transcript = (row.messages || []).map(msg => `<div class="feedbackTurn ${msg.role === 'user' ? 'user' : 'assistant'}"><b>${msg.role === 'user' ? 'User' : 'AI Assistant'}</b>${esc(msg.text || '')}</div>`).join('') || '<div class="empty">No transcript stored.</div>'; showModal(`<div class="modalHeader"><h2>Feedback Detail</h2><button class="closeModal" data-close>×</button></div><div class="feedbackDetailMeta"><div><small>Submitted</small><strong>${feedbackDate(row.submittedAt)}</strong></div><div><small>Rating</small>${ratingHtml(row.rating)}</div><div><small>Result</small>${feedbackBadge(row.helpful)} ${feedbackBadge(row.resolution)}</div></div><div class="formGrid"><div class="field"><label>Article Context</label><div>${esc(row.articleContext?.topicTitle || 'All Knowledge Center')}<div class="muted">${esc(row.articleContext?.moduleName || 'General context')}</div></div></div><div class="field"><label>Session</label><div>${esc(row.sessionId || '—')}<div class="muted">${Number(row.questionCount) || 0} question(s) • ${esc(row.language || '—')}</div></div></div><div class="field full"><label>User Comment</label><div>${esc(row.comment || '—')}</div></div></div><div class="sectionRow"><h2>Conversation Transcript</h2></div><div class="feedbackTranscript">${transcript}</div>`) }
-    function csvCell(value) { const s = String(value ?? '').replace(/"/g, '""'); return `"${s}"` }
-    function downloadFeedbackCsv() { const rows = filteredFeedbackRows(); if (!rows.length) { toast('No feedback data to download'); return } const header = ['Submitted At', 'Session ID', 'Language', 'Article Module', 'Article Title', 'Question Count', 'Last Question', 'Rating', 'Helpful', 'Resolution', 'Comment']; const body = rows.map(r => [r.submittedAt, r.sessionId, r.language, r.articleContext?.moduleName || '', r.articleContext?.topicTitle || '', r.questionCount, r.lastQuestion, r.rating, r.helpful, r.resolution, r.comment].map(csvCell).join(',')); const blob = new Blob(['\ufeff' + [header.map(csvCell).join(','), ...body].join('\n')], { type: 'text/csv;charset=utf-8' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'knowledge-center-feedback-survey.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000) }
-    function initFeedbackReport() { $('feedbackApply').onclick = renderFeedbackReport; $('feedbackReset').onclick = () => { $('feedbackFrom').value = ''; $('feedbackTo').value = ''; $('feedbackRating').value = ''; $('feedbackResolution').value = ''; $('feedbackSearch').value = ''; renderFeedbackReport() }; $('feedbackDownload').onclick = downloadFeedbackCsv; $('feedbackSearch').onkeydown = e => { if (e.key === 'Enter') renderFeedbackReport() }; window.addEventListener('storage', e => { if (e.key === FEEDBACK_STORE_KEY) renderFeedbackReport() }); try { const bc = new BroadcastChannel(FEEDBACK_CHANNEL); bc.onmessage = () => renderFeedbackReport(); window.__kcFeedbackChannel = bc } catch (_) { } }
+    const AI_QUESTION_STORE_KEY = 'prieds_kc_ai_question_log_v1';
+    const AI_QUESTION_CHANNEL = 'prieds-kc-ai-questions';
+    const AI_CHAT_SESSION_KEY = 'prieds_kc_article_chat_v4';
+    const AI_ACTIVE_SESSION_KEYS = ['prieds_kc_article_ai_active_v3'];
+    const AI_HISTORY_KEYS = ['prieds_kc_article_ai_history_v3'];
+
+    function mergeRowsById(...collections) {
+      const map = new Map();
+      collections.flat().filter(Boolean).forEach((row, index) => {
+        const key = row?.id || row?.sessionId || `${row?.submittedAt || 'row'}-${index}`;
+        const existing = map.get(key);
+        if (!existing || String(row?.updatedAt || row?.submittedAt || '') > String(existing?.updatedAt || existing?.submittedAt || '')) map.set(key, row);
+      });
+      return [...map.values()];
+    }
+
+    async function refreshSharedReportData() {
+      await refreshSharedState({ refreshGuides: true });
+      sharedAiReportCache = sharedAiReportFromState(state);
+      return sharedAiReportCache;
+    }
+
+    function readStorageJson(storage, key, fallback) {
+      try {
+        const value = JSON.parse(storage.getItem(key) || 'null');
+        return value === null ? fallback : value;
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    function readFeedbackRows() {
+      const localRows = readStorageJson(localStorage, FEEDBACK_STORE_KEY, []);
+      return mergeRowsById(sharedAiReportCache.feedback || [], Array.isArray(localRows) ? localRows : []);
+    }
+
+    function firstAssistantAfter(messages, userIndex) {
+      for (let index = userIndex + 1; index < messages.length; index++) {
+        if (messages[index]?.role === 'user') break;
+        if (messages[index]?.role === 'assistant') return messages[index];
+      }
+      return null;
+    }
+
+    function sourceArticleContext(feedback, session, assistant) {
+      const source = assistant?.sources?.[0] || session?.lastRetrieval?.sources?.[0] || {};
+      return feedback?.articleContext || session?.articleContext || {
+        moduleId: source.moduleId || '',
+        moduleName: source.moduleName || source.moduleTitle || source.moduleId || 'General context',
+        topicTitle: source.topicTitle || source.title || 'All Knowledge Center'
+      };
+    }
+
+    function sessionQuestionRows(session, feedback = null, origin = 'chat') {
+      if (!session || !Array.isArray(session.messages)) return [];
+      const messages = session.messages;
+      const userIndexes = messages.map((message, index) => message?.role === 'user' ? index : -1).filter(index => index >= 0);
+      if (!userIndexes.length && feedback?.lastQuestion) userIndexes.push(-1);
+      return userIndexes.map((messageIndex, questionIndex) => {
+        const userMessage = messageIndex >= 0 ? messages[messageIndex] : null;
+        const assistant = messageIndex >= 0 ? firstAssistantAfter(messages, messageIndex) : null;
+        const question = String(userMessage?.text || feedback?.lastQuestion || '').trim();
+        const submittedAt = feedback?.submittedAt || userMessage?.createdAt || assistant?.createdAt || session.updatedAt || session.endedAt || session.startedAt || new Date().toISOString();
+        const sessionId = feedback?.sessionId || session.id || `${origin}-${submittedAt}`;
+        return {
+          id: `${feedback?.id || sessionId}::q${questionIndex + 1}`,
+          feedbackId: feedback?.id || '',
+          sessionId,
+          submittedAt,
+          startedAt: feedback?.startedAt || session.startedAt || submittedAt,
+          endedAt: feedback?.endedAt || session.endedAt || null,
+          language: feedback?.language || session.language || 'id',
+          articleContext: sourceArticleContext(feedback, session, assistant),
+          rating: feedback?.rating ?? null,
+          helpful: feedback?.helpful || '',
+          resolution: feedback?.resolution || '',
+          comment: feedback?.comment || '',
+          questionCount: userIndexes.length,
+          questionIndex: questionIndex + 1,
+          lastQuestion: question,
+          answer: String(assistant?.text || feedback?.answer || '').trim(),
+          messages,
+          origin,
+          priority: feedback ? 30 : origin === 'question-log' ? 20 : 10
+        };
+      }).filter(row => row.lastQuestion);
+    }
+
+    function standaloneQuestionRow(entry, index = 0) {
+      const question = String(entry?.question || entry?.lastQuestion || '').trim();
+      if (!question) return null;
+      const submittedAt = entry.submittedAt || entry.createdAt || entry.updatedAt || new Date().toISOString();
+      const sessionId = entry.sessionId || entry.id || `question-log-${submittedAt}`;
+      return {
+        id: entry.rowId || `${entry.id || sessionId}::q${entry.questionIndex || index + 1}`,
+        feedbackId: entry.feedbackId || '',
+        sessionId,
+        submittedAt,
+        startedAt: entry.startedAt || submittedAt,
+        endedAt: entry.endedAt || null,
+        language: entry.language || 'id',
+        articleContext: entry.articleContext || { moduleName: 'General context', topicTitle: 'All Knowledge Center' },
+        rating: entry.rating ?? null,
+        helpful: entry.helpful || '',
+        resolution: entry.resolution || '',
+        comment: entry.comment || '',
+        questionCount: Number(entry.questionCount) || 1,
+        questionIndex: Number(entry.questionIndex) || index + 1,
+        lastQuestion: question,
+        answer: String(entry.answer || entry.response || '').trim(),
+        messages: Array.isArray(entry.messages) ? entry.messages : [
+          { role: 'user', text: question, createdAt: submittedAt },
+          ...(entry.answer || entry.response ? [{ role: 'assistant', text: entry.answer || entry.response, createdAt: entry.answeredAt || submittedAt }] : [])
+        ],
+        origin: 'question-log',
+        priority: 20
+      };
+    }
+
+    function harvestCurrentTabChatSession() {
+      const session = readStorageJson(sessionStorage, AI_CHAT_SESSION_KEY, null);
+      if (!session?.id || !Array.isArray(session.messages) || !session.messages.some(message => message?.role === 'user')) return;
+      const rows = readStorageJson(localStorage, AI_QUESTION_STORE_KEY, []);
+      const list = Array.isArray(rows) ? rows : [];
+      const lastMessageAt = session.messages.at(-1)?.createdAt || session.startedAt || new Date().toISOString();
+      const harvested = { ...session, updatedAt: session.updatedAt || lastMessageAt, harvestedFrom: 'sessionStorage' };
+      const existingIndex = list.findIndex(item => item?.id === harvested.id);
+      if (existingIndex >= 0 && JSON.stringify(list[existingIndex]) === JSON.stringify(harvested)) return;
+      if (existingIndex >= 0) list[existingIndex] = harvested;
+      else list.unshift(harvested);
+      try { localStorage.setItem(AI_QUESTION_STORE_KEY, JSON.stringify(list.slice(0, 300))) } catch (_) { }
+    }
+
+    function blockTextAfterLabel(blocks, labelPattern) {
+      const labelIndex = blocks.findIndex(block => block.type === 'label' && labelPattern.test(String(block.text || '').trim()));
+      if (labelIndex < 0) return '';
+      const values = [];
+      for (let index = labelIndex + 1; index < blocks.length; index++) {
+        const block = blocks[index];
+        if (block.type === 'label') break;
+        if (block.type === 'subheading' || block.type === 'p' || block.type === 'step') {
+          const text = String(block.text || '').trim();
+          if (text) values.push(text);
+        }
+      }
+      return values.join('\n').trim();
+    }
+
+    function faqSourceContext(topic) {
+      const blocks = topic?.blocks?.id || topic?.blocks?.en || [];
+      const source = blocks.find(block => block?.sourceLink)?.sourceLink || null;
+      if (source?.moduleId) {
+        const module = state.data.find(item => item.id === source.moduleId);
+        const topicIndex = Number(source.topicIndex);
+        const sourceTopic = module?.topics?.[topicIndex];
+        if (module && sourceTopic) return { moduleId: module.id, moduleName: module.name?.id || module.name?.en || module.id, topicTitle: sourceTopic.title?.id || sourceTopic.title?.en || source.topicTitle || 'All Knowledge Center' };
+      }
+      return { moduleId: 'faq', moduleName: 'FAQ', topicTitle: topic?.title?.id || topic?.title?.en || 'FAQ' };
+    }
+
+    function aiFaqGuideRows() {
+      const faqModule = faqModuleFromState(state);
+      if (!faqModule) return [];
+      return faqModule.topics.filter(topic => {
+        const category = String(topic.faqCategory?.id || topic.faqCategory?.key || '').trim().toLowerCase();
+        return String(topic.editor || '').trim().toLowerCase() === 'ai chatbot' && (!category || category === 'lainnya' || category === 'other');
+      }).map(topic => {
+        const blocks = topic.blocks?.id || topic.blocks?.en || [];
+        const question = blockTextAfterLabel(blocks, /^(pertanyaan|question)$/i) || String(topic.title?.id || topic.title?.en || '').trim();
+        const answer = blockTextAfterLabel(blocks, /^(jawaban|answer)$/i);
+        const submittedAt = topic.createdAt || topic.updatedAt || new Date().toISOString();
+        return {
+          id: `FAQ-GUIDE-${topic.id || normalizeGuideSearch(question)}::q1`,
+          feedbackId: '',
+          sessionId: `FAQ-GUIDE-${topic.id || normalizeGuideSearch(question)}`,
+          submittedAt,
+          startedAt: submittedAt,
+          endedAt: null,
+          language: 'id',
+          articleContext: faqSourceContext(topic),
+          rating: null, helpful: '', resolution: '', comment: '',
+          questionCount: 1, questionIndex: 1, lastQuestion: question, answer,
+          messages: [{ role: 'user', text: question, createdAt: submittedAt }, ...(answer ? [{ role: 'assistant', text: answer, createdAt: topic.updatedAt || submittedAt }] : [])],
+          origin: 'faq-guide', priority: 5
+        };
+      }).filter(row => row.lastQuestion);
+    }
+
+    function readAiQuestionRows() {
+      harvestCurrentTabChatSession();
+      const feedbackRows = readFeedbackRows();
+      const feedbackBySession = new Map(feedbackRows.filter(row => row?.sessionId).map(row => [row.sessionId, row]));
+      const collected = [];
+
+      (sharedAiReportCache.questions || []).forEach((entry, index) => {
+        if (Array.isArray(entry?.messages)) collected.push(...sessionQuestionRows(entry, feedbackBySession.get(entry.id || entry.sessionId) || null, 'shared-store'));
+        else {
+          const row = standaloneQuestionRow(entry, index);
+          if (row) { row.origin = 'shared-store'; row.priority = 25; collected.push(row); }
+        }
+      });
+
+      feedbackRows.forEach(feedback => collected.push(...sessionQuestionRows({
+        id: feedback.sessionId,
+        startedAt: feedback.startedAt,
+        endedAt: feedback.endedAt,
+        language: feedback.language,
+        messages: Array.isArray(feedback.messages) ? feedback.messages : []
+      }, feedback, 'feedback')));
+
+      const questionLog = readStorageJson(localStorage, AI_QUESTION_STORE_KEY, []);
+      (Array.isArray(questionLog) ? questionLog : []).forEach((entry, index) => {
+        if (Array.isArray(entry?.messages)) collected.push(...sessionQuestionRows(entry, feedbackBySession.get(entry.id || entry.sessionId) || null, 'question-log'));
+        else {
+          const row = standaloneQuestionRow(entry, index);
+          if (row) collected.push(row);
+        }
+      });
+
+      AI_ACTIVE_SESSION_KEYS.forEach(key => {
+        const session = readStorageJson(localStorage, key, null);
+        if (session?.id) collected.push(...sessionQuestionRows(session, feedbackBySession.get(session.id) || null, 'active-session'));
+      });
+      AI_HISTORY_KEYS.forEach(key => {
+        const history = readStorageJson(localStorage, key, []);
+        (Array.isArray(history) ? history : []).forEach(session => collected.push(...sessionQuestionRows(session, feedbackBySession.get(session.id) || null, 'history')));
+      });
+
+      const currentTabSession = readStorageJson(sessionStorage, AI_CHAT_SESSION_KEY, null);
+      if (currentTabSession?.id) collected.push(...sessionQuestionRows(currentTabSession, feedbackBySession.get(currentTabSession.id) || null, 'current-tab'));
+
+      const recordedQuestions = new Set(collected.map(row => normalizeGuideSearch(row.lastQuestion)).filter(Boolean));
+      aiFaqGuideRows().forEach(row => {
+        const key = normalizeGuideSearch(row.lastQuestion);
+        if (!key || recordedQuestions.has(key)) return;
+        recordedQuestions.add(key);
+        collected.push(row);
+      });
+
+      const deduplicated = new Map();
+      collected.forEach(row => {
+        const key = `${row.sessionId}|${row.questionIndex}|${normalizeGuideSearch(row.lastQuestion)}`;
+        const existing = deduplicated.get(key);
+        if (!existing || row.priority > existing.priority || (row.priority === existing.priority && String(row.submittedAt) > String(existing.submittedAt))) deduplicated.set(key, row);
+      });
+      return [...deduplicated.values()].sort((a, b) => String(b.submittedAt).localeCompare(String(a.submittedAt)));
+    }
+
+    function feedbackDate(value) {
+      try { return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) }
+      catch (_) { return value || '—' }
+    }
+
+    function feedbackFilters() {
+      return {
+        from: $('feedbackFrom').value,
+        to: $('feedbackTo').value,
+        rating: $('feedbackRating').value,
+        resolution: $('feedbackResolution').value,
+        search: $('feedbackSearch').value.trim().toLowerCase()
+      }
+    }
+
+    function filteredFeedbackRows() {
+      const f = feedbackFilters();
+      return readAiQuestionRows().filter(row => {
+        const date = String(row.submittedAt || '').slice(0, 10);
+        const context = [row.articleContext?.moduleName, row.articleContext?.topicTitle, row.lastQuestion, row.answer, row.comment, ...(row.messages || []).map(message => message.text)].join(' ').toLowerCase();
+        return (!f.from || date >= f.from)
+          && (!f.to || date <= f.to)
+          && (!f.rating || String(row.rating || '') === f.rating)
+          && (!f.resolution || row.resolution === f.resolution)
+          && (!f.search || context.includes(f.search));
+      });
+    }
+
+    function feedbackBadge(value) {
+      const labels = { yes: 'Yes', no: 'No', resolved: 'Resolved', partial: 'Partially', unresolved: 'Unresolved' };
+      if (!value) return '<span class="muted">Not submitted</span>';
+      return `<span class="feedbackBadge ${esc(value)}">${labels[value] || esc(value)}</span>`;
+    }
+
+    function ratingHtml(value) {
+      if (value === null || value === undefined || value === '') return '<span class="muted">Not rated</span>';
+      const n = Math.max(0, Math.min(5, Number(value) || 0));
+      return `<span class="ratingStars">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span><div class="muted">${n}/5</div>`;
+    }
+
+    function uniqueMetricRows(rows) {
+      const map = new Map();
+      rows.forEach(row => {
+        const key = row.feedbackId || row.sessionId || row.id;
+        const existing = map.get(key);
+        if (!existing || (!existing.rating && row.rating)) map.set(key, row);
+      });
+      return [...map.values()];
+    }
+
+    function faqModuleFromState(currentState = state) {
+      return currentState.data.find(module => module.id === 'faq' || String(module.name?.id || '').trim().toLowerCase() === 'faq' || String(module.name?.en || '').trim().toLowerCase() === 'faq');
+    }
+
+    function existingFaqForQuestion(question, currentState = state) {
+      const faqModule = faqModuleFromState(currentState);
+      if (!faqModule) return null;
+      const normalizedQuestion = normalizeGuideSearch(question);
+      return faqModule.topics.find(topic =>
+        normalizeGuideSearch(topic.title?.id) === normalizedQuestion ||
+        normalizeGuideSearch(topic.title?.en) === normalizedQuestion ||
+        normalizeGuideSearch(pageName(topic, 'id')) === normalizedQuestion ||
+        normalizeGuideSearch(pageName(topic, 'en')) === normalizedQuestion
+      ) || null;
+    }
+
+    function feedbackActionHtml(row) {
+      const alreadyCreated = Boolean(existingFaqForQuestion(row.lastQuestion));
+      return `<div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-feedback-menu="${esc(row.id)}">⋮</button><div class="actionDropdown"><button type="button" data-feedback-detail="${esc(row.id)}">Detail</button><button type="button" data-create-faq="${esc(row.id)}" ${alreadyCreated ? 'disabled' : ''}>${alreadyCreated ? 'FAQ Created' : 'Create as a FAQ'}</button></div></div>`;
+    }
+
+    async function renderFeedbackReport(options = {}) {
+      if (!$('feedbackRows')) return;
+      if (!options.skipRefresh) await refreshSharedReportData();
+      const all = readAiQuestionRows();
+      const rows = filteredFeedbackRows();
+      const metricRows = uniqueMetricRows(rows);
+      const ratedRows = metricRows.filter(row => row.rating !== null && row.rating !== undefined && row.rating !== '');
+      const helpfulRows = metricRows.filter(row => row.helpful === 'yes' || row.helpful === 'no');
+      const resolutionRows = metricRows.filter(row => ['resolved', 'partial', 'unresolved'].includes(row.resolution));
+      const avg = ratedRows.length ? ratedRows.reduce((sum, row) => sum + (Number(row.rating) || 0), 0) / ratedRows.length : 0;
+      const helpful = helpfulRows.length ? Math.round(helpfulRows.filter(row => row.helpful === 'yes').length / helpfulRows.length * 100) : 0;
+      const resolved = resolutionRows.length ? Math.round(resolutionRows.filter(row => row.resolution === 'resolved').length / resolutionRows.length * 100) : 0;
+
+      $('feedbackSummary').innerHTML = `<div class="feedbackMetric"><small>Responses Shown</small><strong>${rows.length}</strong><div class="muted">${all.length} total Tanya AI question(s)</div></div><div class="feedbackMetric"><small>Average Rating</small><strong>${avg.toFixed(1)}</strong><div class="muted">${ratedRows.length} rated response(s) • out of 5.0</div></div><div class="feedbackMetric"><small>Helpful Answers</small><strong>${helpful}%</strong><div class="muted">${helpfulRows.length} feedback response(s)</div></div><div class="feedbackMetric"><small>Resolved</small><strong>${resolved}%</strong><div class="muted">${resolutionRows.length} resolution response(s)</div></div>`;
+
+      $('feedbackRows').innerHTML = rows.length ? rows.map(row => `<tr><td>${feedbackDate(row.submittedAt)}<div class="muted">${esc(row.language || '—')} • Question ${Number(row.questionIndex) || 1} of ${Number(row.questionCount) || 1}</div></td><td><strong>${esc(row.articleContext?.topicTitle || 'All Knowledge Center')}</strong><div class="muted">${esc(row.articleContext?.moduleName || 'General context')}</div></td><td class="feedbackQuestion">${esc(row.lastQuestion || '—')}</td><td>${ratingHtml(row.rating)}</td><td>${feedbackBadge(row.helpful)}</td><td>${feedbackBadge(row.resolution)}</td><td class="feedbackComment">${esc(row.comment || '—')}</td><td>${feedbackActionHtml(row)}</td></tr>`).join('') : `<tr><td colspan="8" class="feedbackEmpty">No Tanya AI data matches the selected filters.</td></tr>`;
+      bindFeedbackActions();
+    }
+
+    function bindFeedbackActions() {
+      const container = $('feedbackRows');
+      container.querySelectorAll('[data-feedback-menu]').forEach(button => button.onclick = event => toggleActionMenu(button, event));
+      container.querySelectorAll('[data-feedback-detail]').forEach(button => button.onclick = () => { closeGuideActionMenus(); openFeedbackDetail(button.dataset.feedbackDetail) });
+      container.querySelectorAll('[data-create-faq]').forEach(button => button.onclick = () => { closeGuideActionMenus(); createFaqFromFeedbackRow(button.dataset.createFaq) });
+    }
+
+    function openFeedbackDetail(id) {
+      const row = readAiQuestionRows().find(item => item.id === id);
+      if (!row) return;
+      const transcript = (row.messages || []).map(message => `<div class="feedbackTurn ${message.role === 'user' ? 'user' : 'assistant'}"><b>${message.role === 'user' ? 'User' : 'AI Assistant'}</b>${esc(message.text || '')}</div>`).join('') || '<div class="empty">No transcript stored.</div>';
+      showModal(`<div class="modalHeader"><h2>Feedback Detail</h2><button class="closeModal" data-close>×</button></div><div class="feedbackDetailMeta"><div><small>Asked / Submitted</small><strong>${feedbackDate(row.submittedAt)}</strong></div><div><small>Rating</small>${ratingHtml(row.rating)}</div><div><small>Result</small>${feedbackBadge(row.helpful)} ${feedbackBadge(row.resolution)}</div></div><div class="formGrid"><div class="field"><label>Article Context</label><div>${esc(row.articleContext?.topicTitle || 'All Knowledge Center')}<div class="muted">${esc(row.articleContext?.moduleName || 'General context')}</div></div></div><div class="field"><label>Session</label><div>${esc(row.sessionId || '—')}<div class="muted">Question ${Number(row.questionIndex) || 1} of ${Number(row.questionCount) || 1} • ${esc(row.language || '—')}</div></div></div><div class="field full"><label>User Question</label><div>${esc(row.lastQuestion || '—')}</div></div><div class="field full"><label>User Comment</label><div>${esc(row.comment || '—')}</div></div></div><div class="sectionRow"><h2>Conversation Transcript</h2></div><div class="feedbackTranscript">${transcript}</div>`);
+    }
+
+    function stripFaqMarkdown(value) {
+      return String(value || '').replace(/\*\*([^*]+)\*\*/g, '$1').replace(/`([^`]+)`/g, '$1').replace(/\s+/g, ' ').trim();
+    }
+
+    function assistantMessageForFeedbackRow(row) {
+      const messages = Array.isArray(row?.messages) ? row.messages : [];
+      let userSeen = 0;
+      for (let index = 0; index < messages.length; index++) {
+        if (messages[index]?.role !== 'user') continue;
+        userSeen++;
+        if (userSeen !== Number(row.questionIndex || 1)) continue;
+        return firstAssistantAfter(messages, index);
+      }
+      return messages.find(message => message?.role === 'assistant') || null;
+    }
+
+    function sourceLinksFromAnswer(answer, explicitSources = []) {
+      const links = [];
+      const seen = new Set();
+      const add = source => {
+        if (!source) return;
+        const topicTitle = String(source.topicTitle || source.title || '').trim();
+        const heading = String(source.heading || topicTitle).trim();
+        let moduleId = source.moduleId || '';
+        let topicIndex = Number.isFinite(Number(source.topicIndex)) ? Number(source.topicIndex) : -1;
+        let targetId = source.targetId || '';
+        if ((!moduleId || topicIndex < 0) && topicTitle) {
+          state.data.some(module => {
+            const index = module.topics.findIndex(topic => normalizeGuideSearch(topic.title?.id) === normalizeGuideSearch(topicTitle) || normalizeGuideSearch(topic.title?.en) === normalizeGuideSearch(topicTitle));
+            if (index < 0) return false;
+            moduleId = module.id;
+            topicIndex = index;
+            const blockIndex = (module.topics[index].blocks?.id || []).findIndex(block => normalizeGuideSearch(block.text) === normalizeGuideSearch(heading));
+            targetId = blockIndex >= 0 ? `kc-section-${String(moduleId).replace(/[^a-z0-9_-]/gi, '-')}-${topicIndex}-${blockIndex}` : '';
+            return true;
+          });
+        }
+        const key = `${moduleId}|${topicIndex}|${heading}|${topicTitle}`;
+        if (seen.has(key) || !topicTitle) return;
+        seen.add(key);
+        links.push({ moduleId, topicIndex, targetId, topicTitle, heading });
+      };
+      explicitSources.forEach(add);
+      const sourcePattern = /-\s*Bagian\s+["“]([^"”]+)["”]\s*[—-]\s*Artikel\s+["“]([^"”]+)["”]/gi;
+      let match;
+      while ((match = sourcePattern.exec(String(answer || ''))) !== null) add({ heading: match[1], topicTitle: match[2] });
+      return links;
+    }
+
+    function expandInlineFaqNumbering(value) {
+      const raw = String(value || '').replace(/\r/g, '').trim();
+      const markerPattern = /(^|[ \t])(\d{1,2})[.)][ \t]+(?=[A-Za-zÀ-ÿ“"'])/g;
+      const markers = [...raw.matchAll(markerPattern)];
+      if (markers.length < 2 && !markers.some(match => match[2] === '1')) return raw;
+      return raw.replace(markerPattern, (full, lead, number) => `\n${number}. `).trim();
+    }
+
+    function hasInlineFaqNumbering(value) {
+      const expanded = expandInlineFaqNumbering(value);
+      return expanded.split(/\n+/).filter(line => /^\d{1,2}[.)]\s+/.test(line.trim())).length >= 2;
+    }
+
+    function faqAnswerBlocks(answer, explicitSources = [], language = 'id') {
+      const raw = String(answer || '').replace(/\r/g, '').trim();
+      const sourceSplit = raw.split(/\n\s*\*\*Sumber:\*\*\s*\n/i);
+      const body = expandInlineFaqNumbering(sourceSplit[0].trim());
+      const blocks = [];
+      let paragraph = [];
+      const flushParagraph = () => {
+        const text = stripFaqMarkdown(paragraph.join(' '));
+        if (text) blocks.push({ type: 'p', text });
+        paragraph = [];
+      };
+      body.split('\n').forEach(lineValue => {
+        const line = String(lineValue || '').trim();
+        if (!line) { flushParagraph(); return; }
+        const numbered = line.match(/^(\d+)[.)]\s+(.+)/);
+        const bullet = line.match(/^[-•]\s+(.+)/);
+        const heading = line.match(/^#{1,6}\s+(.+)/);
+        if (numbered) { flushParagraph(); blocks.push({ type: 'step', text: `${numbered[1]}. ${stripFaqMarkdown(numbered[2])}` }); return; }
+        if (bullet) { flushParagraph(); blocks.push({ type: 'p', text: `• ${stripFaqMarkdown(bullet[1])}` }); return; }
+        if (heading) { flushParagraph(); blocks.push({ type: 'subheading', text: stripFaqMarkdown(heading[1]) }); return; }
+        paragraph.push(line);
+      });
+      flushParagraph();
+      const links = sourceLinksFromAnswer(raw, explicitSources);
+      if (links.length) {
+        blocks.push({ type: 'label', text: language === 'en' ? 'Article Source' : 'Sumber Artikel' });
+        links.forEach(source => blocks.push({
+          type: 'p',
+          text: language === 'en' ? `Section “${source.heading}” — Article “${source.topicTitle}”` : `Bagian “${source.heading}” — Artikel “${source.topicTitle}”`,
+          sourceLink: source
+        }));
+      }
+      return blocks.length ? blocks : [{ type: 'p', text: language === 'en' ? 'The answer is not available yet.' : 'Jawaban belum tersedia.' }];
+    }
+
+    function migrateAiFaqArticles(currentState = state) {
+      const faqModule = faqModuleFromState(currentState);
+      if (!faqModule) return false;
+      let changed = false;
+      faqModule.topics.forEach(topic => {
+        if (String(topic.editor || '').toLowerCase() !== 'ai chatbot') return;
+        if (!topic.faqCategory) { topic.faqCategory = { key: 'Other', id: 'Lainnya', en: 'Other' }; changed = true; }
+        ['id', 'en'].forEach(language => {
+          const blocks = Array.isArray(topic.blocks?.[language]) ? topic.blocks[language] : [];
+          const answerLabelIndex = blocks.findIndex(block => block.type === 'label' && /^(jawaban|answer)$/i.test(String(block.text || '').trim()));
+          const answerIndex = blocks.findIndex((block, index) => index > answerLabelIndex && block.type === 'p' && (/\*\*Sumber:\*\*|\n\s*\d+[.)]\s+/i.test(block.text || '') || hasInlineFaqNumbering(block.text)));
+          if (answerIndex < 0) return;
+          const replacement = faqAnswerBlocks(blocks[answerIndex].text, [], language);
+          topic.blocks[language] = [...blocks.slice(0, answerIndex), ...replacement, ...blocks.slice(answerIndex + 1)];
+          changed = true;
+        });
+      });
+      return changed;
+    }
+
+    function normalizeAiContentLanguage(value, text = '') {
+      const language = String(value || '').trim().toLowerCase();
+      if (language === 'en' || language.startsWith('en-') || language.includes('english')) return 'en';
+      if (language === 'id' || language === 'in' || language.startsWith('id-') || language.includes('indonesia')) return 'id';
+      const sample = ` ${String(text || '').toLowerCase().replace(/[^a-zà-ÿ0-9]+/g, ' ')} `;
+      const idHints = [' yang ', ' dan ', ' dengan ', ' untuk ', ' dari ', ' ke ', ' cara ', ' bagaimana ', ' apakah ', ' barang ', ' gudang ', ' lokasi ', ' pilih ', ' klik ', ' langkah ', ' pengguna ', ' artikel '];
+      const enHints = [' the ', ' and ', ' with ', ' for ', ' from ', ' to ', ' how ', ' what ', ' warehouse ', ' location ', ' select ', ' click ', ' step ', ' user ', ' article '];
+      const idScore = idHints.reduce((score, hint) => score + (sample.includes(hint) ? 1 : 0), 0);
+      const enScore = enHints.reduce((score, hint) => score + (sample.includes(hint) ? 1 : 0), 0);
+      return enScore > idScore ? 'en' : 'id';
+    }
+
+    function faqAnswerWithoutSourceFooter(value) {
+      return String(value || '').replace(/\r/g, '').split(/\s*\*\*(?:Sumber|Source):\*\*\s*/i)[0].trim();
+    }
+
+    function faqSourceLinksFromTopic(topic) {
+      const links = [];
+      const seen = new Set();
+      ['id', 'en'].forEach(language => {
+        (topic?.blocks?.[language] || []).forEach(block => {
+          const source = block?.sourceLink;
+          if (!source) return;
+          const key = `${source.moduleId || ''}|${source.topicIndex ?? ''}|${source.targetId || ''}|${source.topicTitle || ''}|${source.heading || ''}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          links.push({ ...source });
+        });
+      });
+      return links;
+    }
+
+    function bilingualFaqBlocks(question, answer, sources, language) {
+      return [
+        { type: 'label', text: language === 'en' ? 'Question' : 'Pertanyaan' },
+        { type: 'p', text: question },
+        { type: 'label', text: language === 'en' ? 'Answer' : 'Jawaban' },
+        ...faqAnswerBlocks(answer, sources, language)
+      ];
+    }
+
+    async function bilingualFaqValues(row, question, answer) {
+      const sourceLanguage = normalizeAiContentLanguage(row?.language, `${question}\n${answer}`);
+      const cleanAnswer = faqAnswerWithoutSourceFooter(answer);
+      let questionId = sourceLanguage === 'id' ? question : '';
+      let questionEn = sourceLanguage === 'en' ? question : '';
+      let answerId = sourceLanguage === 'id' ? cleanAnswer : '';
+      let answerEn = sourceLanguage === 'en' ? cleanAnswer : '';
+
+      if (sourceLanguage === 'id') {
+        questionEn = await translateText(question, 'en', 'id');
+        answerEn = await translateText(cleanAnswer, 'en', 'id');
+      } else {
+        questionId = await translateText(question, 'id', 'en');
+        answerId = await translateText(cleanAnswer, 'id', 'en');
+      }
+
+      return {
+        sourceLanguage,
+        questionId: String(questionId || question).trim(),
+        questionEn: String(questionEn || question).trim(),
+        answerId: String(answerId || cleanAnswer || answer).trim(),
+        answerEn: String(answerEn || cleanAnswer || answer).trim()
+      };
+    }
+
+    async function ensureAiFaqBilingualArticles(currentState = state) {
+      const faqModule = faqModuleFromState(currentState);
+      if (!faqModule) return false;
+      let changed = false;
+
+      for (const topic of faqModule.topics) {
+        if (String(topic.editor || '').trim().toLowerCase() !== 'ai chatbot') continue;
+        if (!topic.title || typeof topic.title !== 'object') {
+          const titleValue = String(topic.title || '').trim();
+          topic.title = { id: titleValue, en: titleValue };
+        }
+        if (!topic.pageMenu || typeof topic.pageMenu !== 'object') {
+          const pageValue = String(topic.pageMenu || topic.title.id || topic.title.en || '').trim();
+          topic.pageMenu = { id: pageValue, en: pageValue };
+        }
+        topic.blocks = topic.blocks && typeof topic.blocks === 'object' ? topic.blocks : { id: [], en: [] };
+        topic.blocks.id = Array.isArray(topic.blocks.id) ? topic.blocks.id : [];
+        topic.blocks.en = Array.isArray(topic.blocks.en) ? topic.blocks.en : [];
+
+        const questionId = blockTextAfterLabel(topic.blocks.id, /^(pertanyaan|question)$/i) || String(topic.title.id || '').trim();
+        const questionEn = blockTextAfterLabel(topic.blocks.en, /^(pertanyaan|question)$/i) || String(topic.title.en || '').trim();
+        const answerId = blockTextAfterLabel(topic.blocks.id, /^(jawaban|answer)$/i);
+        const answerEn = blockTextAfterLabel(topic.blocks.en, /^(jawaban|answer)$/i);
+        const sourceLanguage = normalizeAiContentLanguage(topic.originalLanguage, questionId || questionEn || topic.title.id || topic.title.en);
+        const sources = faqSourceLinksFromTopic(topic);
+        const sameQuestion = normalizeGuideSearch(questionId || topic.title.id) === normalizeGuideSearch(questionEn || topic.title.en);
+        const sameAnswer = normalizeGuideSearch(answerId) === normalizeGuideSearch(answerEn);
+
+        if (sourceLanguage === 'id' && (sameQuestion || !questionEn || sameAnswer || !answerEn)) {
+          const translatedQuestion = sameQuestion || !questionEn ? await translateText(questionId || topic.title.id, 'en', 'id') : questionEn;
+          const translatedAnswer = sameAnswer || !answerEn ? await translateText(faqAnswerWithoutSourceFooter(answerId), 'en', 'id') : answerEn;
+          if (translatedQuestion) {
+            topic.title.en = translatedQuestion;
+            topic.pageMenu.en = translatedQuestion;
+          }
+          topic.blocks.en = bilingualFaqBlocks(translatedQuestion || questionId, translatedAnswer || answerId, sources, 'en');
+          topic.originalLanguage = 'id';
+          topic.updatedAt = new Date().toISOString();
+          changed = true;
+        } else if (sourceLanguage === 'en' && (sameQuestion || !questionId || sameAnswer || !answerId)) {
+          const translatedQuestion = sameQuestion || !questionId ? await translateText(questionEn || topic.title.en, 'id', 'en') : questionId;
+          const translatedAnswer = sameAnswer || !answerId ? await translateText(faqAnswerWithoutSourceFooter(answerEn), 'id', 'en') : answerId;
+          if (translatedQuestion) {
+            topic.title.id = translatedQuestion;
+            topic.pageMenu.id = translatedQuestion;
+          }
+          topic.blocks.id = bilingualFaqBlocks(translatedQuestion || questionEn, translatedAnswer || answerEn, sources, 'id');
+          topic.originalLanguage = 'en';
+          topic.updatedAt = new Date().toISOString();
+          changed = true;
+        }
+      }
+      return changed;
+    }
+
+    async function createFaqFromFeedbackRow(id) {
+      const row = readAiQuestionRows().find(item => item.id === id);
+      if (!row?.lastQuestion) { toast('Tanya AI question not found.'); return }
+      const question = row.lastQuestion.trim();
+      if (existingFaqForQuestion(question)) {
+        toast('FAQ article for this question already exists.');
+        return;
+      }
+
+      confirmModal(`Create “${question}” as a FAQ article?`, async () => {
+        state = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        let faqModule = faqModuleFromState(state);
+        if (!faqModule) {
+          const usedModuleIds = new Set(state.data.map(module => module.id));
+          let moduleId = 'faq', number = 2;
+          while (usedModuleIds.has(moduleId)) moduleId = `faq-${number++}`;
+          faqModule = { id: moduleId, name: { id: 'FAQ', en: 'FAQ' }, topics: [] };
+          state.data.push(faqModule);
+        }
+
+        const duplicate = existingFaqForQuestion(question, state);
+        if (duplicate) { toast('FAQ article for this question already exists.'); return }
+
+        const stamp = new Date().toISOString();
+        const usedTopicIds = new Set(state.data.flatMap(module => module.topics.map(topic => topic.id)));
+        const idBase = `${faqModule.id}-${window.KCStore.slugify(question) || 'question'}`;
+        let topicId = idBase, number = 2;
+        while (usedTopicIds.has(topicId)) topicId = `${idBase}-${number++}`;
+        const assistantMessage = assistantMessageForFeedbackRow(row);
+        const sourceLanguage = normalizeAiContentLanguage(row.language, question);
+        const fallbackAnswer = sourceLanguage === 'en'
+          ? 'The answer is not available yet. Complete this FAQ article through the Edit action in Guide List.'
+          : 'Jawaban belum tersedia. Silakan lengkapi artikel FAQ ini melalui action Edit pada Guide List.';
+        const answer = row.answer || assistantMessage?.text || fallbackAnswer;
+        const sources = assistantMessage?.sources || [];
+        setSynced('Translating…');
+        const bilingual = await bilingualFaqValues(row, question, answer);
+        const blocksId = bilingualFaqBlocks(bilingual.questionId, bilingual.answerId, sources, 'id');
+        const blocksEn = bilingualFaqBlocks(bilingual.questionEn, bilingual.answerEn, sources, 'en');
+
+        faqModule.topics.push({
+          id: topicId,
+          title: { id: bilingual.questionId, en: bilingual.questionEn },
+          tabMenu: null,
+          group: null,
+          faqCategory: { key: 'Other', id: 'Lainnya', en: 'Other' },
+          pageMenu: { id: bilingual.questionId, en: bilingual.questionEn },
+          source: 'Knowledge Center',
+          editor: 'AI Chatbot',
+          originalLanguage: bilingual.sourceLanguage,
+          purpose: { id: 'Artikel FAQ dibuat dari pertanyaan pengguna pada fitur Tanya AI.', en: 'FAQ article created from a user question in the Ask AI feature.' },
+          createdAt: stamp,
+          updatedAt: stamp,
+          blocks: { id: blocksId, en: blocksEn }
+        });
+
+        const saved = await persist();
+        if (!saved) return;
+        successModal(`FAQ article “${question}” has been created in Guide List under FAQ → Lainnya.`);
+      });
+    }
+
+    function csvCell(value) {
+      const text = String(value ?? '').replace(/"/g, '""');
+      return `"${text}"`;
+    }
+
+    function downloadFeedbackCsv() {
+      const rows = filteredFeedbackRows();
+      if (!rows.length) { toast('No Tanya AI data to download'); return }
+      const header = ['Asked / Submitted At', 'Session ID', 'Language', 'Article Module', 'Article Title', 'Question No.', 'Question', 'AI Answer', 'Rating', 'Helpful', 'Resolution', 'Comment'];
+      const body = rows.map(row => [row.submittedAt, row.sessionId, row.language, row.articleContext?.moduleName || '', row.articleContext?.topicTitle || '', row.questionIndex, row.lastQuestion, row.answer, row.rating ?? '', row.helpful, row.resolution, row.comment].map(csvCell).join(','));
+      const blob = new Blob(['\ufeff' + [header.map(csvCell).join(','), ...body].join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'knowledge-center-tanya-ai-report.csv';
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function initFeedbackReport() {
+      $('feedbackApply').onclick = () => renderFeedbackReport();
+      $('feedbackReset').onclick = () => {
+        $('feedbackFrom').value = '';
+        $('feedbackTo').value = '';
+        $('feedbackRating').value = '';
+        $('feedbackResolution').value = '';
+        $('feedbackSearch').value = '';
+        renderFeedbackReport();
+      };
+      $('feedbackDownload').onclick = downloadFeedbackCsv;
+      $('feedbackSearch').onkeydown = event => { if (event.key === 'Enter') renderFeedbackReport() };
+      window.addEventListener('focus', () => renderFeedbackReport());
+      window.setInterval(() => { if ($('panel-feedback')?.classList.contains('active')) renderFeedbackReport(); }, 15000);
+      window.addEventListener('storage', event => {
+        if ([FEEDBACK_STORE_KEY, AI_QUESTION_STORE_KEY, ...AI_ACTIVE_SESSION_KEYS, ...AI_HISTORY_KEYS].includes(event.key)) renderFeedbackReport();
+      });
+      try {
+        const feedbackChannel = new BroadcastChannel(FEEDBACK_CHANNEL);
+        feedbackChannel.onmessage = renderFeedbackReport;
+        window.__kcFeedbackChannel = feedbackChannel;
+      } catch (_) { }
+      try {
+        const questionChannel = new BroadcastChannel(AI_QUESTION_CHANNEL);
+        questionChannel.onmessage = renderFeedbackReport;
+        window.__kcAiQuestionChannel = questionChannel;
+      } catch (_) { }
+    }
 
     function openSplitModal(mid, id) {
     const m = state.data.find(x => x.id === mid);
@@ -1899,14 +4474,15 @@
     };
   }
 
-    async function translateText(text, targetLang) {
-        if (!text || text.trim() === '') return '';
+    async function translateText(text, targetLang, sourceLang = 'id') {
+        if (!text || text.trim() === '' || sourceLang === targetLang) return String(text || '');
         try {
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=id&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sourceLang)}&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(text)}`;
             const res = await fetch(url);
+            if (!res.ok) throw new Error(`Translation request failed (${res.status})`);
             const data = await res.json();
             // Google Translate mengembalikan array of arrays, kita perlu menggabungkannya
-            return data[0].map(item => item[0]).join('');
+            return Array.isArray(data?.[0]) ? data[0].map(item => item?.[0] || '').join('') : text;
         } catch (err) {
             console.error("Translation error:", err);
             return text; // Kembalikan teks asli jika gagal
@@ -1919,11 +4495,14 @@
         let body = ''; 
         if (b.type === 'image') { 
           let imgSrc = assets[b.asset] || b.asset;
-          if (imgSrc && !imgSrc.includes('.') && !imgSrc.startsWith('data:') && !imgSrc.startsWith('http')) {
+          const isStoredImportAsset = String(imgSrc || '').startsWith(KC_IMPORT_ASSET_PREFIX);
+          if (imgSrc && !isStoredImportAsset && !imgSrc.includes('.') && !imgSrc.startsWith('data:') && !imgSrc.startsWith('http')) {
               imgSrc = `assets/${imgSrc}.png`; 
           }
           const alignOpts = `<select data-align="${b.uid}" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Alignment"><option value="left" ${b.align==='left'?'selected':''}>Left</option><option value="center" ${(!b.align || b.align==='center')?'selected':''}>Center</option><option value="right" ${b.align==='right'?'selected':''}>Right</option></select>`;
-          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"><input type="number" data-scale="${b.uid}" value="${esc(b.scale || '')}" placeholder="Scale %" min="1" max="100" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Scale (1-100%)">${alignOpts}</div>${imgSrc ? `<img class="blockImage" src="${imgSrc}" style="${b.scale ? `width: ${b.scale}%; height: auto;` : ''}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
+          const previewSrc = isStoredImportAsset ? 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==' : imgSrc;
+          const importAssetAttribute = isStoredImportAsset ? ` data-kc-import-asset="${esc(imgSrc)}"` : '';
+          body = `<div class="blockHead"><strong>Content ${i + 1}</strong><span class="status">Image</span><input type="text" data-file-text="${b.uid}" value="${esc(b.asset || '')}" placeholder="Ketik path, misal: assets/gambar.png" style="flex:1; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;"><input type="number" data-scale="${b.uid}" value="${esc(b.scale || '')}" placeholder="Scale %" min="1" max="100" style="width:80px; padding:6px; margin-left:10px; border: 1px solid #B6C1C6; border-radius: 5px;" title="Scale (1-100%)">${alignOpts}</div>${imgSrc ? `<img class="blockImage" src="${previewSrc}"${importAssetAttribute} style="${b.scale ? `width: ${b.scale}%; height: auto;` : ''}">` : ''}<div class="blockFields"><textarea data-field="captionId" data-uid="${b.uid}" placeholder="Caption Bahasa Indonesia">${esc(b.captionId || '')}</textarea><textarea data-field="captionEn" data-uid="${b.uid}" placeholder="English caption">${esc(b.captionEn || '')}</textarea></div>`; 
         } else if (b.type === 'table') { 
           const textRowsId = (b.rowsId || []).map(r => r.join(' | ')).join('\n');
           const textRowsEn = (b.rowsEn || b.rowsId || []).map(r => r.join(' | ')).join('\n');
@@ -1949,6 +4528,7 @@
         return `<div class="block" draggable="true" data-block="${b.uid}"><div class="drag">⋮⋮</div><div class="blockBody">${body}</div><button class="deleteBlock" data-delete="${b.uid}">🗑</button></div>`;
       }).join(''); 
       bindBuilder();
+      hydrateHighResolutionImportImages($('contentBuilder'));
     }
 
     function bindBuilder() { 
@@ -2043,7 +4623,31 @@
     // Render ulang saat bahasa diganti agar placeholder berubah
     $('targetLang').addEventListener('change', renderBuilder);
     function renderAll() { initSelects(); renderGuideList(); renderArrangement(); renderFeedbackReport() }
-    window.KCStore.subscribe(() => location.reload()); initSelects(); resetCreate(); renderGuideList(); renderArrangement(); initFeedbackReport(); renderFeedbackReport();
+    let aiFaqMigrationChanged = migrateAiFaqArticles(state);
+    try {
+      aiFaqMigrationChanged = await ensureAiFaqBilingualArticles(state) || aiFaqMigrationChanged;
+    } catch (error) {
+      console.warn('Existing AI FAQ bilingual migration could not be completed:', error);
+    }
+    if (aiFaqMigrationChanged) {
+      try {
+        writeSharedAiReportToState(state, sharedAiReportCache);
+        state = await window.KCStore.save(state);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+      } catch (error) { console.warn('Existing AI FAQ migration could not be saved:', error); }
+    }
+    window.KCStore.subscribe(async () => {
+      try {
+        const latest = await window.KCStore.load(window.KC_DEFAULT_DATA);
+        const nextFingerprint = knowledgeContentFingerprint(latest);
+        if (nextFingerprint !== knowledgeFingerprint) { location.reload(); return; }
+        state = latest;
+        sharedAiReportCache = sharedAiReportFromState(latest);
+        if ($('panel-feedback')?.classList.contains('active')) renderFeedbackReport({ skipRefresh: true });
+      } catch (error) { console.warn('Knowledge Center subscription refresh failed:', error); }
+    });
+    initSelects(); resetCreate(); renderGuideList(); renderArrangement(); initFeedbackReport(); renderFeedbackReport();
   </script>
 </body>
 
