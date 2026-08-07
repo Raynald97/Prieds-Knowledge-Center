@@ -234,16 +234,175 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 
 <div class="mobileDrawer" id="mobileDrawer"><aside class="sidebar"><h2 class="sidebarTitle" data-ui="tocTitle"></h2><div id="mobileNav"></div></aside></div>
 <div class="lightbox" id="lightbox"><button class="close" id="lightboxClose">×</button><img id="lightboxImg"></div><div class="toast" id="toast"></div>
-<script src="knowledge-data.js"></script><script src="knowledge-store.js"></script><script type="module">const __kcState=await window.KCStore.load(window.KC_DEFAULT_DATA);
+<script src="knowledge-data.js"></script><script src="knowledge-store.js"></script><script>
+/* Shared Knowledge Center sync patch: Firebase Realtime Database across devices. */
+(function(){
+  'use strict';
+  const localStore = window.KCStore;
+  if (!localStore || localStore.__sharedFirebaseSync) return;
+
+  const DATABASE_URL = 'https://prds-management-default-rtdb.asia-southeast1.firebasedatabase.app';
+  const STATE_URL = `${DATABASE_URL}/prieds_knowledge_center_v1/state.json`;
+  const IS_ADMIN = /Knowledge Center Admin/i.test(document.title);
+  const subscribers = new Set();
+  let pollTimer = null;
+  let lastRemoteStamp = '';
+  let remoteAvailable = true;
+  let remoteInitialized = false;
+
+  const stateStamp = state => String(state?.savedAt || state?.updatedAt || '');
+
+  async function firebaseRequest(url, options = {}) {
+    const response = await fetch(url, {
+      cache: 'no-store',
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+    });
+    if (!response.ok) throw new Error(`Firebase request failed (${response.status})`);
+    return response.json();
+  }
+
+  async function readRemoteState() {
+    const value = await firebaseRequest(`${STATE_URL}?t=${Date.now()}`);
+    remoteInitialized = !!(value && Array.isArray(value.data));
+    return remoteInitialized ? value : null;
+  }
+
+  async function writeRemoteState(state) {
+    const normalized = localStore.normalizeState(state, state?.data || []);
+    normalized.schemaVersion = localStore.schemaVersion || normalized.schemaVersion || 1;
+    normalized.savedAt = new Date().toISOString();
+    const saved = await firebaseRequest(STATE_URL, { method: 'PUT', body: JSON.stringify(normalized) });
+    remoteInitialized = true;
+    lastRemoteStamp = stateStamp(saved || normalized);
+    return localStore.normalizeState(saved || normalized, normalized.data || []);
+  }
+
+  async function load(defaultData) {
+    try {
+      const remote = await readRemoteState();
+      remoteAvailable = true;
+      if (remote) {
+        const normalized = localStore.normalizeState(remote, defaultData);
+        lastRemoteStamp = stateStamp(normalized);
+        try { await localStore.save(normalized); } catch (_) {}
+        return normalized;
+      }
+    } catch (error) {
+      remoteAvailable = false;
+      console.warn('Shared Knowledge Center state is temporarily unavailable; browser cache is used as fallback.', error);
+    }
+
+    const cached = await localStore.load(defaultData);
+    if (IS_ADMIN && remoteAvailable && !remoteInitialized) {
+      try {
+        const seeded = await writeRemoteState(cached);
+        try { await localStore.save(seeded); } catch (_) {}
+        return seeded;
+      } catch (error) {
+        console.warn('Initial Knowledge Center cloud migration could not be completed yet.', error);
+      }
+    }
+    return cached;
+  }
+
+  async function save(state) {
+    try {
+      // A public/stale browser is never allowed to initialize an empty cloud database.
+      // The Admin page is the authoritative first-time migration source.
+      if (!IS_ADMIN && !remoteInitialized) {
+        const current = await readRemoteState();
+        if (!current) {
+          console.warn('Cloud Knowledge Center is not initialized yet. Saving only to browser cache until Admin seeds the shared state.');
+          return localStore.save(state);
+        }
+      }
+      const saved = await writeRemoteState(state);
+      try { await localStore.save(saved); } catch (_) {}
+      subscribers.forEach(callback => { try { callback(); } catch (_) {} });
+      return saved;
+    } catch (error) {
+      remoteAvailable = false;
+      console.error('Shared Knowledge Center save failed. Browser cache is used as fallback.', error);
+      return localStore.save(state);
+    }
+  }
+
+  async function reset(defaultData) {
+    const state = localStore.normalizeState(null, defaultData);
+    return save(state);
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(async () => {
+      if (!subscribers.size || document.hidden) return;
+      try {
+        const remote = await readRemoteState();
+        remoteAvailable = true;
+        if (!remote) return;
+        const stamp = stateStamp(remote);
+        if (lastRemoteStamp && stamp && stamp !== lastRemoteStamp) {
+          lastRemoteStamp = stamp;
+          try { await localStore.save(localStore.normalizeState(remote, remote.data || [])); } catch (_) {}
+          subscribers.forEach(callback => { try { callback(); } catch (_) {} });
+        } else if (!lastRemoteStamp) {
+          lastRemoteStamp = stamp;
+        }
+      } catch (error) {
+        remoteAvailable = false;
+        console.warn('Knowledge Center background synchronization is temporarily unavailable.', error);
+      }
+    }, 3000);
+  }
+
+  function subscribe(callback) {
+    subscribers.add(callback);
+    const unsubscribeLocal = localStore.subscribe(() => {
+      if (!remoteAvailable) {
+        try { callback(); } catch (_) {}
+      }
+    });
+    startPolling();
+    return () => {
+      subscribers.delete(callback);
+      try { unsubscribeLocal?.(); } catch (_) {}
+      if (!subscribers.size && pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    };
+  }
+
+  window.KCStore = {
+    ...localStore,
+    load,
+    save,
+    reset,
+    subscribe,
+    __sharedFirebaseSync: true,
+    sharedDatabaseUrl: DATABASE_URL
+  };
+})();
+</script><script type="module">const __kcState=await window.KCStore.load(window.KC_DEFAULT_DATA);
 const KC_IMPORT_ASSET_PREFIX='kc-import-asset://';
 const KC_IMPORT_ASSET_DB='prieds-kc-import-assets-v1';
 const KC_IMPORT_ASSET_STORE='assets';
+const KC_SHARED_DATABASE_URL=window.KCStore.sharedDatabaseUrl||'https://prds-management-default-rtdb.asia-southeast1.firebasedatabase.app';
+const KC_SHARED_IMPORT_ASSET_ROOT='prieds_knowledge_center_v1/import_assets';
 let kcImportAssetDbPromise=null;
 const kcImportAssetObjectUrls=new Map();
 function openKcImportAssetDb(){if(!('indexedDB'in window))return Promise.reject(new Error('IndexedDB is not supported by this browser.'));if(kcImportAssetDbPromise)return kcImportAssetDbPromise;kcImportAssetDbPromise=new Promise((resolve,reject)=>{const request=indexedDB.open(KC_IMPORT_ASSET_DB,1);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(KC_IMPORT_ASSET_STORE))db.createObjectStore(KC_IMPORT_ASSET_STORE,{keyPath:'id'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('Imported screenshot storage could not be opened.'));request.onblocked=()=>reject(new Error('Imported screenshot storage is blocked by another browser tab.'))}).catch(error=>{kcImportAssetDbPromise=null;throw error});return kcImportAssetDbPromise}
 function importAssetIdFromReference(value){const source=String(value||'');if(!source.startsWith(KC_IMPORT_ASSET_PREFIX))return'';try{return decodeURIComponent(source.slice(KC_IMPORT_ASSET_PREFIX.length))}catch(_){return source.slice(KC_IMPORT_ASSET_PREFIX.length)}}
-async function loadOriginalImportAsset(reference){const assetId=importAssetIdFromReference(reference);if(!assetId)return String(reference||'');if(kcImportAssetObjectUrls.has(assetId))return kcImportAssetObjectUrls.get(assetId);const db=await openKcImportAssetDb();const record=await new Promise((resolve,reject)=>{const transaction=db.transaction(KC_IMPORT_ASSET_STORE,'readonly');const request=transaction.objectStore(KC_IMPORT_ASSET_STORE).get(assetId);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error||new Error(`Screenshot ${assetId} could not be read.`))});if(!record?.blob)return'';const objectUrl=URL.createObjectURL(record.blob);kcImportAssetObjectUrls.set(assetId,objectUrl);return objectUrl}
-function hydrateHighResolutionImportImages(root=document){root.querySelectorAll('img[data-kc-import-asset]').forEach(async image=>{const reference=image.dataset.kcImportAsset||'';try{const source=await loadOriginalImportAsset(reference);if(!source)throw new Error('Screenshot was not found in high-resolution storage.');image.src=source;const button=image.closest('[data-asset]');if(button)button.dataset.asset=source;image.removeAttribute('data-kc-import-asset')}catch(error){console.error('Imported screenshot could not be displayed:',error);image.alt=lang==='en'?'Imported screenshot could not be loaded in this browser.':'Screenshot hasil import tidak dapat dimuat pada browser ini.'}})}
+function sharedImportAssetUrl(assetId){return `${KC_SHARED_DATABASE_URL}/${KC_SHARED_IMPORT_ASSET_ROOT}/${encodeURIComponent(assetId)}.json`}
+async function loadSharedImportAsset(assetId){const response=await fetch(`${sharedImportAssetUrl(assetId)}?t=${Date.now()}`,{cache:'no-store'});if(!response.ok)throw new Error(`Shared screenshot request failed (${response.status}).`);const value=await response.json();return typeof value==='string'?value:''}
+async function writeSharedImportAsset(assetId,dataUrl){const response=await fetch(sharedImportAssetUrl(assetId),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(String(dataUrl||''))});if(!response.ok)throw new Error(`Shared screenshot upload failed (${response.status}).`);return true}
+function blobToDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(reader.error||new Error('Screenshot cache could not be converted.'));reader.readAsDataURL(blob)})}
+async function loadOriginalImportAsset(reference){const assetId=importAssetIdFromReference(reference);if(!assetId)return String(reference||'');if(kcImportAssetObjectUrls.has(assetId))return kcImportAssetObjectUrls.get(assetId);try{const shared=await loadSharedImportAsset(assetId);if(shared){kcImportAssetObjectUrls.set(assetId,shared);return shared}}catch(error){console.warn('Shared imported screenshot could not be loaded; trying browser cache.',error)}try{const db=await openKcImportAssetDb();const record=await new Promise((resolve,reject)=>{const transaction=db.transaction(KC_IMPORT_ASSET_STORE,'readonly');const request=transaction.objectStore(KC_IMPORT_ASSET_STORE).get(assetId);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error||new Error(`Screenshot ${assetId} could not be read.`))});if(!record?.blob)return'';const dataUrl=await blobToDataUrl(record.blob);if(!dataUrl)return'';kcImportAssetObjectUrls.set(assetId,dataUrl);try{await writeSharedImportAsset(assetId,dataUrl);console.info(`Shared screenshot repaired: ${assetId}`)}catch(error){console.warn(`Screenshot ${assetId} is available locally but could not be uploaded to shared storage.`,error)}return dataUrl}catch(error){console.warn(`Screenshot ${assetId} was not found in this browser cache.`,error);return''}}
+function collectImportAssetReferences(currentState=__kcState){const refs=new Set();const assets=currentState?.assets||{};Object.values(assets).forEach(value=>{if(String(value||'').startsWith(KC_IMPORT_ASSET_PREFIX))refs.add(String(value))});(currentState?.data||[]).forEach(module=>(module?.topics||[]).forEach(topic=>Object.values(topic?.blocks||{}).forEach(blocks=>(Array.isArray(blocks)?blocks:[]).forEach(block=>{if(block?.type!=='image')return;const value=assets?.[block.asset]||block.asset;if(String(value||'').startsWith(KC_IMPORT_ASSET_PREFIX))refs.add(String(value))}))));return [...refs]}
+async function migrateLegacyImportAssetsToSharedStorage(currentState=__kcState){const references=collectImportAssetReferences(currentState);if(!references.length)return;let cursor=0,uploaded=0;const worker=async()=>{while(cursor<references.length){const reference=references[cursor++];const assetId=importAssetIdFromReference(reference);if(!assetId)continue;try{const shared=await loadSharedImportAsset(assetId);if(shared){kcImportAssetObjectUrls.set(assetId,shared);continue}}catch(_){}try{const source=await loadOriginalImportAsset(reference);if(source)uploaded++}catch(_){}}};await Promise.all(Array.from({length:Math.min(4,references.length)},worker));if(uploaded)console.info(`Knowledge Center shared screenshot repair completed: ${uploaded} local image(s) migrated.`)}
+function hydrateHighResolutionImportImages(root=document){root.querySelectorAll('img[data-kc-import-asset]').forEach(async image=>{const reference=image.dataset.kcImportAsset||'';try{const source=await loadOriginalImportAsset(reference);if(!source)throw new Error('Screenshot was not found in shared or browser storage.');image.src=source;const button=image.closest('[data-asset]');if(button)button.dataset.asset=source;image.removeAttribute('data-kc-import-asset')}catch(error){console.error('Imported screenshot could not be displayed:',error);image.alt=lang==='en'?'Imported screenshot could not be loaded.':'Screenshot hasil import tidak dapat dimuat.'}})}
+setTimeout(()=>migrateLegacyImportAssetsToSharedStorage(__kcState).catch(error=>console.warn('Background screenshot repair incomplete.',error)),0);
 let DATA=__kcState.data;
 const FAQ_ROWS=[
   ["FAQ-001","Integrasi","Integration","WMS Lite","WMS Lite","Bagaimana cara melakukan sinkronisasi ulang Sales Order (SO) yang bermasalah?","How do I resynchronize a problematic Sales Order (SO)?","Klik ikon Sync di kanan atas, pilih sinkronisasi SO secara spesifik, lalu masukkan nomor SO yang bermasalah. Jalankan sinkronisasi dan periksa kembali status serta detail SO di Prieds. Jika data masih berbeda, pastikan SO pada sistem sumber, seperti Accurate atau Jurnal, tidak sedang diubah atau telah dihapus.","Click the Sync icon in the upper-right corner, select the specific SO synchronization option, and enter the affected SO number. Run the synchronization and recheck the SO status and details in Prieds. If the data still differs, confirm that the SO in the source system, such as Accurate or Jurnal, has not been edited or deleted."],
