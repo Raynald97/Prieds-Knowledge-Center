@@ -643,6 +643,11 @@
       cursor: not-allowed
     }
 
+    .arrangePageBtn:disabled {
+      opacity: .42;
+      cursor: not-allowed
+    }
+
     .modalOverlay {
       position: fixed;
       inset: 0;
@@ -1793,6 +1798,7 @@
             <div class="field"><label>Page Menu</label><select id="arrPage"></select></div>
             <div class="arrangeActions">
               <button class="primaryBtn" id="arrSearch">Search</button>
+              <button class="ghostBtn arrangePageBtn" id="arrangePageMenus" type="button" disabled>Arrange Page Menu</button>
               <button class="dangerBtn tocDeleteBtn" id="deleteTocPage" type="button" disabled>Delete Page Menu</button>
               <button class="dangerBtn tocDeleteBtn" id="deleteTocMain" type="button" disabled>Delete Main Menu</button>
             </div>
@@ -2221,7 +2227,7 @@
 ;
 </script>
   <script type="module">
-    let state = await window.KCStore.load(window.KC_DEFAULT_DATA); let pendingAssets = {}; let draftBlocks = []; let editing = null; let dragUid = null; let arrangementContext = null; const PAGE_SIZE = 10; let guidePage = 1; let arrangementPage = 1;
+    let state = await window.KCStore.load(window.KC_DEFAULT_DATA); let pendingAssets = {}; let draftBlocks = []; let editing = null; let dragUid = null; let arrangementContext = null; let pageArrangementContext = null; const PAGE_SIZE = 10; let guidePage = 1; let arrangementPage = 1;
     const $ = id => document.getElementById(id); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const clone = x => JSON.parse(JSON.stringify(x)); const fmt = v => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v)); const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
     // Create/Edit Guide local draft protection. IndexedDB is used instead of localStorage
@@ -3112,6 +3118,7 @@
       const page = $('arrPage').value;
       $('deleteTocMain').disabled = !mainId;
       $('deleteTocPage').disabled = !mainId || !page;
+      if ($('arrangePageMenus')) $('arrangePageMenus').disabled = !mainId;
     }
 
     async function deleteSelectedPageMenu() {
@@ -3154,6 +3161,7 @@
 
     ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1; syncTocDeleteButtons() });
     $('arrPage').onchange = syncTocDeleteButtons;
+    $('arrangePageMenus').onclick = openPageMenuArrangement;
     $('deleteTocPage').onclick = deleteSelectedPageMenu;
     $('deleteTocMain').onclick = deleteSelectedMainMenu;
     function openFilterDrawer() { $('filterDrawerOverlay').classList.add('show') } function closeFilterDrawer() { $('filterDrawerOverlay').classList.remove('show') } $('applyFilter').onclick = () => { guidePage = 1; renderGuideList() }; $('moreFilter').onclick = openFilterDrawer; $('closeFilterDrawer').onclick = closeFilterDrawer; $('filterDrawerOverlay').onclick = e => { if (e.target === $('filterDrawerOverlay')) closeFilterDrawer() }; $('applyMoreFilter').onclick = () => { guidePage = 1; renderGuideList(); closeFilterDrawer() }; $('resetFilter').onclick = () => { ['createdFrom', 'createdTo', 'updatedFrom', 'updatedTo'].forEach(id => $(id).value = ''); $('filterMain').value = ''; $('filterPage').innerHTML = pageOptions('', true); $('filterEditor').value = ''; guidePage = 1; renderGuideList() }; $('filterTitle').addEventListener('keydown', e => { if (e.key === 'Enter') { guidePage = 1; renderGuideList() } });
@@ -4092,6 +4100,88 @@
     $('saveGuideImport').onclick = saveImportedGuides;
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('importModalOverlay').classList.contains('show')) closeImportExcelModal(); });
 
+
+    function pageMenuGroupsForModule(module) {
+      const map = new Map();
+      (module?.topics || []).forEach(topic => {
+        const page = pageName(topic);
+        if (!map.has(page)) map.set(page, []);
+        map.get(page).push(topic);
+      });
+      return [...map.entries()].map(([page, topics]) => ({ page, topics }));
+    }
+    function openPageMenuArrangement() {
+      const mid = $('arrMain').value;
+      if (!mid) { toast('Pilih Main Menu terlebih dahulu.'); return; }
+      const module = state.data.find(item => item.id === mid);
+      if (!module) { toast('Main Menu tidak ditemukan.'); return; }
+      const pageGroups = pageMenuGroupsForModule(module);
+      if (!pageGroups.length) { toast('Main Menu belum memiliki Page Menu.'); return; }
+      const pages = pageGroups.map(group => group.page);
+      pageArrangementContext = { mid, pages: [...pages], originalPages: [...pages], drag: null };
+      const cards = pageGroups.map((group, index) => `<div class="sortItem" draggable="true" data-page-sort="${esc(group.page)}"><div class="sortHead"><span class="sortHandle">⋮⋮</span><span>${index + 1}. ${esc(group.page)}</span><span style="margin-left:auto;background:#EAF9FD;color:#087C9D;padding:5px 8px;border-radius:5px">${group.topics.length} Guide</span></div><div class="sortInfo">Drag untuk mengatur posisi Page Menu pada Knowledge Center.</div></div>`).join('');
+      showModal(`<div class="modalHeader"><h2>Arrange Page Menu</h2><button class="closeModal" data-close>×</button></div><p class="helper">Drag and drop Page Menu untuk mengubah urutan menu di bawah Main Menu <strong>${esc(module.name?.id || mid)}</strong>. Urutan artikel di dalam masing-masing Page Menu tetap dipertahankan.</p><div class="sortable" id="pageMenuSortable">${cards}</div><div class="submitBar"><button class="primaryBtn" id="savePageMenuArrangement" type="button">Save Page Menu Arrangement</button></div>`);
+      bindPageMenuSort();
+      $('savePageMenuArrangement').onclick = savePageMenuArrangement;
+    }
+    function bindPageMenuSort() {
+      $('pageMenuSortable').querySelectorAll('[data-page-sort]').forEach(el => {
+        el.ondragstart = () => { pageArrangementContext.drag = el.dataset.pageSort; el.classList.add('dragging'); };
+        el.ondragend = () => { pageArrangementContext.drag = null; el.classList.remove('dragging'); };
+        el.ondragover = event => event.preventDefault();
+        el.ondrop = event => {
+          event.preventDefault();
+          const from = pageArrangementContext.pages.indexOf(pageArrangementContext.drag);
+          const to = pageArrangementContext.pages.indexOf(el.dataset.pageSort);
+          if (from < 0 || to < 0 || from === to) return;
+          const [page] = pageArrangementContext.pages.splice(from, 1);
+          pageArrangementContext.pages.splice(to, 0, page);
+          const nodes = [...$('pageMenuSortable').children];
+          const node = nodes.find(item => item.dataset.pageSort === page);
+          const target = nodes.find(item => item.dataset.pageSort === el.dataset.pageSort);
+          $('pageMenuSortable').insertBefore(node, from < to ? target.nextSibling : target);
+          pageArrangementContext.drag = null;
+        };
+      });
+    }
+    async function savePageMenuArrangement() {
+      if (!pageArrangementContext) return;
+      const button = $('savePageMenuArrangement');
+      button.disabled = true;
+      button.textContent = 'Saving…';
+      try {
+        const latestState = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
+        const module = latestState.data.find(item => item.id === pageArrangementContext.mid);
+        if (!module) throw new Error('Main Menu arrangement was not found.');
+
+        const latestGroups = pageMenuGroupsForModule(module);
+        const latestPages = latestGroups.map(group => group.page);
+        const orderedPages = [
+          ...pageArrangementContext.pages.filter(page => latestPages.includes(page)),
+          ...latestPages.filter(page => !pageArrangementContext.pages.includes(page))
+        ];
+        const topicsByPage = new Map(latestGroups.map(group => [group.page, group.topics]));
+        const orderedTopics = orderedPages.flatMap(page => topicsByPage.get(page) || []);
+        if (orderedTopics.length !== module.topics.length) throw new Error('Page Menu arrangement could not be prepared.');
+
+        module.topics = orderedTopics;
+        state = latestState;
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+        const saved = await persist('', { skipReportRefresh: true });
+        if (!saved) throw new Error('Page Menu arrangement could not be saved.');
+
+        hideModal();
+        arrangementPage = 1;
+        toast('Urutan Page Menu berhasil disimpan.');
+        successModal('Page Menu arrangement has been successfully updated and synchronized with the Knowledge Center.');
+      } catch (error) {
+        console.error('Save Page Menu arrangement failed:', error);
+        toast(error.message || 'Urutan Page Menu gagal disimpan.');
+        button.disabled = false;
+        button.textContent = 'Save Page Menu Arrangement';
+      }
+    }
 
     function groups() { const map = new Map(); allArticles().forEach(x => { const key = x.module.id + '||' + pageName(x.topic); if (!map.has(key)) map.set(key, { module: x.module, page: pageName(x.topic), items: [] }); map.get(key).items.push(x) }); return [...map.values()] }
     function renderArrangement() { const main = $('arrMain').value, page = $('arrPage').value; const gs = groups().filter(g => (!main || g.module.id === main) && (!page || g.page === page)); const totalPages = Math.max(1, Math.ceil(gs.length / PAGE_SIZE)); arrangementPage = Math.min(arrangementPage, totalPages); const pageGroups = gs.slice((arrangementPage - 1) * PAGE_SIZE, arrangementPage * PAGE_SIZE); $('arrRows').innerHTML = gs.length ? pageGroups.map(g => `<tr><td>${esc(g.module.name.id)}</td><td>${esc(g.page)}</td><td>${g.items.length}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-arr-menu="${g.module.id}|${esc(g.page)}">⋮</button><div class="actionDropdown"><button type="button" data-setup="${g.module.id}|${esc(g.page)}">Setup</button></div></div></td></tr>`).join('') : `<tr><td colspan="4" class="empty">No arrangement group found.</td></tr>`; renderPagination('arrPagination', arrangementPage, totalPages, gs.length, next => { arrangementPage = next; renderArrangement() }); $('arrRows').querySelectorAll('[data-arr-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e)); $('arrRows').querySelectorAll('[data-setup]').forEach(b => b.onclick = () => { closeGuideActionMenus(); const p = b.dataset.setup.split('|'); openArrangement(p[0], p.slice(1).join('|')) }) }
