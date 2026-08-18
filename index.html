@@ -833,11 +833,18 @@ function topicMenuMeta(module,topic,index=0){
   const titleHasRFID=/\brfid\b/i.test(fromTitle.id)||/\brfid\b/i.test(fromTitle.en);
 
   /*
-   * A report/RFID guide must not inherit the non-report/non-RFID menu name.
-   * This prevents duplicate Layer-2 entries such as:
-   * Sales Order + Sales Order, or POS + POS.
+   * An explicitly assigned Page Menu from Knowledge Center Admin is the
+   * source of truth. Do not override it only because the article title
+   * contains keywords such as "Report" or "RFID".
+   *
+   * The title-based fallback is kept only for legacy topics that do not
+   * have a Page Menu value at all.
    */
-  const useTitle=(titleHasReport&&!rawHasReport)||(titleHasRFID&&!rawHasRFID);
+  const pageMenuValue=topic?.pageMenu;
+  const hasExplicitPageMenu=typeof pageMenuValue==='string'
+    ?!!pageMenuValue.trim()
+    :!!(pageMenuValue&&typeof pageMenuValue==='object'&&(String(pageMenuValue.id||'').trim()||String(pageMenuValue.en||'').trim()));
+  const useTitle=!hasExplicitPageMenu&&((titleHasReport&&!rawHasReport)||(titleHasRFID&&!rawHasRFID));
   const selected=useTitle?fromTitle:raw;
   const stableKey=normalizeMenuKey(selected.id||selected.en)||`menu-${index}`;
 
