@@ -1798,6 +1798,7 @@
             <div class="field"><label>Page Menu</label><select id="arrPage"></select></div>
             <div class="arrangeActions">
               <button class="primaryBtn" id="arrSearch">Search</button>
+              <button class="ghostBtn arrangePageBtn" id="arrangeMainMenus" type="button">Arrange Main Menu</button>
               <button class="ghostBtn arrangePageBtn" id="arrangePageMenus" type="button" disabled>Arrange Page Menu</button>
               <button class="dangerBtn tocDeleteBtn" id="deleteTocPage" type="button" disabled>Delete Page Menu</button>
               <button class="dangerBtn tocDeleteBtn" id="deleteTocMain" type="button" disabled>Delete Main Menu</button>
@@ -2227,7 +2228,7 @@
 ;
 </script>
   <script type="module">
-    let state = await window.KCStore.load(window.KC_DEFAULT_DATA); let pendingAssets = {}; let draftBlocks = []; let editing = null; let dragUid = null; let arrangementContext = null; let pageArrangementContext = null; const PAGE_SIZE = 10; let guidePage = 1; let arrangementPage = 1;
+    let state = await window.KCStore.load(window.KC_DEFAULT_DATA); let pendingAssets = {}; let draftBlocks = []; let editing = null; let dragUid = null; let arrangementContext = null; let pageArrangementContext = null; let mainMenuArrangementContext = null; const PAGE_SIZE = 10; let guidePage = 1; let arrangementPage = 1;
     const $ = id => document.getElementById(id); const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); const clone = x => JSON.parse(JSON.stringify(x)); const fmt = v => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v)); const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
     // Create/Edit Guide local draft protection. IndexedDB is used instead of localStorage
@@ -3161,6 +3162,7 @@
 
     ['filterMain', 'arrMain'].forEach(id => $(id).onchange = () => { const target = id === 'filterMain' ? 'filterPage' : 'arrPage'; $(target).innerHTML = pageOptions($(id).value, true); if (id === 'filterMain') guidePage = 1; else arrangementPage = 1; syncTocDeleteButtons() });
     $('arrPage').onchange = syncTocDeleteButtons;
+    $('arrangeMainMenus').onclick = openMainMenuArrangement;
     $('arrangePageMenus').onclick = openPageMenuArrangement;
     $('deleteTocPage').onclick = deleteSelectedPageMenu;
     $('deleteTocMain').onclick = deleteSelectedMainMenu;
@@ -4100,6 +4102,87 @@
     $('saveGuideImport').onclick = saveImportedGuides;
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('importModalOverlay').classList.contains('show')) closeImportExcelModal(); });
 
+
+    function mainMenuArrangementCards(modules) {
+      return modules.map((module, index) => {
+        const pageCount = pageMenuGroupsForModule(module).length;
+        const guideCount = (module.topics || []).length;
+        return `<div class="sortItem" draggable="true" data-main-menu-sort="${esc(module.id)}"><div class="sortHead"><span class="sortHandle">⋮⋮</span><span data-main-menu-position>${index + 1}.</span><span>${esc(module.name?.id || module.name?.en || module.id)}</span><span style="margin-left:auto;background:#EAF9FD;color:#087C9D;padding:5px 8px;border-radius:5px">${pageCount} Page Menu • ${guideCount} Guide</span></div><div class="sortInfo">Drag untuk mengatur posisi Main Menu pada sidebar Prieds Knowledge Center.</div></div>`;
+      }).join('');
+    }
+    function refreshMainMenuArrangementPositions() {
+      const root = $('mainMenuSortable');
+      if (!root) return;
+      [...root.querySelectorAll('[data-main-menu-sort]')].forEach((item, index) => {
+        const position = item.querySelector('[data-main-menu-position]');
+        if (position) position.textContent = `${index + 1}.`;
+      });
+    }
+    function openMainMenuArrangement() {
+      const modules = state.data || [];
+      if (!modules.length) { toast('Belum ada Main Menu yang dapat diatur.'); return; }
+      const ids = modules.map(module => module.id);
+      mainMenuArrangementContext = { ids: [...ids], originalIds: [...ids], drag: null };
+      showModal(`<div class="modalHeader"><h2>Arrange Main Menu</h2><button class="closeModal" data-close>×</button></div><p class="helper">Drag and drop Main Menu untuk mengubah urutan menu utama pada sidebar <strong>index.html</strong>. Seluruh Page Menu dan Guide di dalam setiap Main Menu tetap dipertahankan.</p><div class="sortable" id="mainMenuSortable">${mainMenuArrangementCards(modules)}</div><div class="submitBar"><button class="primaryBtn" id="saveMainMenuArrangement" type="button">Save Main Menu Arrangement</button></div>`);
+      bindMainMenuSort();
+      $('saveMainMenuArrangement').onclick = saveMainMenuArrangement;
+    }
+    function bindMainMenuSort() {
+      $('mainMenuSortable').querySelectorAll('[data-main-menu-sort]').forEach(el => {
+        el.ondragstart = () => { mainMenuArrangementContext.drag = el.dataset.mainMenuSort; el.classList.add('dragging'); };
+        el.ondragend = () => { mainMenuArrangementContext.drag = null; el.classList.remove('dragging'); };
+        el.ondragover = event => event.preventDefault();
+        el.ondrop = event => {
+          event.preventDefault();
+          const from = mainMenuArrangementContext.ids.indexOf(mainMenuArrangementContext.drag);
+          const to = mainMenuArrangementContext.ids.indexOf(el.dataset.mainMenuSort);
+          if (from < 0 || to < 0 || from === to) return;
+          const [moduleId] = mainMenuArrangementContext.ids.splice(from, 1);
+          mainMenuArrangementContext.ids.splice(to, 0, moduleId);
+          const nodes = [...$('mainMenuSortable').children];
+          const node = nodes.find(item => item.dataset.mainMenuSort === moduleId);
+          const target = nodes.find(item => item.dataset.mainMenuSort === el.dataset.mainMenuSort);
+          $('mainMenuSortable').insertBefore(node, from < to ? target.nextSibling : target);
+          mainMenuArrangementContext.drag = null;
+          refreshMainMenuArrangementPositions();
+        };
+      });
+    }
+    async function saveMainMenuArrangement() {
+      if (!mainMenuArrangementContext) return;
+      const button = $('saveMainMenuArrangement');
+      button.disabled = true;
+      button.textContent = 'Saving…';
+      try {
+        const latestState = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
+        const latestModules = Array.isArray(latestState.data) ? latestState.data : [];
+        const latestIds = latestModules.map(module => module.id);
+        const orderedIds = [
+          ...mainMenuArrangementContext.ids.filter(id => latestIds.includes(id)),
+          ...latestIds.filter(id => !mainMenuArrangementContext.ids.includes(id))
+        ];
+        const modulesById = new Map(latestModules.map(module => [module.id, module]));
+        const orderedModules = orderedIds.map(id => modulesById.get(id)).filter(Boolean);
+        if (orderedModules.length !== latestModules.length) throw new Error('Main Menu arrangement could not be prepared.');
+
+        latestState.data = orderedModules;
+        state = latestState;
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+        const saved = await persist('', { skipReportRefresh: true });
+        if (!saved) throw new Error('Main Menu arrangement could not be saved.');
+
+        hideModal();
+        arrangementPage = 1;
+        toast('Urutan Main Menu berhasil disimpan.');
+        successModal('Main Menu arrangement has been successfully updated and synchronized with the Knowledge Center sidebar.');
+      } catch (error) {
+        console.error('Save Main Menu arrangement failed:', error);
+        toast(error.message || 'Urutan Main Menu gagal disimpan.');
+        button.disabled = false;
+        button.textContent = 'Save Main Menu Arrangement';
+      }
+    }
 
     function pageMenuGroupsForModule(module) {
       const map = new Map();
