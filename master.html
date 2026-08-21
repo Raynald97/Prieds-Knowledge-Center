@@ -638,6 +638,66 @@
       min-width: 92px
     }
 
+    .mainMenuArrangeCard {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px 22px;
+      border-left: 4px solid var(--primary);
+      background: linear-gradient(90deg, #F7FCFE 0%, #FFFFFF 68%);
+    }
+
+    .mainMenuArrangeCopy {
+      min-width: 0
+    }
+
+    .mainMenuArrangeEyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      color: #087FA4;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+
+    .mainMenuArrangeCopy h2 {
+      margin: 0 0 6px;
+      font-size: 18px
+    }
+
+    .mainMenuArrangeCopy p {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55
+    }
+
+    .mainMenuArrangeAction {
+      flex: 0 0 auto;
+      min-width: 176px
+    }
+
+    .arrangeSectionHead {
+      margin: 0 0 14px
+    }
+
+    .arrangeSectionHead h2 {
+      margin: 0 0 4px;
+      font-size: 16px
+    }
+
+    .arrangeSectionHead p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5
+    }
+
     .tocDeleteBtn:disabled {
       opacity: .42;
       cursor: not-allowed
@@ -898,6 +958,15 @@
 
       .arrangeToolbar #arrSearch {
         width: max-content
+      }
+
+      .mainMenuArrangeCard {
+        align-items: stretch;
+        flex-direction: column
+      }
+
+      .mainMenuArrangeAction {
+        width: 100%
       }
 
       .tabs {
@@ -1792,13 +1861,24 @@
         </div>
       </section>
       <section class="panel" id="panel-arrange">
+        <div class="card mainMenuArrangeCard">
+          <div class="mainMenuArrangeCopy">
+            <div class="mainMenuArrangeEyebrow">☰ Sidebar Main Menu</div>
+            <h2>Main Menu Arrangement</h2>
+            <p>Atur urutan Main Menu yang tampil pada sidebar Prieds Knowledge Center. Drag &amp; drop Main Menu ke posisi yang diinginkan, lalu simpan agar urutan yang sama digunakan di <strong>index.html</strong>.</p>
+          </div>
+          <button class="primaryBtn mainMenuArrangeAction" id="arrangeMainMenus" type="button">Arrange Main Menu</button>
+        </div>
         <div class="card">
+          <div class="arrangeSectionHead">
+            <h2>Page Menu &amp; Guide Arrangement</h2>
+            <p>Pilih Main Menu untuk mengatur urutan Page Menu, mengelola Page Menu, atau mengatur urutan Guide pada tabel di bawah.</p>
+          </div>
           <div class="arrangeToolbar">
             <div class="field"><label>Main Menu</label><select id="arrMain"></select></div>
             <div class="field"><label>Page Menu</label><select id="arrPage"></select></div>
             <div class="arrangeActions">
               <button class="primaryBtn" id="arrSearch">Search</button>
-              <button class="ghostBtn arrangePageBtn" id="arrangeMainMenus" type="button">Arrange Main Menu</button>
               <button class="ghostBtn arrangePageBtn" id="arrangePageMenus" type="button" disabled>Arrange Page Menu</button>
               <button class="dangerBtn tocDeleteBtn" id="deleteTocPage" type="button" disabled>Delete Page Menu</button>
               <button class="dangerBtn tocDeleteBtn" id="deleteTocMain" type="button" disabled>Delete Main Menu</button>
