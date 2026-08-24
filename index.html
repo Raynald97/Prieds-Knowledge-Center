@@ -185,6 +185,13 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 @keyframes kcAiPulse{0%,22%{background:#FFF0A8;box-shadow:0 0 0 6px rgba(255,214,64,.28)}100%{background:transparent;box-shadow:0 0 0 0 rgba(255,214,64,0)}}
 @media(max-width:700px){.aiAnswerActions{width:100%;margin-left:0}.aiAnswerAction{flex:1}.aiMarkdown table{font-size:9px}}
 
+
+/* Module flowchart navigation */
+.moduleFlowcharts{display:grid;gap:12px;margin:0 0 18px}.moduleFlowcharts[hidden]{display:none}
+.moduleFlowchart{border:1px solid #CFE3E9;background:#fff;border-radius:8px;padding:14px 14px 12px;box-shadow:0 3px 10px rgba(28,91,111,.06)}
+.moduleFlowchartHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}.moduleFlowchartHead strong{font-size:13px;color:#304047}.moduleFlowchartHead small{display:block;margin-top:3px;color:#75868D;font-size:9px}.moduleFlowchartHint{font-size:9px;color:#0B84A9;background:#EAF9FD;border-radius:999px;padding:5px 8px;white-space:nowrap}
+.moduleFlowchartTrack{display:flex;align-items:stretch;overflow-x:auto;padding:2px 1px 6px}.moduleFlowNode{flex:0 0 165px;min-height:68px;border:1px solid #9EDBEC;background:#F0FAFD;border-radius:8px;padding:10px 9px;text-align:left;color:#17647B;transition:.15s}.moduleFlowNode:hover{border-color:#28B8E2;background:#E5F7FC;transform:translateY(-1px);box-shadow:0 4px 10px rgba(24,129,160,.10)}.moduleFlowNode strong{display:block;font-size:11px;line-height:1.35}.moduleFlowNode small{display:block;margin-top:6px;color:#6F8188;font-size:8px;line-height:1.3}.moduleFlowNode.invalid{cursor:default;opacity:.55}.moduleFlowArrow{flex:0 0 34px;display:grid;place-items:center;color:#43AFCF;font-size:17px;font-weight:900}
+@media(max-width:700px){.moduleFlowcharts{gap:10px}.moduleFlowchart{padding:12px}.moduleFlowchartHead{align-items:flex-start}.moduleFlowchartHint{display:none}.moduleFlowchartTrack{overflow:visible;flex-direction:column;align-items:stretch}.moduleFlowNode{width:100%;flex:auto;min-height:0}.moduleFlowArrow{height:28px;flex:0 0 28px;transform:rotate(90deg)}}
 </style></head><body>
 <div class="app">
 <header class="header">
@@ -200,7 +207,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
     <div class="breadcrumb" id="breadcrumb"></div>
     <section class="listView" id="listView">
       <div class="searchBlock"><h1 data-ui="findTitle"></h1><div class="searchRow"><input id="searchInput"><button class="searchBtn" id="searchBtn" data-ui="search"></button></div></div>
-      <div id="listHeader"></div><div class="articleList" id="articleList"></div>
+      <div id="listHeader"></div><div class="moduleFlowcharts" id="moduleFlowchart" hidden></div><div class="articleList" id="articleList"></div>
     </section>
     <section class="articleView" id="articleView">
       <div class="articleTopSearch"><div class="searchBlock"><h1 data-ui="findTitle"></h1><div class="searchRow"><input id="articleSearchInput"><button class="searchBtn" id="articleSearchBtn" data-ui="search"></button></div></div></div>
@@ -277,9 +284,10 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
 
   async function readRemoteCoreState() {
     const stampPromise = firebaseRequest(`${STATE_ROOT}/savedAt.json?t=${Date.now()}`);
-    const [data, aiReport, savedAt] = await Promise.all([
+    const [data, aiReport, flowcharts, savedAt] = await Promise.all([
       firebaseRequest(`${STATE_ROOT}/data.json?t=${Date.now()}`),
       firebaseRequest(`${STATE_ROOT}/aiReport.json?t=${Date.now()}`),
+      firebaseRequest(`${STATE_ROOT}/flowcharts.json?t=${Date.now()}`),
       stampPromise
     ]);
     remoteInitialized = Array.isArray(data);
@@ -288,6 +296,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
       data,
       assets: {},
       aiReport: aiReport && typeof aiReport === 'object' ? aiReport : undefined,
+      flowcharts: flowcharts && typeof flowcharts === 'object' ? flowcharts : {},
       savedAt: savedAt || new Date().toISOString(),
       schemaVersion: localStore.schemaVersion || 1
     };
@@ -312,6 +321,7 @@ button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allow
     const corePayload = {
       data: normalized.data,
       aiReport: normalized.aiReport || null,
+      flowcharts: normalized.flowcharts || {},
       schemaVersion: normalized.schemaVersion,
       savedAt: normalized.savedAt
     };
@@ -688,6 +698,7 @@ if(!storedFaq){DATA=[...DATA,FAQ_MODULE];faqDataChanged=true}else{
 }
 if(faqDataChanged){__kcState.data=DATA;}
 let ASSETS={...window.KC_DEFAULT_ASSETS,...(__kcState.assets||{})};
+let FLOWCHARTS=__kcState.flowcharts&&typeof __kcState.flowcharts==='object'?__kcState.flowcharts:{};
 const KC_TRANSPARENT_PIXEL='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 function isDirectAssetValue(value){const source=String(value||'');return !source||source.startsWith('data:')||source.startsWith('http://')||source.startsWith('https://')||source.startsWith('blob:')||source.startsWith(KC_IMPORT_ASSET_PREFIX)||source.includes('/')||source.includes('.')}
 async function resolveRemoteStateAsset(assetKey){const key=String(assetKey||'');if(!key)return'';if(Object.prototype.hasOwnProperty.call(ASSETS,key))return ASSETS[key];if(isDirectAssetValue(key))return key;try{return await window.KCStore.loadAsset(key)}catch(_){return''}}
@@ -944,10 +955,14 @@ function showList(){ $('listView').classList.remove('hide');$('articleView').cla
 function showArticle(){ $('listView').classList.add('hide');$('articleView').classList.add('show');window.scrollTo({top:0,behavior:'smooth'}) }
 function articleCard(r){const meta=topicMeta(r.x);return `<button class="articleCard" data-open-module="${r.m.id}" data-open-index="${r.i}"><div class="cardThumb">◖</div><div class="cardBody"><h3>${esc(r.x.title[lang])}</h3><div class="cardMeta">${esc(meta.editor)} • ${fmtDate(meta.updatedAt)}</div><p>${esc(preview(r.x))}</p></div><div class="cardArrow">›</div></button>`}
 function bindCards(){$('articleList').querySelectorAll('[data-open-module]').forEach(btn=>btn.onclick=()=>openArticle(btn.dataset.openModule,+btn.dataset.openIndex))}
+function flowchartsForModule(m){const map=new Map();Object.entries(FLOWCHARTS&&typeof FLOWCHARTS==='object'?FLOWCHARTS:{}).forEach(([key,value])=>{if(!value||typeof value!=='object'||value.enabled===false||!Array.isArray(value.nodes)||!value.nodes.length)return;const keyIsModule=DATA.some(module=>module.id===key);const moduleIds=[...new Set([...(Array.isArray(value.moduleIds)?value.moduleIds:[]),...(keyIsModule?[key]:[])])];if(!moduleIds.includes(m?.id))return;const flowId=value.flowId||key;if(!map.has(flowId))map.set(flowId,{...value,flowId,moduleIds});else{const existing=map.get(flowId);existing.moduleIds=[...new Set([...(existing.moduleIds||[]),...moduleIds])]}});return[...map.values()].sort((a,b)=>{const ta=Date.parse(a.updatedAt||a.createdAt||'')||0,tb=Date.parse(b.updatedAt||b.createdAt||'')||0;if(tb!==ta)return tb-ta;return String(a.title?.[lang]||a.title?.id||a.adminName||'').localeCompare(String(b.title?.[lang]||b.title?.id||b.adminName||''))})}
+function flowTargetMeta(m,node){const targetModule=DATA.find(module=>module.id===node?.moduleId)||m;const moduleLabel=targetModule?.name?.[lang]||targetModule?.name?.id||targetModule?.name?.en||'';if(node?.targetType==='article'){const index=(targetModule?.topics||[]).findIndex(topic=>topic.id===node.topicId);const topic=index>=0?targetModule.topics[index]:null;return{valid:!!topic,label:moduleLabel?`${moduleLabel} • ${lang==='id'?'Artikel':'Article'}`:(lang==='id'?'Buka artikel':'Open article'),action:()=>openArticle(targetModule.id,index)}}const page=String(node?.pageMenu||'');const exists=(targetModule?.topics||[]).some(topic=>topic?.pageMenu?.id===page||topic?.pageMenu?.en===page||topic?.pageMenu===page);return{valid:!!page&&exists,label:moduleLabel?`${moduleLabel} • Page Menu`:(lang==='id'?'Buka Page Menu':'Open Page Menu'),action:()=>showFlowPageMenu(targetModule,page)}}
+function renderModuleFlowchart(m){const host=$('moduleFlowchart');if(!host)return;const configs=flowchartsForModule(m);if(!configs.length){host.hidden=true;host.innerHTML='';return}host.hidden=false;host.innerHTML=configs.map((config,flowIndex)=>{const title=config.title?.[lang]||config.title?.id||config.title?.en||config.adminName||(lang==='id'?'Alur Proses':'Process Flow');return`<section class="moduleFlowchart" data-flowchart-card="${flowIndex}"><div class="moduleFlowchartHead"><div><strong>${esc(title)}</strong><small>${lang==='id'?'Klik step untuk membuka panduan terkait.':'Click a step to open the related guide.'}</small></div><span class="moduleFlowchartHint">${configs.length>1?`${flowIndex+1}/${configs.length} • `:''}${lang==='id'?'Navigasi cepat':'Quick navigation'}</span></div><div class="moduleFlowchartTrack">${config.nodes.map((node,nodeIndex)=>{const meta=flowTargetMeta(m,node);const label=node.label?.[lang]||node.label?.id||node.label?.en||`Step ${nodeIndex+1}`;return`${nodeIndex?'<span class="moduleFlowArrow">→</span>':''}<button type="button" class="moduleFlowNode ${meta.valid?'':'invalid'}" data-flowchart-index="${flowIndex}" data-flow-index="${nodeIndex}" ${meta.valid?'':'disabled'}><strong>${esc(label)}</strong><small>${esc(meta.valid?meta.label:(lang==='id'?'Link belum tersedia':'Link unavailable'))}</small></button>`}).join('')}</div></section>`}).join('');host.querySelectorAll('[data-flowchart-index][data-flow-index]').forEach(button=>{button.onclick=()=>{const config=configs[Number(button.dataset.flowchartIndex)],node=config?.nodes?.[Number(button.dataset.flowIndex)];if(!node)return;const meta=flowTargetMeta(m,node);if(meta.valid)meta.action()}})}
 function showModuleList(m){activeModule=m;activeTopic=0;openModuleId=m.id;lastListMode={type:'module',module:m,items:m.topics.map((x,i)=>({m,x,i}))};showList();renderNav();renderModuleList(m);history.replaceState(null,'','#'+m.id)}
-function renderModuleList(m){$('breadcrumb').innerHTML=`${t('home')} / ${esc(m.name[lang])}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">▣</div><div><strong>${esc(m.name[lang])}</strong><small>${m.topics.length} ${t('articles')}</small></div></div>`;$('articleList').innerHTML=m.topics.length?m.topics.map((x,i)=>articleCard({m,x,i})).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
-function searchArticles(q){q=q.trim();if(!q){showModuleList(activeModule);return}const nq=normalize(q),items=[];DATA.forEach(m=>m.topics.forEach((x,i)=>{const blocks=getBlocks(x);const hay=[m.name[lang],m.desc[lang],x.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join(' ');if(normalize(hay).includes(nq))items.push({m,x,i})}));lastListMode={type:'search',query:q,items};showList();$('breadcrumb').innerHTML=`${t('home')} / ${t('results')}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">⌕</div><div><strong>${t('results')}</strong><small>${items.length} ${t('articles')} • “${esc(q)}”</small></div></div>`;$('articleList').innerHTML=items.length?items.map(articleCard).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
-function rerenderLastList(){if(lastListMode.type==='search')searchArticles(lastListMode.query);else renderModuleList(lastListMode.module||activeModule)}
+function showFlowPageMenu(m,page){activeModule=m;activeTopic=0;openModuleId=m.id;const items=m.topics.map((x,i)=>({m,x,i})).filter(row=>row.x?.pageMenu?.id===page||row.x?.pageMenu?.en===page||row.x?.pageMenu===page);const firstMatch=items[0];if(firstMatch){const menu=topicMenuMeta(m,firstMatch.x,firstMatch.i);if(menu)openTopicMenus.add(topicMenuStateKey(m.id,menu.key))}const localizedPage=firstMatch?.x?.pageMenu?.[lang]||firstMatch?.x?.pageMenu?.id||firstMatch?.x?.pageMenu?.en||page;lastListMode={type:'page',module:m,page,items};showList();renderNav();$('breadcrumb').innerHTML=`${t('home')} / ${esc(m.name[lang])} / ${esc(localizedPage)}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">↳</div><div><strong>${esc(localizedPage)}</strong><small>${items.length} ${t('articles')}</small></div></div>`;renderModuleFlowchart(m);$('articleList').innerHTML=items.length?items.map(articleCard).join(''):`<div class="empty">${t('empty')}</div>`;bindCards();history.replaceState(null,'','#'+m.id)}
+function renderModuleList(m){$('breadcrumb').innerHTML=`${t('home')} / ${esc(m.name[lang])}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">▣</div><div><strong>${esc(m.name[lang])}</strong><small>${m.topics.length} ${t('articles')}</small></div></div>`;renderModuleFlowchart(m);$('articleList').innerHTML=m.topics.length?m.topics.map((x,i)=>articleCard({m,x,i})).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
+function searchArticles(q){q=q.trim();if(!q){showModuleList(activeModule);return}const nq=normalize(q),items=[];DATA.forEach(m=>m.topics.forEach((x,i)=>{const blocks=getBlocks(x);const hay=[m.name[lang],m.desc[lang],x.title[lang],...blocks.filter(b=>b.text).map(b=>b.text)].join(' ');if(normalize(hay).includes(nq))items.push({m,x,i})}));lastListMode={type:'search',query:q,items};showList();if($('moduleFlowchart')){$('moduleFlowchart').hidden=true;$('moduleFlowchart').innerHTML=''}$('breadcrumb').innerHTML=`${t('home')} / ${t('results')}`;$('listHeader').innerHTML=`<div class="sectionBanner"><div class="bannerIcon">⌕</div><div><strong>${t('results')}</strong><small>${items.length} ${t('articles')} • “${esc(q)}”</small></div></div>`;$('articleList').innerHTML=items.length?items.map(articleCard).join(''):`<div class="empty">${t('empty')}</div>`;bindCards()}
+function rerenderLastList(){if(lastListMode.type==='search')searchArticles(lastListMode.query);else if(lastListMode.type==='page')showFlowPageMenu(lastListMode.module||activeModule,lastListMode.page);else renderModuleList(lastListMode.module||activeModule)}
 function normalize(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ')}
 function openArticle(mid,idx){activeModule=DATA.find(m=>m.id===mid)||DATA[0];activeTopic=Math.max(0,Math.min(idx,activeModule.topics.length-1));openModuleId=activeModule.id;if(activeModule.id==='faq'){const category=activeModule.topics[activeTopic]?.faqCategory;if(category)openFaqCategories.add(category.key)}else{const menu=topicMenuMeta(activeModule,activeModule.topics[activeTopic],activeTopic);if(menu)openTopicMenus.add(topicMenuStateKey(activeModule.id,menu.key))}showArticle();renderNav();renderArticle();history.replaceState(null,'','#'+mid+'-'+activeTopic)}
 function sectionDomId(moduleId,topicIndex,blockIndex){return`kc-section-${String(moduleId||'module').replace(/[^a-z0-9_-]/gi,'-')}-${topicIndex}-${blockIndex}`}
@@ -1117,7 +1132,7 @@ function writeSharedReportToState(currentState,report){const normalized=normaliz
 function upsertById(rows,entry){const list=Array.isArray(rows)?[...rows]:[];const key=entry?.id||entry?.sessionId;const index=list.findIndex(item=>(item?.id||item?.sessionId)===key);if(index>=0)list[index]=entry;else list.unshift(entry);return list.slice(0,SHARED_AI_REPORT_LIMIT)}
 function queueSharedReportMutation(mutator){sharedReportWriteQueue=sharedReportWriteQueue.then(async()=>{const latest=await window.KCStore.load(window.KC_DEFAULT_DATA);const report=sharedReportFromState(latest);await mutator(report);writeSharedReportToState(latest,report);const saved=await window.KCStore.save(latest);return sharedReportFromState(saved)}).catch(error=>{console.warn('Shared Tanya AI data could not be synchronized:',error);return null});return sharedReportWriteQueue}
 function scheduleSharedSessionSync(){clearTimeout(sharedSessionSyncTimer);sharedSessionSyncTimer=setTimeout(()=>{if(!aiSession)return;const sharedSession={...aiSession,updatedAt:new Date().toISOString(),articleContext:typeof currentArticleContext==='function'?currentArticleContext():null};queueSharedReportMutation(report=>{report.questions=upsertById(report.questions,sharedSession)})},450)}
-function knowledgeContentFingerprint(currentState){return JSON.stringify({data:currentState?.data||[]})}
+function knowledgeContentFingerprint(currentState){return JSON.stringify({data:currentState?.data||[],flowcharts:currentState?.flowcharts||{}})}
 let knowledgeFingerprint=knowledgeContentFingerprint(__kcState);
 const NOT_FOUND_ANSWER='Maaf, saya tidak menemukan informasi tersebut pada artikel ini.';
 const chatText=k=>CHAT_UI[lang]?.[k]||CHAT_UI.id[k]||k;
@@ -1643,12 +1658,14 @@ async function applyRemoteKnowledgeState(latest){
     FAQ_MODULE.topics.forEach(topic=>{const faqId=(topic.source||'').split('•').pop().trim();if(!storedFaqIds.has(faqId))refreshedFaq.topics.push(topic)});
   }
 
-  const nextFingerprint=knowledgeContentFingerprint({data:nextData});
+  const nextFlowcharts=latest?.flowcharts&&typeof latest.flowcharts==='object'?latest.flowcharts:{};
+  const nextFingerprint=knowledgeContentFingerprint({data:nextData,flowcharts:nextFlowcharts});
   if(nextFingerprint===knowledgeFingerprint)return;
   const wasArticleOpen=$('articleView')?.classList.contains('show');
   const currentModuleId=activeModule?.id||'';
   const currentTopicId=activeModule?.topics?.[activeTopic]?.id||'';
   DATA=nextData;
+  FLOWCHARTS=nextFlowcharts;
   knowledgeFingerprint=nextFingerprint;
   knowledgeBase=null;knowledgeBuildPromise=null;knowledgeReady=false;
 
@@ -1669,6 +1686,9 @@ async function applyRemoteKnowledgeState(latest){
     }
   }else if(lastListMode.type==='search'){
     searchArticles(lastListMode.query||'');
+    renderNav();
+  }else if(lastListMode.type==='page'){
+    showFlowPageMenu(nextModule,lastListMode.page||'');
     renderNav();
   }else{
     lastListMode={type:'module',module:nextModule,items:nextModule.topics.map((x,i)=>({m:nextModule,x,i}))};

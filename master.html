@@ -1704,7 +1704,62 @@
       }
     }
 
-  </style>
+    /* Flowchart management */
+    .flowchartAdminIntro{display:flex;align-items:center;justify-content:space-between;gap:18px}
+    .flowchartAdminIntro h2{margin:3px 0 6px}.flowchartAdminIntro p{margin:0;color:#66767D;font-size:12px;line-height:1.55}
+    .flowchartAdminEyebrow{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#0784AA}
+    .flowchartStatusBadge{flex:0 0 auto;border:1px solid #CBD9DE;background:#F5F8F9;color:#68777D;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:800}
+    .flowchartStatusBadge.live{border-color:#A9E1C7;background:#E9F8F0;color:#168257}
+    .flowchartLibraryHead{align-items:flex-start}.flowchartLibraryHead h2{margin:0 0 3px}.flowchartLibraryHead .helper{margin:0}
+    .flowchartListTools{display:grid;grid-template-columns:minmax(180px,260px) minmax(220px,1fr);gap:10px;margin:14px 0 12px}
+    .flowchartLibrary{display:grid;gap:9px}
+    .flowchartLibraryRow{display:grid;grid-template-columns:minmax(230px,1.35fr) minmax(220px,1.2fr) 100px 86px 150px;gap:12px;align-items:center;border:1px solid #D9E3E7;border-radius:8px;background:#fff;padding:11px 12px}
+    .flowchartLibraryRow:hover{border-color:#B6DCE7;background:#FCFEFF}.flowchartLibraryRow.active{border-color:#6BCBE5;box-shadow:0 0 0 2px rgba(40,184,226,.08)}
+    .flowchartLibraryTitle{font-size:11px;font-weight:900;color:#34474F;line-height:1.35}.flowchartLibrarySub{margin-top:3px;color:#77888F;font-size:9px;line-height:1.35}.flowchartLibraryMeta{font-size:9px;color:#667980;font-weight:700}
+    .flowchartModuleChips{display:flex;flex-wrap:wrap;gap:4px}.flowchartModuleChip{display:inline-flex;max-width:170px;border:1px solid #D2E4E9;background:#F4FBFD;border-radius:999px;padding:4px 7px;color:#377286;font-size:8px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .flowchartListStatus{display:inline-flex;justify-content:center;border-radius:999px;padding:5px 7px;font-size:8px;font-weight:900}.flowchartListStatus.on{background:#E9F8F0;color:#168257}.flowchartListStatus.off{background:#F1F3F4;color:#75848A}
+    .flowchartRowActions{display:flex;justify-content:flex-end;gap:6px}.flowchartRowActions button{min-height:32px;padding:6px 9px;font-size:9px}.flowchartEditBtn{border:1px solid #B7DCE7;background:#F0FAFD;color:#087C9D;border-radius:6px;font-weight:850}.flowchartDeleteBtn{border:1px solid #F1C7C2;background:#FFF5F3;color:#C45443;border-radius:6px;font-weight:850}
+    .flowchartListEmpty{padding:24px;border:1px dashed #BCCDD3;border-radius:8px;background:#FCFDFD;text-align:center;color:#76888F;font-size:11px}
+    .flowchartEditorLabel{display:flex;align-items:center;gap:8px;margin-bottom:12px}.flowchartEditorLabel strong{font-size:12px;color:#34474F}.flowchartEditorLabel span{font-size:9px;color:#708188}
+    .flowchartConfigGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .flowchartToggleField{align-self:end}.flowchartToggle{min-height:39px;display:flex;align-items:center;gap:9px;border:1px solid #CED9DE;border-radius:6px;padding:8px 11px;background:#FAFCFC;font-size:12px;font-weight:700;color:#40525A}.flowchartToggle input{width:16px;height:16px}
+    .flowModulePickerField{grid-column:1/-1}.flowModulePicker{display:flex;flex-wrap:wrap;gap:7px;border:1px solid #CED9DE;border-radius:7px;background:#FAFCFC;padding:9px;min-height:44px}.flowModuleChoice{display:flex;align-items:center;gap:6px;border:1px solid #D4E1E5;background:#fff;border-radius:999px;padding:6px 9px;font-size:10px;font-weight:750;color:#42565E;cursor:pointer}.flowModuleChoice:has(input:checked){border-color:#66CBE7;background:#EAF9FD;color:#087C9D}.flowModuleChoice input{width:14px;height:14px;margin:0}.flowModuleHelp{display:block;margin-top:5px;color:#77888F;font-size:9px;line-height:1.4}
+    .flowchartBuilderHead{align-items:flex-start}.flowchartBuilderHead h2{margin:0 0 3px}.flowchartBuilderHead .helper{margin:0}
+    .flowchartNodeBuilder{display:grid;gap:10px;margin-top:12px}
+    .flowNodeEditor{display:grid;grid-template-columns:34px minmax(120px,1fr) minmax(120px,1fr) 120px minmax(145px,1fr) minmax(145px,1fr) minmax(170px,1.2fr) 42px;gap:8px;align-items:end;border:1px solid #D7E2E6;background:#FBFDFD;border-radius:8px;padding:12px}
+    .flowNodeOrder{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#DDF5FB;color:#087B9D;font-size:11px;font-weight:900;align-self:center}.flowNodeEditor .field{min-width:0}.flowNodeEditor .field label{font-size:9px}.flowNodeEditor select,.flowNodeEditor input{width:100%}.flowNodeDelete{width:38px;height:38px;border:1px solid #F1C7C2;background:#FFF5F3;color:#C45443;border-radius:6px;font-size:16px}
+    .flowNodeMove{display:flex;gap:4px;margin-top:4px}.flowNodeMove button{border:0;background:transparent;color:#74868D;font-size:10px;padding:2px 4px}.flowNodeMove button:hover{color:#087FA4}
+    .flowchartEmptyBuilder{padding:28px;border:1px dashed #BBCBD1;border-radius:8px;text-align:center;color:#78888E;background:#FCFDFD;font-size:12px}
+    .flowchartPreviewWrap{margin-top:18px;border-top:1px solid #E5ECEF;padding-top:16px}.flowchartPreviewLabel{font-size:10px;font-weight:900;color:#6F7E84;text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px}
+    .flowchartPreview{display:flex;align-items:stretch;gap:0;overflow:auto;padding:4px 2px 8px}.flowPreviewNode{min-width:150px;max-width:200px;border:1px solid #9EDBEC;background:#EFFAFF;color:#17647B;border-radius:8px;padding:10px;text-align:center;font-size:11px;font-weight:800;line-height:1.35}.flowPreviewTarget{display:block;margin-top:5px;color:#708189;font-size:9px;font-weight:600}.flowPreviewArrow{flex:0 0 36px;display:grid;place-items:center;color:#43AFCF;font-size:18px;font-weight:900}
+    .flowchartSubmitBar{justify-content:space-between}.flowchartSubmitBar .flowchartLeftActions{display:flex;gap:7px}
+    @media(max-width:1200px){.flowchartLibraryRow{grid-template-columns:minmax(200px,1.2fr) minmax(190px,1fr) 90px 70px 135px}.flowNodeEditor{grid-template-columns:34px 1fr 1fr}.flowNodeEditor .field:nth-of-type(4),.flowNodeEditor .field:nth-of-type(5),.flowNodeEditor .field:nth-of-type(6){grid-column:auto}.flowNodeDelete{align-self:end}}
+    @media(max-width:850px){.flowchartLibraryRow{grid-template-columns:1fr 1fr}.flowchartRowActions{justify-content:flex-start}.flowchartListTools{grid-template-columns:1fr 1fr}}
+    @media(max-width:700px){.flowchartAdminIntro{align-items:flex-start;flex-direction:column}.flowchartListTools{grid-template-columns:1fr}.flowchartLibraryRow{grid-template-columns:1fr}.flowchartConfigGrid{grid-template-columns:1fr}.flowNodeEditor{grid-template-columns:34px 1fr}.flowNodeEditor .field{grid-column:2}.flowNodeDelete{grid-column:2}.flowchartPreview{align-items:center;flex-direction:column}.flowPreviewArrow{height:30px;min-height:30px;transform:rotate(90deg)}.flowPreviewNode{width:100%;max-width:none}.flowchartSubmitBar{gap:8px;flex-direction:column-reverse}.flowchartSubmitBar button{width:100%}.flowchartSubmitBar .flowchartLeftActions{width:100%;flex-direction:column}}
+    /* Flowchart Management v4 — Guide List aligned layout */
+    .flowchartView[hidden]{display:none!important}
+    .flowchartMoreFilter{display:grid;grid-template-columns:minmax(220px,1fr) minmax(180px,240px) auto;gap:12px;align-items:end;border-top:1px solid #E5ECEF;margin-top:14px;padding-top:14px}
+    .flowchartMoreFilter[hidden]{display:none!important}
+    .flowchartMoreFilterActions{display:flex;gap:7px;justify-content:flex-end}
+    .flowchartNewBtn{white-space:nowrap}
+    .flowchartTableModules{display:flex;flex-wrap:wrap;gap:4px;max-width:330px}
+    .flowchartTableModules .flowchartModuleChip{max-width:145px}
+    .flowchartTableName strong,.flowchartTableTitle strong{display:block;color:#2F4047;line-height:1.35}
+    .flowchartTableId{font-size:9px;color:#829097;margin-top:4px;word-break:break-all}
+    .flowchartEditorNav{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .flowchartEditorNavLeft{display:flex;align-items:center;gap:12px;min-width:0}
+    .flowchartEditorNavCopy{min-width:0}
+    .flowchartEditorNavCopy h2{margin:0 0 3px;font-size:17px;color:#2F4047}
+    .flowchartEditorNavCopy p{margin:0;color:#718087;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:760px}
+    .flowchartEditorBack{flex:0 0 auto}
+    .flowchartEditorSectionHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+    .flowchartEditorSectionHead h2{margin:0 0 3px;font-size:16px}.flowchartEditorSectionHead p{margin:0}
+    .flowchartSubmitBarGuideLike{justify-content:flex-end;gap:8px}
+    .flowchartDeleteMenuItem{color:#C84A34!important}
+    .flowchartDeleteMenuItem:hover{background:#FFF2EF!important;color:#B83B27!important}
+    @media(max-width:900px){.flowchartMoreFilter{grid-template-columns:1fr 1fr}.flowchartMoreFilterActions{grid-column:1/-1;justify-content:flex-start}.flowchartEditorNav{align-items:flex-start}.flowchartEditorNavLeft{align-items:flex-start}}
+    @media(max-width:700px){.flowchartMoreFilter{grid-template-columns:1fr}.flowchartMoreFilterActions{grid-column:auto}.flowchartEditorNav{flex-direction:column}.flowchartEditorNavLeft{width:100%;flex-direction:column}.flowchartEditorBack{width:auto}.flowchartStatusBadge{align-self:flex-start}.flowchartSubmitBarGuideLike{flex-direction:column-reverse}.flowchartSubmitBarGuideLike button{width:100%}}
+</style>
 </head>
 
 <body>
@@ -1736,8 +1791,8 @@
     <div class="page">
       <div class="moduleTab">🎓 Knowledge Center Admin</div>
       <nav class="tabs"><button class="tab active" data-tab="create">Create Guide</button><button class="tab"
-          data-tab="list">Guide List</button><button class="tab" data-tab="arrange">Guide Arrangement</button><button
-          class="tab" data-tab="feedback">Feedback Survey Report</button></nav>
+          data-tab="list">Guide List</button><button class="tab" data-tab="arrange">Guide Arrangement</button><button class="tab"
+          data-tab="flowchart">Flowchart</button><button class="tab" data-tab="feedback">Feedback Survey Report</button></nav>
       <section class="panel active" id="panel-create">
         <div class="card">
           <div class="formGrid">
@@ -1906,6 +1961,89 @@
         </div>
       </section>
 
+      <section class="panel" id="panel-flowchart">
+        <div class="flowchartView" id="flowchartListView">
+          <div class="card">
+            <div class="listFilterBar">
+              <div class="field"><label>Title</label><input id="flowListSearch" placeholder="Search flowchart name or title"></div>
+              <div class="listFilterActions">
+                <button class="primaryBtn" id="applyFlowFilter" type="button">Search</button>
+                <button class="ghostBtn" id="toggleFlowMoreFilter" type="button">More Filter</button>
+                <button class="ghostBtn flowchartNewBtn" id="newFlowchart" type="button"><span aria-hidden="true">＋</span> New Flowchart</button>
+              </div>
+            </div>
+            <div class="flowchartMoreFilter" id="flowchartMoreFilter" hidden>
+              <div class="field"><label>Main Menu</label><select id="flowListModuleFilter"></select></div>
+              <div class="field"><label>Status</label><select id="flowListStatusFilter"><option value="">All Status</option><option value="active">Active</option><option value="hidden">Hidden</option></select></div>
+              <div class="flowchartMoreFilterActions"><button class="ghostBtn" id="resetFlowFilter" type="button">Reset</button><button class="primaryBtn" id="applyFlowMoreFilter" type="button">Apply Filter</button></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="tableTopBar">
+              <div class="summary" id="flowchartSummary"></div>
+              <div class="pagination" id="flowchartPagination"></div>
+            </div>
+            <div class="tableWrap">
+              <table class="dataTable">
+                <thead>
+                  <tr>
+                    <th>Created / Updated</th>
+                    <th>Flowchart Name</th>
+                    <th>Main Menu</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Steps</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="flowchartRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="flowchartView" id="flowchartEditorView" hidden>
+          <div class="card flowchartEditorNav">
+            <div class="flowchartEditorNavLeft">
+              <button class="ghostBtn flowchartEditorBack" id="backToFlowchartList" type="button">← Back</button>
+              <div class="flowchartEditorNavCopy">
+                <h2 id="flowchartEditorHeading">Create New Flowchart</h2>
+                <p id="flowchartEditorHint">Flowchart baru akan mendapatkan ID unik ketika disimpan.</p>
+              </div>
+            </div>
+            <div class="flowchartStatusBadge" id="flowchartStatusBadge">New flowchart</div>
+          </div>
+
+          <div class="card">
+            <div class="flowchartEditorSectionHead"><div><h2>Flowchart Information</h2><p class="helper">Tentukan nama internal, visibility, Main Menu tempat flowchart ditampilkan, dan judul yang terlihat oleh user.</p></div></div>
+            <div class="flowchartConfigGrid">
+              <div class="field"><label>Flowchart Name — Admin</label><input id="flowAdminName" placeholder="Contoh: Inbound Standard Flow"><span class="flowModuleHelp">Nama internal untuk membedakan banyak variasi flowchart di Flowchart List.</span></div>
+              <div class="field flowchartToggleField"><label>Visibility</label><label class="flowchartToggle"><input type="checkbox" id="flowEnabled"><span>Show flowchart in index.html</span></label></div>
+              <div class="field flowModulePickerField"><label>Show Flowchart In — Multiple Main Menu</label><div class="flowModulePicker" id="flowModulePicker"></div><span class="flowModuleHelp">Pilih semua Main Menu tempat flowchart ini muncul. Main Menu yang sama boleh dipilih oleh banyak flowchart.</span></div>
+              <div class="field"><label>Flowchart Title — Bahasa Indonesia</label><input id="flowTitleId" placeholder="Contoh: Alur Proses Inbound"></div>
+              <div class="field"><label>Flowchart Title — English</label><input id="flowTitleEn" placeholder="Example: Inbound Process Flow"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="sectionRow flowchartBuilderHead">
+              <div><h2>Flow Steps</h2><p class="helper">Urutan node dari kiri ke kanan di desktop dan dari atas ke bawah di mobile. Setiap step dapat menuju Main Menu yang berbeda.</p></div>
+              <button class="primaryBtn" id="addFlowNode" type="button">+ Add Step</button>
+            </div>
+            <div class="flowchartNodeBuilder" id="flowchartNodeBuilder"></div>
+            <div class="flowchartPreviewWrap">
+              <div class="flowchartPreviewLabel">Preview</div>
+              <div class="flowchartPreview" id="flowchartAdminPreview"></div>
+            </div>
+            <div class="submitBar flowchartSubmitBarGuideLike">
+              <button class="cancelFillBtn" id="cancelFlowchart" type="button">Cancel</button>
+              <button class="primaryBtn" id="saveFlowchart" type="button">Save Flowchart</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="panel" id="panel-feedback">
         <div class="card">
           <div class="feedbackFilters">
@@ -2050,9 +2188,10 @@
 
   async function readRemoteCoreState() {
     const stampPromise = firebaseRequest(`${STATE_ROOT}/savedAt.json?t=${Date.now()}`);
-    const [data, aiReport, savedAt] = await Promise.all([
+    const [data, aiReport, flowcharts, savedAt] = await Promise.all([
       firebaseRequest(`${STATE_ROOT}/data.json?t=${Date.now()}`),
       firebaseRequest(`${STATE_ROOT}/aiReport.json?t=${Date.now()}`),
+      firebaseRequest(`${STATE_ROOT}/flowcharts.json?t=${Date.now()}`),
       stampPromise
     ]);
     remoteInitialized = Array.isArray(data);
@@ -2061,6 +2200,7 @@
       data,
       assets: {},
       aiReport: aiReport && typeof aiReport === 'object' ? aiReport : undefined,
+      flowcharts: flowcharts && typeof flowcharts === 'object' ? flowcharts : {},
       savedAt: savedAt || new Date().toISOString(),
       schemaVersion: localStore.schemaVersion || 1
     };
@@ -2085,6 +2225,7 @@
     const corePayload = {
       data: normalized.data,
       aiReport: normalized.aiReport || null,
+      flowcharts: normalized.flowcharts || {},
       schemaVersion: normalized.schemaVersion,
       savedAt: normalized.savedAt
     };
@@ -2772,7 +2913,7 @@
     }
 
     function knowledgeContentFingerprint(currentState) {
-      return JSON.stringify({ data: currentState?.data || [] });
+      return JSON.stringify({ data: currentState?.data || [], flowcharts: currentState?.flowcharts || {} });
     }
 
     let knowledgeFingerprint = knowledgeContentFingerprint(state);
@@ -2867,7 +3008,7 @@
     function moduleOptions(includeAll = false, includeNew = false) { let h = includeAll ? '<option value="">All Main Menu</option>' : ''; h += state.data.map(m => `<option value="${esc(m.id)}">${esc(m.name.id)}</option>`).join(''); if (includeNew) h += '<option value="__new__">+ Create New Main Menu</option>'; return h }
     function uniquePages(moduleId = '') { const arr = allArticles().filter(x => !moduleId || x.module.id === moduleId).map(x => pageName(x.topic)); return [...new Set(arr)].sort((a, b) => a.localeCompare(b)) }
     function pageOptions(moduleId, includeAll = false, includeNew = false) { let h = includeAll ? '<option value="">All Page Menu</option>' : ''; h += uniquePages(moduleId).map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join(''); if (includeNew) h += '<option value="__new__">+ Create New Page Menu</option>'; return h }
-    function initSelects() { $('mainMenu').innerHTML = moduleOptions(false, true); ['filterMain', 'arrMain'].forEach(id => $(id).innerHTML = moduleOptions(true)); $('mainMenu').value = state.data[0]?.id || '__new__'; $('pageMenu').innerHTML = pageOptions($('mainMenu').value, false, true); $('filterPage').innerHTML = pageOptions('', true); $('arrPage').innerHTML = pageOptions('', true); refreshEditors(); if (typeof syncTocDeleteButtons === 'function') syncTocDeleteButtons() }
+    function initSelects() { const selectedFlow = $('flowMain')?.value || ''; $('mainMenu').innerHTML = moduleOptions(false, true); ['filterMain', 'arrMain'].forEach(id => $(id).innerHTML = moduleOptions(true)); if ($('flowMain')) { $('flowMain').innerHTML = moduleOptions(false); if (selectedFlow && state.data.some(module => module.id === selectedFlow)) $('flowMain').value = selectedFlow; } $('mainMenu').value = state.data[0]?.id || '__new__'; $('pageMenu').innerHTML = pageOptions($('mainMenu').value, false, true); $('filterPage').innerHTML = pageOptions('', true); $('arrPage').innerHTML = pageOptions('', true); refreshEditors(); if (typeof syncTocDeleteButtons === 'function') syncTocDeleteButtons() }
     function syncNewPageMenuField() { const isNewPage = $('pageMenu').value === '__new__'; $('newPageMenu').style.display = isNewPage ? '' : 'none'; if (!isNewPage) $('newPageMenu').value = '' }
     function syncCreateMenuFields() { const isNewMain = $('mainMenu').value === '__new__'; $('newMainMenu').style.display = isNewMain ? '' : 'none'; if (!isNewMain) $('newMainMenu').value = ''; $('pageMenu').innerHTML = isNewMain ? '<option value="__new__">+ Create New Page Menu</option>' : pageOptions($('mainMenu').value, false, true); if (isNewMain) $('pageMenu').value = '__new__'; syncNewPageMenuField() }
     $('mainMenu').onchange = syncCreateMenuFields;
@@ -2883,6 +3024,7 @@
       await refreshSharedState({ refreshGuides: true });
       if (name === 'list') renderGuideList();
       if (name === 'arrange') renderArrangement();
+      if (name === 'flowchart') renderFlowchartEditor();
       if (name === 'feedback') renderFeedbackReport({ skipRefresh: true });
     }
     document.querySelectorAll('.tab').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
@@ -4391,6 +4533,462 @@
         button.textContent = 'Save Arrangement';
       }
     }
+
+    // ===== Flowchart Library: many flowcharts can belong to the same Main Menu =====
+    let selectedFlowId = '';
+    let flowchartEditorInitialized = false;
+    let flowchartDraft = null;
+    const flowUid = () => 'flow-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+    const flowNow = () => new Date().toISOString();
+    function flowchartsState() { state.flowcharts = state.flowcharts && typeof state.flowcharts === 'object' ? state.flowcharts : {}; return state.flowcharts }
+    function flowModuleById(id) { return state.data.find(module => module.id === id) }
+    function flowDefaultTargetModule() { return flowModuleById(flowchartDraft?.moduleIds?.[0]) || state.data[0] }
+    function flowTargetModule(node) { return flowModuleById(node?.moduleId) || flowDefaultTargetModule() }
+    function flowPagePairs(module) {
+      const map = new Map();
+      (module?.topics || []).forEach(topic => {
+        const id = pageName(topic, 'id');
+        const en = pageName(topic, 'en');
+        if (id && !map.has(id)) map.set(id, { id, en });
+      });
+      return [...map.values()];
+    }
+    function emptyFlowNode(module) {
+      const firstPage = flowPagePairs(module)[0]?.id || '';
+      return { id: flowUid(), label: { id: '', en: '' }, targetType: 'page', moduleId: module?.id || '', pageMenu: firstPage, topicId: '' };
+    }
+    function blankFlowchartDraft() {
+      return { flowId: flowUid(), adminName: '', moduleIds: [], enabled: true, title: { id: '', en: '' }, nodes: [], createdAt: '', updatedAt: '' };
+    }
+    function normalizeFlowchartConfig(flowId, value, fallbackModuleId = '') {
+      const raw = value && typeof value === 'object' ? clone(value) : {};
+      const moduleIds = [...new Set([
+        ...(Array.isArray(raw.moduleIds) ? raw.moduleIds : []),
+        ...(fallbackModuleId ? [fallbackModuleId] : [])
+      ])].filter(id => state.data.some(item => item.id === id));
+      const firstModule = flowModuleById(moduleIds[0]) || state.data[0];
+      return {
+        flowId: raw.flowId || flowId || flowUid(),
+        adminName: raw.adminName || raw.name || raw.title?.id || raw.title?.en || '',
+        moduleIds,
+        enabled: raw.enabled !== false,
+        title: {
+          id: raw.title?.id || (raw.title && typeof raw.title === 'string' ? raw.title : '') || '',
+          en: raw.title?.en || raw.title?.id || (raw.title && typeof raw.title === 'string' ? raw.title : '') || ''
+        },
+        nodes: Array.isArray(raw.nodes) ? raw.nodes.map(node => ({
+          id: node.id || flowUid(),
+          label: { id: node.label?.id || node.label || '', en: node.label?.en || node.label?.id || node.label || '' },
+          targetType: node.targetType === 'article' ? 'article' : 'page',
+          moduleId: node.moduleId || fallbackModuleId || firstModule?.id || '',
+          pageMenu: node.pageMenu || '',
+          topicId: node.topicId || ''
+        })) : [],
+        createdAt: raw.createdAt || '',
+        updatedAt: raw.updatedAt || ''
+      };
+    }
+    function flowchartCollection(source = flowchartsState()) {
+      const collection = {};
+      Object.entries(source && typeof source === 'object' ? source : {}).forEach(([key, value]) => {
+        if (!value || typeof value !== 'object') return;
+        const keyIsModule = state.data.some(module => module.id === key);
+        const flowId = value.flowId || (keyIsModule ? `legacy-${key}` : key) || flowUid();
+        const normalized = normalizeFlowchartConfig(flowId, value, keyIsModule ? key : '');
+        if (!collection[flowId]) collection[flowId] = normalized;
+        else {
+          collection[flowId].moduleIds = [...new Set([...collection[flowId].moduleIds, ...normalized.moduleIds])];
+          if (!collection[flowId].adminName && normalized.adminName) collection[flowId].adminName = normalized.adminName;
+          if (!collection[flowId].nodes.length && normalized.nodes.length) collection[flowId].nodes = normalized.nodes;
+        }
+      });
+      return collection;
+    }
+    function flowchartItems(source = flowchartsState()) {
+      return Object.values(flowchartCollection(source)).sort((a, b) => {
+        const ta = Date.parse(a.updatedAt || a.createdAt || '') || 0;
+        const tb = Date.parse(b.updatedAt || b.createdAt || '') || 0;
+        if (tb !== ta) return tb - ta;
+        return String(a.adminName || a.title.id || '').localeCompare(String(b.adminName || b.title.id || ''));
+      });
+    }
+    function flowDisplayName(config) { return config.adminName || config.title?.id || config.title?.en || config.flowId || 'Untitled Flowchart' }
+    function flowFormatDate(value) {
+      if (!value) return '—';
+      const d = new Date(value); if (Number.isNaN(d.getTime())) return '—';
+      return d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function articleOptionsForFlow(module, page, selected = '') {
+      const rows = (module?.topics || []).filter(topic => !page || pageName(topic) === page);
+      let html = '<option value="">Select article</option>' + rows.map(topic => `<option value="${esc(topic.id)}" ${topic.id === selected ? 'selected' : ''}>${esc(topic.title?.id || topic.title?.en || topic.id)}</option>`).join('');
+      if (selected && !rows.some(topic => topic.id === selected)) {
+        const fallback = module?.topics?.find(topic => topic.id === selected);
+        if (fallback) html += `<option value="${esc(fallback.id)}" selected>${esc(fallback.title?.id || fallback.title?.en || fallback.id)}</option>`;
+      }
+      return html;
+    }
+    function flowPageOptions(module, selected = '') {
+      return '<option value="">Select Page Menu</option>' + flowPagePairs(module).map(page => `<option value="${esc(page.id)}" ${page.id === selected ? 'selected' : ''}>${esc(page.id)}</option>`).join('');
+    }
+    function flowModuleOptions(selected = '') {
+      return state.data.map(module => `<option value="${esc(module.id)}" ${module.id === selected ? 'selected' : ''}>${esc(module.name?.id || module.name?.en || module.id)}</option>`).join('');
+    }
+    let flowchartPage = 1;
+    const FLOWCHART_PAGE_SIZE = 10;
+    let flowchartView = 'list';
+    function ensureFlowListControls() {
+      const filter = $('flowListModuleFilter');
+      if (filter) {
+        const current = filter.value;
+        filter.innerHTML = '<option value="">All Main Menu</option>' + flowModuleOptions(current);
+        if ([...filter.options].some(option => option.value === current)) filter.value = current;
+      }
+    }
+    function setFlowchartView(view) {
+      flowchartView = view === 'editor' ? 'editor' : 'list';
+      const listView = $('flowchartListView');
+      const editorView = $('flowchartEditorView');
+      if (listView) listView.hidden = flowchartView !== 'list';
+      if (editorView) editorView.hidden = flowchartView !== 'editor';
+      closeGuideActionMenus();
+    }
+    function filteredFlowchartItems() {
+      const moduleFilter = $('flowListModuleFilter')?.value || '';
+      const statusFilter = $('flowListStatusFilter')?.value || '';
+      const query = String($('flowListSearch')?.value || '').trim().toLowerCase();
+      return flowchartItems().filter(config => {
+        if (moduleFilter && !config.moduleIds.includes(moduleFilter)) return false;
+        if (statusFilter === 'active' && !config.enabled) return false;
+        if (statusFilter === 'hidden' && config.enabled) return false;
+        if (!query) return true;
+        const moduleNames = config.moduleIds.map(id => { const m = flowModuleById(id); return `${m?.name?.id || ''} ${m?.name?.en || ''}`; }).join(' ');
+        return `${config.adminName} ${config.title?.id || ''} ${config.title?.en || ''} ${moduleNames} ${config.flowId}`.toLowerCase().includes(query);
+      });
+    }
+    function renderFlowchartLibrary() {
+      const root = $('flowchartRows'); if (!root) return;
+      const allRows = flowchartItems();
+      const rows = filteredFlowchartItems();
+      const totalPages = Math.max(1, Math.ceil(rows.length / FLOWCHART_PAGE_SIZE));
+      flowchartPage = Math.min(Math.max(1, flowchartPage), totalPages);
+      const pageRows = rows.slice((flowchartPage - 1) * FLOWCHART_PAGE_SIZE, flowchartPage * FLOWCHART_PAGE_SIZE);
+      root.innerHTML = rows.length ? pageRows.map(config => {
+        const modules = config.moduleIds.map(id => flowModuleById(id)).filter(Boolean);
+        const created = flowFormatDate(config.createdAt);
+        const updated = flowFormatDate(config.updatedAt || config.createdAt);
+        const titleId = config.title?.id || config.title?.en || '—';
+        const titleEn = config.title?.en && config.title.en !== config.title.id ? config.title.en : '';
+        return `<tr>
+          <td>${esc(created)}<div class="muted">Updated: ${esc(updated)}</div></td>
+          <td class="flowchartTableName"><strong>${esc(flowDisplayName(config))}</strong><div class="flowchartTableId">${esc(config.flowId)}</div></td>
+          <td><div class="flowchartTableModules">${modules.length ? modules.map(module => `<span class="flowchartModuleChip" title="${esc(module.name?.id || module.name?.en || module.id)}">${esc(module.name?.id || module.name?.en || module.id)}</span>`).join('') : '<span class="muted">—</span>'}</div></td>
+          <td class="flowchartTableTitle"><strong>${esc(titleId)}</strong>${titleEn ? `<div class="muted">${esc(titleEn)}</div>` : ''}</td>
+          <td><span class="flowchartListStatus ${config.enabled ? 'on' : 'off'}">${config.enabled ? 'Active' : 'Hidden'}</span></td>
+          <td>${config.nodes.length}</td>
+          <td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-flow-menu="${esc(config.flowId)}">⋮</button><div class="actionDropdown"><button type="button" data-flow-edit="${esc(config.flowId)}">Edit</button><button type="button" data-flow-duplicate="${esc(config.flowId)}">Duplicate</button><button type="button" class="flowchartDeleteMenuItem" data-remove data-flow-list-delete="${esc(config.flowId)}">Delete</button></div></div></td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="7" class="empty">${allRows.length ? 'No flowcharts match the selected filters.' : 'No flowcharts have been created yet.'}</td></tr>`;
+      if ($('flowchartSummary')) $('flowchartSummary').innerHTML = `<span>${pageRows.length} flowcharts shown</span><span>${allRows.length} total flowcharts</span>`;
+      renderPagination('flowchartPagination', flowchartPage, totalPages, rows.length, next => { flowchartPage = next; renderFlowchartLibrary(); });
+      root.querySelectorAll('[data-flow-menu]').forEach(button => button.onclick = event => toggleActionMenu(button, event));
+      root.querySelectorAll('[data-flow-edit]').forEach(button => button.onclick = () => { closeGuideActionMenus(); loadFlowchartForEdit(button.dataset.flowEdit); });
+      root.querySelectorAll('[data-flow-duplicate]').forEach(button => button.onclick = () => { closeGuideActionMenus(); duplicateFlowchartById(button.dataset.flowDuplicate); });
+      root.querySelectorAll('[data-flow-list-delete]').forEach(button => button.onclick = () => { closeGuideActionMenus(); deleteFlowchartById(button.dataset.flowListDelete); });
+    }
+    function renderFlowModulePicker() {
+      const root = $('flowModulePicker'); if (!root || !flowchartDraft) return;
+      root.innerHTML = state.data.map(module => `<label class="flowModuleChoice"><input type="checkbox" data-flow-display-module="${esc(module.id)}" ${flowchartDraft.moduleIds.includes(module.id) ? 'checked' : ''}><span>${esc(module.name?.id || module.name?.en || module.id)}</span></label>`).join('') || '<span class="helper">No Main Menu available.</span>';
+      root.querySelectorAll('[data-flow-display-module]').forEach(input => input.onchange = () => {
+        const id = input.dataset.flowDisplayModule;
+        if (input.checked) { if (!flowchartDraft.moduleIds.includes(id)) flowchartDraft.moduleIds.push(id); }
+        else flowchartDraft.moduleIds = flowchartDraft.moduleIds.filter(item => item !== id);
+        renderFlowchartStatus();
+      });
+    }
+    function renderFlowchartStatus() {
+      const badge = $('flowchartStatusBadge'); if (!badge || !flowchartDraft) return;
+      const exists = !!selectedFlowId && !!flowchartCollection()[selectedFlowId];
+      const count = flowchartDraft.moduleIds.length;
+      badge.textContent = exists ? (flowchartDraft.enabled ? `Saved • Active in ${count} Main Menu${count === 1 ? '' : 's'}` : `Saved • Hidden • ${count} Main Menu${count === 1 ? '' : 's'}`) : 'New flowchart';
+      badge.classList.toggle('live', exists && flowchartDraft.enabled);
+      if ($('flowchartEditorHeading')) $('flowchartEditorHeading').textContent = exists ? `Edit Flowchart — ${flowDisplayName(flowchartDraft)}` : 'Create New Flowchart';
+      if ($('flowchartEditorHint')) $('flowchartEditorHint').textContent = exists ? `Flow ID: ${flowchartDraft.flowId}` : 'Flowchart baru akan mendapatkan ID unik ketika disimpan.';
+    }
+    function applyFlowchartDraftToForm() {
+      if (!flowchartDraft) flowchartDraft = blankFlowchartDraft();
+      $('flowAdminName').value = flowchartDraft.adminName || '';
+      $('flowEnabled').checked = flowchartDraft.enabled !== false;
+      $('flowTitleId').value = flowchartDraft.title?.id || '';
+      $('flowTitleEn').value = flowchartDraft.title?.en || '';
+      renderFlowModulePicker(); renderFlowchartStatus(); renderFlowchartNodes();
+    }
+    function renderFlowchartEditor() {
+      ensureFlowListControls();
+      if (!flowchartEditorInitialized) {
+        flowchartEditorInitialized = true;
+        selectedFlowId = '';
+        flowchartDraft = blankFlowchartDraft();
+        flowchartView = 'list';
+      }
+      if (flowchartView === 'editor') {
+        const collection = flowchartCollection();
+        if (selectedFlowId && collection[selectedFlowId]) flowchartDraft = normalizeFlowchartConfig(selectedFlowId, collection[selectedFlowId]);
+        else if (!flowchartDraft) flowchartDraft = blankFlowchartDraft();
+        setFlowchartView('editor');
+        applyFlowchartDraftToForm();
+      } else {
+        setFlowchartView('list');
+        renderFlowchartLibrary();
+      }
+    }
+    function startNewFlowchart() {
+      selectedFlowId = '';
+      flowchartDraft = blankFlowchartDraft();
+      setFlowchartView('editor');
+      applyFlowchartDraftToForm();
+      $('panel-flowchart')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => $('flowAdminName')?.focus(), 80);
+    }
+    function loadFlowchartForEdit(flowId) {
+      const config = flowchartCollection()[flowId]; if (!config) { toast('Flowchart tidak ditemukan.'); renderFlowchartLibrary(); return; }
+      selectedFlowId = flowId;
+      flowchartDraft = normalizeFlowchartConfig(flowId, config);
+      setFlowchartView('editor');
+      applyFlowchartDraftToForm();
+      $('panel-flowchart')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function backToFlowchartList() {
+      selectedFlowId = '';
+      flowchartDraft = null;
+      setFlowchartView('list');
+      renderFlowchartLibrary();
+      $('panel-flowchart')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function syncFlowchartHeaderDraft() {
+      if (!flowchartDraft) return;
+      flowchartDraft.adminName = $('flowAdminName').value.trim();
+      flowchartDraft.enabled = $('flowEnabled').checked;
+      flowchartDraft.title = { id: $('flowTitleId').value.trim(), en: $('flowTitleEn').value.trim() };
+      renderFlowchartStatus(); renderFlowchartPreview();
+    }
+    function renderFlowchartNodes() {
+      const root = $('flowchartNodeBuilder'); if (!root || !flowchartDraft) return;
+      root.innerHTML = flowchartDraft.nodes.length ? flowchartDraft.nodes.map((node, index) => {
+        const targetModule = flowTargetModule(node);
+        const articleDisabled = node.targetType !== 'article';
+        return `<div class="flowNodeEditor" data-flow-node="${esc(node.id)}">
+          <div><div class="flowNodeOrder">${index + 1}</div><div class="flowNodeMove"><button type="button" data-flow-up="${esc(node.id)}" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" data-flow-down="${esc(node.id)}" ${index === flowchartDraft.nodes.length - 1 ? 'disabled' : ''}>↓</button></div></div>
+          <div class="field"><label>Step Label — ID</label><input data-flow-field="labelId" value="${esc(node.label.id)}" placeholder="Contoh: Create PO"></div>
+          <div class="field"><label>Step Label — EN</label><input data-flow-field="labelEn" value="${esc(node.label.en)}" placeholder="Example: Create PO"></div>
+          <div class="field"><label>Direct Link</label><select data-flow-field="targetType"><option value="page" ${node.targetType === 'page' ? 'selected' : ''}>Page Menu</option><option value="article" ${node.targetType === 'article' ? 'selected' : ''}>Article</option></select></div>
+          <div class="field"><label>Target Main Menu</label><select data-flow-field="moduleId">${flowModuleOptions(node.moduleId)}</select></div>
+          <div class="field"><label>Page Menu</label><select data-flow-field="pageMenu">${flowPageOptions(targetModule, node.pageMenu)}</select></div>
+          <div class="field"><label>Article ${articleDisabled ? '(optional)' : ''}</label><select data-flow-field="topicId" ${articleDisabled ? 'disabled' : ''}>${articleOptionsForFlow(targetModule, node.pageMenu, node.topicId)}</select></div>
+          <button class="flowNodeDelete" type="button" data-flow-delete="${esc(node.id)}" aria-label="Delete step">×</button>
+        </div>`;
+      }).join('') : '<div class="flowchartEmptyBuilder">Belum ada step. Klik <strong>+ Add Step</strong> untuk mulai membuat flowchart.</div>';
+      bindFlowchartNodes(); renderFlowchartPreview();
+    }
+    function bindFlowchartNodes() {
+      $('flowchartNodeBuilder').querySelectorAll('[data-flow-node]').forEach(row => {
+        const node = flowchartDraft.nodes.find(item => item.id === row.dataset.flowNode); if (!node) return;
+        row.querySelectorAll('[data-flow-field]').forEach(input => {
+          input.onchange = input.oninput = () => {
+            const field = input.dataset.flowField;
+            if (field === 'labelId') node.label.id = input.value;
+            else if (field === 'labelEn') node.label.en = input.value;
+            else if (field === 'targetType') { node.targetType = input.value === 'article' ? 'article' : 'page'; if (node.targetType === 'page') node.topicId = ''; renderFlowchartNodes(); return; }
+            else if (field === 'moduleId') { node.moduleId = input.value; const module = flowTargetModule(node); node.pageMenu = flowPagePairs(module)[0]?.id || ''; node.topicId = ''; renderFlowchartNodes(); return; }
+            else if (field === 'pageMenu') { node.pageMenu = input.value; if (node.targetType === 'article') node.topicId = ''; renderFlowchartNodes(); return; }
+            else if (field === 'topicId') node.topicId = input.value;
+            renderFlowchartPreview();
+          };
+        });
+      });
+      $('flowchartNodeBuilder').querySelectorAll('[data-flow-delete]').forEach(button => button.onclick = () => { flowchartDraft.nodes = flowchartDraft.nodes.filter(node => node.id !== button.dataset.flowDelete); renderFlowchartNodes(); });
+      $('flowchartNodeBuilder').querySelectorAll('[data-flow-up],[data-flow-down]').forEach(button => button.onclick = () => {
+        const id = button.dataset.flowUp || button.dataset.flowDown;
+        const index = flowchartDraft.nodes.findIndex(node => node.id === id);
+        const next = button.dataset.flowUp ? index - 1 : index + 1;
+        if (index < 0 || next < 0 || next >= flowchartDraft.nodes.length) return;
+        [flowchartDraft.nodes[index], flowchartDraft.nodes[next]] = [flowchartDraft.nodes[next], flowchartDraft.nodes[index]];
+        renderFlowchartNodes();
+      });
+    }
+    function flowTargetLabel(node) {
+      const module = flowTargetModule(node);
+      const moduleLabel = module?.name?.id || module?.name?.en || node.moduleId || 'Main Menu';
+      if (node.targetType === 'article') {
+        const topic = module?.topics?.find(item => item.id === node.topicId);
+        return topic ? `${moduleLabel} → Article: ${topic.title?.id || topic.title?.en || topic.id}` : `${moduleLabel} → Article: not selected`;
+      }
+      return node.pageMenu ? `${moduleLabel} → Page Menu: ${node.pageMenu}` : `${moduleLabel} → Page Menu: not selected`;
+    }
+    function renderFlowchartPreview() {
+      if (!$('flowchartAdminPreview') || !flowchartDraft) return;
+      syncFlowchartHeaderDraftSilent();
+      $('flowchartAdminPreview').innerHTML = flowchartDraft.nodes.length ? flowchartDraft.nodes.map((node, index) => `${index ? '<div class="flowPreviewArrow">→</div>' : ''}<div class="flowPreviewNode">${esc(node.label.id || node.label.en || `Step ${index + 1}`)}<span class="flowPreviewTarget">${esc(flowTargetLabel(node))}</span></div>`).join('') : '<div class="flowchartEmptyBuilder" style="width:100%">Flowchart preview will appear here.</div>';
+    }
+    function syncFlowchartHeaderDraftSilent() {
+      if (!$('flowEnabled') || !flowchartDraft) return;
+      flowchartDraft.adminName = $('flowAdminName').value.trim();
+      flowchartDraft.enabled = $('flowEnabled').checked;
+      flowchartDraft.title = { id: $('flowTitleId').value.trim(), en: $('flowTitleEn').value.trim() };
+    }
+    function configPayloadFromDraft(existing = null) {
+      const now = flowNow();
+      return {
+        flowId: flowchartDraft.flowId || flowUid(),
+        adminName: flowchartDraft.adminName.trim(),
+        moduleIds: [...new Set(flowchartDraft.moduleIds)],
+        enabled: flowchartDraft.enabled,
+        title: clone(flowchartDraft.title),
+        nodes: clone(flowchartDraft.nodes),
+        createdAt: existing?.createdAt || flowchartDraft.createdAt || now,
+        updatedAt: now
+      };
+    }
+    async function saveFlowchart() {
+      syncFlowchartHeaderDraftSilent();
+      flowchartDraft.moduleIds = [...new Set(flowchartDraft.moduleIds)].filter(id => state.data.some(module => module.id === id));
+      if (!flowchartDraft.adminName.trim()) { toast('Isi Flowchart Name agar variasi flowchart mudah dibedakan.'); $('flowAdminName')?.focus(); return; }
+      if (!flowchartDraft.moduleIds.length) { toast('Pilih minimal 1 Main Menu pada “Show Flowchart In”.'); return; }
+      if (!flowchartDraft.title.id.trim() && !flowchartDraft.title.en.trim()) { toast('Isi minimal satu Flowchart Title.'); return; }
+      if (!flowchartDraft.nodes.length) { toast('Tambahkan minimal 1 flow step sebelum menyimpan.'); return; }
+      const invalid = flowchartDraft.nodes.find(node => {
+        const module = state.data.find(item => item.id === node.moduleId);
+        if ((!node.label.id.trim() && !node.label.en.trim()) || !module) return true;
+        if (node.targetType === 'article') return !node.topicId || !module.topics?.some(topic => topic.id === node.topicId);
+        return !node.pageMenu || !module.topics?.some(topic => topic?.pageMenu?.id === node.pageMenu || topic?.pageMenu?.en === node.pageMenu || topic?.pageMenu === node.pageMenu);
+      });
+      if (invalid) { toast('Lengkapi label, Target Main Menu, dan target link pada semua flow step.'); return; }
+      const button = $('saveFlowchart'); button.disabled = true; button.textContent = 'Saving…';
+      try {
+        const latest = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
+        const collection = flowchartCollection(latest.flowcharts);
+        const existing = collection[flowchartDraft.flowId] || null;
+        const payload = configPayloadFromDraft(existing);
+        collection[payload.flowId] = payload;
+        latest.flowcharts = collection;
+        state = latest;
+        selectedFlowId = payload.flowId;
+        flowchartDraft = normalizeFlowchartConfig(payload.flowId, payload);
+        sharedAiReportCache = sharedAiReportFromState(state);
+        knowledgeFingerprint = knowledgeContentFingerprint(state);
+        const saved = await persist('', { skipReportRefresh: true });
+        if (!saved) throw new Error('Flowchart could not be saved.');
+        toast(`Flowchart “${payload.adminName}” berhasil disimpan. ${payload.moduleIds.length} Main Menu sekarang dapat menampilkan flowchart ini tanpa membatasi flowchart lain.`);
+        flowchartPage = 1;
+        backToFlowchartList();
+      } catch (error) { console.error('Save flowchart failed:', error); toast(error.message || 'Flowchart gagal disimpan.'); }
+      finally { button.disabled = false; button.textContent = 'Save Flowchart'; }
+    }
+    function nextFlowchartCopyLabel(baseValue, usedValues, label = 'Copy') {
+      const original = String(baseValue || 'Untitled Flowchart').trim() || 'Untitled Flowchart';
+      const used = new Set((usedValues || []).map(value => String(value || '').trim().toLowerCase()).filter(Boolean));
+      let number = 1;
+      let candidate = `${original} (${label})`;
+      while (used.has(candidate.toLowerCase())) {
+        number += 1;
+        candidate = `${original} (${label} ${number})`;
+      }
+      return candidate;
+    }
+    async function duplicateFlowchartById(flowId) {
+      const current = flowchartCollection()[flowId];
+      if (!current) { toast('Flowchart tidak ditemukan.'); return; }
+      confirmModal(
+        `Duplicate flowchart “${flowDisplayName(current)}”? Seluruh Main Menu, title, visibility, dan flow step akan disalin ke flowchart baru.`,
+        async () => {
+          try {
+            const latest = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
+            const collection = flowchartCollection(latest.flowcharts);
+            const source = collection[flowId];
+            if (!source) { toast('Flowchart tidak ditemukan.'); return; }
+
+            let copiedFlowId = flowUid();
+            while (collection[copiedFlowId]) copiedFlowId = flowUid();
+            const now = flowNow();
+            const configs = Object.values(collection);
+            const copiedAdminName = nextFlowchartCopyLabel(
+              source.adminName || flowDisplayName(source),
+              configs.map(config => config.adminName || flowDisplayName(config)),
+              'Copy'
+            );
+            const copiedTitleId = nextFlowchartCopyLabel(
+              source.title?.id || source.title?.en || flowDisplayName(source),
+              configs.map(config => config.title?.id || ''),
+              'Salinan'
+            );
+            const copiedTitleEn = nextFlowchartCopyLabel(
+              source.title?.en || source.title?.id || flowDisplayName(source),
+              configs.map(config => config.title?.en || ''),
+              'Copy'
+            );
+
+            const copied = clone(source);
+            copied.flowId = copiedFlowId;
+            copied.adminName = copiedAdminName;
+            copied.title = { id: copiedTitleId, en: copiedTitleEn };
+            copied.nodes = (source.nodes || []).map(node => ({ ...clone(node), id: flowUid() }));
+            copied.createdAt = now;
+            copied.updatedAt = now;
+
+            collection[copiedFlowId] = copied;
+            latest.flowcharts = collection;
+            state = latest;
+            sharedAiReportCache = sharedAiReportFromState(state);
+            knowledgeFingerprint = knowledgeContentFingerprint(state);
+            const saved = await persist('', { skipReportRefresh: true });
+            if (!saved) throw new Error('Flowchart could not be duplicated.');
+
+            flowchartPage = 1;
+            setFlowchartView('list');
+            ensureFlowListControls();
+            renderFlowchartLibrary();
+            successModal(`Flowchart “${flowDisplayName(source)}” successfully duplicated as “${copiedAdminName}”.`);
+          } catch (error) {
+            console.error('Duplicate flowchart failed:', error);
+            toast(error.message || 'Flowchart gagal diduplikasi.');
+          }
+        }
+      );
+    }
+    async function deleteFlowchartById(flowId) {
+      const config = flowchartCollection()[flowId];
+      if (!config) { toast('Flowchart tidak ditemukan.'); return; }
+      confirmModal(`Delete flowchart “${flowDisplayName(config)}”? Flowchart akan dihapus dari ${config.moduleIds.length} Main Menu terkait.`, async () => {
+        try {
+          const latest = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
+          const collection = flowchartCollection(latest.flowcharts);
+          delete collection[flowId];
+          latest.flowcharts = collection;
+          state = latest; sharedAiReportCache = sharedAiReportFromState(state); knowledgeFingerprint = knowledgeContentFingerprint(state);
+          const saved = await persist('', { skipReportRefresh: true });
+          if (!saved) throw new Error('Flowchart could not be deleted.');
+          if (selectedFlowId === flowId) { selectedFlowId = ''; flowchartDraft = null; }
+          toast('Flowchart berhasil dihapus.');
+          flowchartPage = 1;
+          setFlowchartView('list');
+          ensureFlowListControls(); renderFlowchartLibrary();
+        } catch (error) { console.error('Delete flowchart failed:', error); toast(error.message || 'Flowchart gagal dihapus.'); }
+      });
+    }
+    $('newFlowchart').onclick = startNewFlowchart;
+    $('backToFlowchartList').onclick = backToFlowchartList;
+    $('cancelFlowchart').onclick = backToFlowchartList;
+    $('applyFlowFilter').onclick = () => { flowchartPage = 1; renderFlowchartLibrary(); };
+    $('applyFlowMoreFilter').onclick = () => { flowchartPage = 1; renderFlowchartLibrary(); $('flowchartMoreFilter').hidden = true; };
+    $('toggleFlowMoreFilter').onclick = () => { $('flowchartMoreFilter').hidden = !$('flowchartMoreFilter').hidden; };
+    $('resetFlowFilter').onclick = () => { $('flowListModuleFilter').value = ''; $('flowListStatusFilter').value = ''; flowchartPage = 1; renderFlowchartLibrary(); };
+    $('flowListSearch').addEventListener('keydown', event => { if (event.key === 'Enter') { flowchartPage = 1; renderFlowchartLibrary(); } });
+    $('flowAdminName').oninput = syncFlowchartHeaderDraft;
+    $('flowEnabled').onchange = syncFlowchartHeaderDraft;
+    $('flowTitleId').oninput = syncFlowchartHeaderDraft;
+    $('flowTitleEn').oninput = syncFlowchartHeaderDraft;
+    $('addFlowNode').onclick = () => { if (!flowchartDraft) flowchartDraft = blankFlowchartDraft(); flowchartDraft.nodes.push(emptyFlowNode(flowDefaultTargetModule())); renderFlowchartNodes(); };
+    $('saveFlowchart').onclick = saveFlowchart;
+
     function showModal(html, small = false) { $('modalBox').className = 'modal' + (small ? ' small' : ''); $('modalBox').innerHTML = html; $('modalOverlay').classList.add('show'); $('modalBox').querySelectorAll('[data-close]').forEach(x => x.onclick = hideModal) } function hideModal() { $('modalOverlay').classList.remove('show') }
     function successModal(message) { showModal(`<button class="closeModal" style="float:right" data-close>×</button><div class="successIcon">✓</div><h2>Success</h2><p>${esc(message)}</p><div class="modalActions"><button class="primaryBtn" data-close>Close</button></div>`, true) }
     function confirmModal(message, onYes) { showModal(`<div class="confirmIcon">?</div><h2>Are you sure?</h2><p>${esc(message)}</p><div class="modalActions"><button class="ghostBtn" data-close>No</button><button class="primaryBtn" id="confirmYes">Yes</button></div>`, true); $('confirmYes').onclick = async () => { hideModal(); await onYes() } }
@@ -5328,6 +5926,7 @@
       const activeTab = document.querySelector('.tab.active')?.dataset.tab || 'create';
       if (activeTab === 'list') renderGuideList();
       else if (activeTab === 'arrange') renderArrangement();
+      else if (activeTab === 'flowchart') renderFlowchartEditor();
       else if (activeTab === 'feedback') renderFeedbackReport({ skipRefresh: true });
     }
     function renderAll() { initSelects(); renderVisibleAdminPanel() }
