@@ -1759,6 +1759,24 @@
     .flowchartDeleteMenuItem:hover{background:#FFF2EF!important;color:#B83B27!important}
     @media(max-width:900px){.flowchartMoreFilter{grid-template-columns:1fr 1fr}.flowchartMoreFilterActions{grid-column:1/-1;justify-content:flex-start}.flowchartEditorNav{align-items:flex-start}.flowchartEditorNavLeft{align-items:flex-start}}
     @media(max-width:700px){.flowchartMoreFilter{grid-template-columns:1fr}.flowchartMoreFilterActions{grid-column:auto}.flowchartEditorNav{flex-direction:column}.flowchartEditorNavLeft{width:100%;flex-direction:column}.flowchartEditorBack{width:auto}.flowchartStatusBadge{align-self:flex-start}.flowchartSubmitBarGuideLike{flex-direction:column-reverse}.flowchartSubmitBarGuideLike button{width:100%}}
+
+    /* Flowchart graph editor v6 — manual positioning, cleaner connectors, decision labels */
+    .flowchartBuilderActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .flowchartNodeBuilder{display:grid;gap:10px;margin-top:12px}
+    .flowNodeEditor{display:grid;grid-template-columns:38px 112px minmax(125px,1fr) minmax(125px,1fr) 125px minmax(145px,1fr) minmax(145px,1fr) minmax(165px,1.2fr) 86px 86px 44px 42px;gap:8px;align-items:end;border:1px solid #D7E2E6;background:#FBFDFD;border-radius:8px;padding:12px}
+    .flowNodeEditor.decision{border-color:#D8C987;background:#FFFDF4}
+    .flowNodeTypeBadge{font-size:8px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#087C9D;margin-top:5px;text-align:center}.flowNodeEditor.decision .flowNodeTypeBadge{color:#8A6B00}
+    .flowConnectionSection{margin-top:18px;padding:16px;border:1px solid #CFE3E9;border-radius:9px;background:#F9FCFD}.flowConnectionSection .flowchartBuilderHead{margin-bottom:10px}.flowConnectionSection h2{display:flex;align-items:center;gap:8px}.flowConnectionSection h2:before{content:"↗";display:grid;place-items:center;width:24px;height:24px;border-radius:6px;background:#EAF9FD;color:#0B84A9;font-size:13px}
+    .flowConnectionBuilder{display:grid;gap:8px}.flowConnectionEditor{display:grid;grid-template-columns:34px minmax(160px,1.15fr) 105px minmax(115px,.8fr) minmax(115px,.8fr) minmax(160px,1.15fr) 105px minmax(150px,.9fr) 42px;gap:8px;align-items:end;border:1px solid #D9E4E8;background:#F8FBFC;border-radius:8px;padding:10px 12px}.flowConnectionEditor.manualRoute{border-color:#9EDBEC;background:#F3FBFD}.flowConnectionEditor .field label{font-size:9px}.flowConnectionOrder{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#EAF2F5;color:#547079;font-size:10px;font-weight:900}.flowConnectionDelete{width:38px;height:38px;border:1px solid #F1C7C2;background:#FFF5F3;color:#C45443;border-radius:6px;font-size:16px}.flowRouteControls{display:flex;gap:5px;align-items:center}.flowRouteControls select{min-width:82px}.flowRouteMiniBtn{height:38px;padding:0 9px;border:1px solid #BBD5DE;background:#fff;color:#187B99;border-radius:6px;font-size:10px;font-weight:800;white-space:nowrap}.flowRouteMiniBtn:hover{background:#EAF9FD}.flowRouteMiniBtn:disabled{opacity:.4;cursor:not-allowed}
+    .flowNodePositionReset{width:40px;height:38px;border:1px solid #C9D9DE;background:#fff;color:#54717A;border-radius:6px;font-size:17px}
+    .flowchartPreviewHead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+    .flowchartPreviewTools{display:flex;gap:8px;flex-wrap:wrap}
+    .flowchartPreviewLabel{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#5E7279}
+    .flowchartPreviewHint{margin:0 0 10px;color:#6B7A80;font-size:11px;line-height:1.5}
+    .flowchartPreview{display:block;overflow:auto;padding:4px 2px 10px}.flowGraphViewport{overflow:auto;border:1px solid #E0E8EB;border-radius:8px;background-color:#FBFDFE;background-image:linear-gradient(#EAF1F4 1px,transparent 1px),linear-gradient(90deg,#EAF1F4 1px,transparent 1px);background-size:20px 20px;padding:8px}.flowGraphCanvas{position:relative;min-height:180px}.flowGraphSvg{position:absolute;inset:0;overflow:visible;pointer-events:none}.flowGraphPath{fill:none;stroke:#43AFCF;stroke-width:2.5;stroke-linecap:square;stroke-linejoin:miter;shape-rendering:geometricPrecision}.flowGraphPath.manual{stroke:#1FA7CF}.flowGraphPathHit{fill:none;stroke:transparent;stroke-width:18;pointer-events:stroke;cursor:crosshair}.flowGraphWaypoint{fill:#fff;stroke:#1498C0;stroke-width:2;cursor:move;pointer-events:all}.flowGraphWaypoint:hover{fill:#DFF6FC;stroke-width:3}.flowGraphWaypointHalo{fill:transparent;stroke:transparent;stroke-width:14;pointer-events:all;cursor:move}.flowGraphPath.back{stroke-dasharray:none}.flowGraphEdgeLabel{font-size:10px;font-weight:800;fill:#47717E;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round}.flowGraphNode{position:absolute;width:180px;height:92px;border:1px solid #9EDBEC;background:#EFFAFF;color:#17647B;border-radius:9px;padding:10px 12px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:850;line-height:1.3;box-shadow:0 3px 9px rgba(26,112,138,.08);cursor:grab;user-select:none;touch-action:none}.flowGraphNode.dragging{cursor:grabbing;box-shadow:0 10px 24px rgba(26,112,138,.20)}.flowGraphNode.decision{height:104px;border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#FFF8D9;border-color:#D6B84C;color:#715C0C;padding:19px 28px}.flowGraphNode small{display:block;margin-top:5px;color:#708189;font-size:8px;font-weight:600;line-height:1.25}.flowGraphNode.decision small{color:#806F32}.flowGraphNodeKind{font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;opacity:.72;margin-bottom:3px}
+    @media(max-width:1380px){.flowNodeEditor{grid-template-columns:38px 120px 1fr 1fr 125px 1fr 1fr}.flowNodeEditor .field{min-width:0}.flowNodePositionReset,.flowNodeDelete{align-self:end}.flowConnectionEditor{grid-template-columns:34px 1fr 110px 1fr 1fr 110px}.flowConnectionEditor .field{min-width:0}.flowConnectionDelete{grid-column:6}.flowRouteControls{flex-wrap:wrap}}
+    @media(max-width:700px){.flowchartBuilderActions{width:100%;justify-content:stretch}.flowchartBuilderActions button{flex:1}.flowNodeEditor{grid-template-columns:38px 1fr}.flowNodeEditor .field{grid-column:2}.flowNodePositionReset,.flowNodeDelete{grid-column:2}.flowConnectionEditor{grid-template-columns:34px 1fr}.flowConnectionEditor .field{grid-column:2}.flowConnectionDelete{grid-column:2}.flowGraphViewport{padding:4px}.flowchartPreviewHead{align-items:flex-start}.flowchartPreviewTools{width:100%}.flowchartPreviewTools button{flex:1}}
+
 </style>
 </head>
 
@@ -2028,12 +2046,27 @@
 
           <div class="card">
             <div class="sectionRow flowchartBuilderHead">
-              <div><h2>Flow Steps</h2><p class="helper">Urutan node dari kiri ke kanan di desktop dan dari atas ke bawah di mobile. Setiap step dapat menuju Main Menu yang berbeda.</p></div>
-              <button class="primaryBtn" id="addFlowNode" type="button">+ Add Step</button>
+              <div><h2>Flow Nodes</h2><p class="helper">Buat process node atau decision node. Hubungan antar-node diatur terpisah sehingga satu node bisa bercabang, bergabung kembali, atau kembali ke node sebelumnya.</p></div>
+              <div class="flowchartBuilderActions"><button class="primaryBtn" id="addFlowNode" type="button">+ Add Process</button><button class="ghostBtn" id="addFlowDecision" type="button">◇ Add Decision</button></div>
             </div>
             <div class="flowchartNodeBuilder" id="flowchartNodeBuilder"></div>
+            <div class="flowConnectionSection">
+              <div class="sectionRow flowchartBuilderHead">
+                <div><h2>Connections</h2><p class="helper">Klik <strong>+ Add Connection</strong>, lalu pilih <strong>Source</strong> dan <strong>Target</strong>. Source Port / Target Port menentukan garis keluar-masuk dari Top, Right, Bottom, atau Left. Garis selalu 90° dan bisa digeser langsung pada Graph Preview.</p></div>
+                <button class="primaryBtn" id="addFlowEdge" type="button">+ Add Connection</button>
+              </div>
+              <div class="flowConnectionBuilder" id="flowchartConnectionBuilder"></div>
+            </div>
             <div class="flowchartPreviewWrap">
-              <div class="flowchartPreviewLabel">Preview</div>
+              <div class="flowchartPreviewHead">
+                <div class="flowchartPreviewLabel">Graph Preview</div>
+                <div class="flowchartPreviewTools">
+                  <button class="primaryBtn" id="addFlowEdgePreview" type="button">+ Add Connection</button>
+                  <button class="ghostBtn" id="autoArrangeFlowchart" type="button">Auto Arrange</button>
+                  <button class="ghostBtn" id="clearFlowNodePositions" type="button">Reset Manual Position</button>
+                </div>
+              </div>
+              <p class="flowchartPreviewHint">Drag node langsung di preview — posisi otomatis <strong>snap ke grid 20px</strong> agar node dan garis tetap lurus. Position X/Y tetap bisa diisi manual. Label decision seperti <strong>Yes</strong> / <strong>No</strong> atau <strong>Void</strong> / <strong>Tidak Void</strong> diisi pada connection yang keluar dari decision.</p>
               <div class="flowchartPreview" id="flowchartAdminPreview"></div>
             </div>
             <div class="submitBar flowchartSubmitBarGuideLike">
@@ -4553,13 +4586,47 @@
       });
       return [...map.values()];
     }
-    function emptyFlowNode(module) {
+    function flowNumber(value) {
+      if (value === '' || value === null || value === undefined) return null;
+      const num = Number(value);
+      return Number.isFinite(num) ? num : null;
+    }
+    function flowTextValue(value, locale = 'id') {
+      if (value === null || value === undefined) return '';
+      if (typeof value === 'string' || typeof value === 'number') return String(value);
+      if (Array.isArray(value)) return value.map(item => flowTextValue(item, locale)).filter(Boolean).join(' ');
+      if (typeof value === 'object') {
+        return flowTextValue(value?.[locale], locale)
+          || flowTextValue(value?.id, locale)
+          || flowTextValue(value?.en, locale)
+          || '';
+      }
+      return '';
+    }
+    function flowNodeManualPosition(node) {
+      const x = flowNumber(node?.position?.x ?? node?.x);
+      const y = flowNumber(node?.position?.y ?? node?.y);
+      return x !== null && y !== null ? { x: Math.max(16, Math.round(x)), y: Math.max(16, Math.round(y)) } : null;
+    }
+    function setFlowNodePosition(node, x, y) {
+      const snap = value => Math.max(20, Math.round(Number(value || 0) / 20) * 20);
+      node.position = { x: snap(x), y: snap(y) };
+    }
+    function clearFlowNodePosition(node) {
+      node.position = { x: '', y: '' };
+    }
+    function emptyFlowNode(module, kind = 'process') {
       const firstPage = flowPagePairs(module)[0]?.id || '';
-      return { id: flowUid(), label: { id: '', en: '' }, targetType: 'page', moduleId: module?.id || '', pageMenu: firstPage, topicId: '' };
+      const nodeKind = kind === 'decision' ? 'decision' : 'process';
+      return { id: flowUid(), kind: nodeKind, label: { id: '', en: '' }, targetType: nodeKind === 'decision' ? 'none' : 'page', moduleId: module?.id || '', pageMenu: firstPage, topicId: '', position: { x: '', y: '' } };
+    }
+    function emptyFlowEdge(from = '', to = '') {
+      return { id: flowUid(), from, to, label: { id: '', en: '' }, sourceSide: 'auto', targetSide: 'auto', routeMode: 'auto', waypoints: [] };
     }
     function blankFlowchartDraft() {
-      return { flowId: flowUid(), adminName: '', moduleIds: [], enabled: true, title: { id: '', en: '' }, nodes: [], createdAt: '', updatedAt: '' };
+      return { flowId: flowUid(), adminName: '', moduleIds: [], enabled: true, title: { id: '', en: '' }, nodes: [], edges: [], createdAt: '', updatedAt: '' };
     }
+
     function normalizeFlowchartConfig(flowId, value, fallbackModuleId = '') {
       const raw = value && typeof value === 'object' ? clone(value) : {};
       const moduleIds = [...new Set([
@@ -4567,27 +4634,49 @@
         ...(fallbackModuleId ? [fallbackModuleId] : [])
       ])].filter(id => state.data.some(item => item.id === id));
       const firstModule = flowModuleById(moduleIds[0]) || state.data[0];
+      const nodes = Array.isArray(raw.nodes) ? raw.nodes.map(node => ({
+        id: node.id || flowUid(),
+        kind: node.kind === 'decision' ? 'decision' : 'process',
+        label: { id: flowTextValue(node.label?.id ?? node.label, 'id'), en: flowTextValue(node.label?.en ?? node.label, 'en') },
+        targetType: node.targetType === 'none' ? 'none' : (node.targetType === 'article' ? 'article' : 'page'),
+        moduleId: node.moduleId || fallbackModuleId || firstModule?.id || '',
+        pageMenu: node.pageMenu || '',
+        topicId: node.topicId || '',
+        position: {
+          x: flowNumber(node?.position?.x ?? node?.x) ?? '',
+          y: flowNumber(node?.position?.y ?? node?.y) ?? ''
+        }
+      })) : [];
+      const nodeIds = new Set(nodes.map(node => node.id));
+      const legacyEdges = nodes.slice(1).map((node, index) => emptyFlowEdge(nodes[index].id, node.id));
+      const sourceEdges = Array.isArray(raw.edges) ? raw.edges : legacyEdges;
+      const validSides = new Set(['auto','top','right','bottom','left']);
+      const edges = sourceEdges.map(edge => ({
+        id: edge.id || flowUid(),
+        from: edge.from || edge.source || '',
+        to: edge.to || edge.target || '',
+        label: { id: flowTextValue(edge.label?.id ?? edge.label, 'id'), en: flowTextValue(edge.label?.en ?? edge.label, 'en') },
+        sourceSide: validSides.has(edge.sourceSide) ? edge.sourceSide : 'auto',
+        targetSide: validSides.has(edge.targetSide) ? edge.targetSide : 'auto',
+        routeMode: edge.routeMode === 'manual' ? 'manual' : 'auto',
+        waypoints: Array.isArray(edge.waypoints) ? edge.waypoints.map(point => ({ x: flowNumber(point?.x) ?? 20, y: flowNumber(point?.y) ?? 20 })) : []
+      })).filter(edge => nodeIds.has(edge.from) && nodeIds.has(edge.to));
       return {
         flowId: raw.flowId || flowId || flowUid(),
-        adminName: raw.adminName || raw.name || raw.title?.id || raw.title?.en || '',
+        adminName: flowTextValue(raw.adminName || raw.name || raw.title, 'id'),
         moduleIds,
         enabled: raw.enabled !== false,
         title: {
-          id: raw.title?.id || (raw.title && typeof raw.title === 'string' ? raw.title : '') || '',
-          en: raw.title?.en || raw.title?.id || (raw.title && typeof raw.title === 'string' ? raw.title : '') || ''
+          id: flowTextValue(raw.title?.id ?? raw.title, 'id'),
+          en: flowTextValue(raw.title?.en ?? raw.title, 'en')
         },
-        nodes: Array.isArray(raw.nodes) ? raw.nodes.map(node => ({
-          id: node.id || flowUid(),
-          label: { id: node.label?.id || node.label || '', en: node.label?.en || node.label?.id || node.label || '' },
-          targetType: node.targetType === 'article' ? 'article' : 'page',
-          moduleId: node.moduleId || fallbackModuleId || firstModule?.id || '',
-          pageMenu: node.pageMenu || '',
-          topicId: node.topicId || ''
-        })) : [],
+        nodes,
+        edges,
         createdAt: raw.createdAt || '',
         updatedAt: raw.updatedAt || ''
       };
     }
+
     function flowchartCollection(source = flowchartsState()) {
       const collection = {};
       Object.entries(source && typeof source === 'object' ? source : {}).forEach(([key, value]) => {
@@ -4600,6 +4689,7 @@
           collection[flowId].moduleIds = [...new Set([...collection[flowId].moduleIds, ...normalized.moduleIds])];
           if (!collection[flowId].adminName && normalized.adminName) collection[flowId].adminName = normalized.adminName;
           if (!collection[flowId].nodes.length && normalized.nodes.length) collection[flowId].nodes = normalized.nodes;
+          if (!collection[flowId].edges.length && normalized.edges.length) collection[flowId].edges = normalized.edges;
         }
       });
       return collection;
@@ -4771,41 +4861,75 @@
       flowchartDraft.title = { id: $('flowTitleId').value.trim(), en: $('flowTitleEn').value.trim() };
       renderFlowchartStatus(); renderFlowchartPreview();
     }
+    function flowNodeOptionLabel(node, index) {
+      const label = node?.label?.id || node?.label?.en || `${node?.kind === 'decision' ? 'Decision' : 'Step'} ${index + 1}`;
+      return `${index + 1}. ${label}`;
+    }
+    function flowNodeOptions(selected = '') {
+      return '<option value="">Select node</option>' + flowchartDraft.nodes.map((node, index) => `<option value="${esc(node.id)}" ${node.id === selected ? 'selected' : ''}>${esc(flowNodeOptionLabel(node, index))}</option>`).join('');
+    }
     function renderFlowchartNodes() {
       const root = $('flowchartNodeBuilder'); if (!root || !flowchartDraft) return;
       root.innerHTML = flowchartDraft.nodes.length ? flowchartDraft.nodes.map((node, index) => {
         const targetModule = flowTargetModule(node);
+        const noLink = node.targetType === 'none';
         const articleDisabled = node.targetType !== 'article';
-        return `<div class="flowNodeEditor" data-flow-node="${esc(node.id)}">
-          <div><div class="flowNodeOrder">${index + 1}</div><div class="flowNodeMove"><button type="button" data-flow-up="${esc(node.id)}" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" data-flow-down="${esc(node.id)}" ${index === flowchartDraft.nodes.length - 1 ? 'disabled' : ''}>↓</button></div></div>
-          <div class="field"><label>Step Label — ID</label><input data-flow-field="labelId" value="${esc(node.label.id)}" placeholder="Contoh: Create PO"></div>
-          <div class="field"><label>Step Label — EN</label><input data-flow-field="labelEn" value="${esc(node.label.en)}" placeholder="Example: Create PO"></div>
-          <div class="field"><label>Direct Link</label><select data-flow-field="targetType"><option value="page" ${node.targetType === 'page' ? 'selected' : ''}>Page Menu</option><option value="article" ${node.targetType === 'article' ? 'selected' : ''}>Article</option></select></div>
-          <div class="field"><label>Target Main Menu</label><select data-flow-field="moduleId">${flowModuleOptions(node.moduleId)}</select></div>
-          <div class="field"><label>Page Menu</label><select data-flow-field="pageMenu">${flowPageOptions(targetModule, node.pageMenu)}</select></div>
+        const posX = node?.position?.x ?? '';
+        const posY = node?.position?.y ?? '';
+        return `<div class="flowNodeEditor ${node.kind === 'decision' ? 'decision' : ''}" data-flow-node="${esc(node.id)}">
+          <div><div class="flowNodeOrder">${index + 1}</div><div class="flowNodeTypeBadge">${node.kind === 'decision' ? 'Decision' : 'Process'}</div><div class="flowNodeMove"><button type="button" data-flow-up="${esc(node.id)}" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" data-flow-down="${esc(node.id)}" ${index === flowchartDraft.nodes.length - 1 ? 'disabled' : ''}>↓</button></div></div>
+          <div class="field"><label>Node Type</label><select data-flow-field="kind"><option value="process" ${node.kind !== 'decision' ? 'selected' : ''}>Process</option><option value="decision" ${node.kind === 'decision' ? 'selected' : ''}>Decision</option></select></div>
+          <div class="field"><label>Label — ID</label><input data-flow-field="labelId" value="${esc(node.label.id)}" placeholder="Contoh: Create PO"></div>
+          <div class="field"><label>Label — EN</label><input data-flow-field="labelEn" value="${esc(node.label.en)}" placeholder="Example: Create PO"></div>
+          <div class="field"><label>Direct Link</label><select data-flow-field="targetType"><option value="none" ${node.targetType === 'none' ? 'selected' : ''}>No direct link</option><option value="page" ${node.targetType === 'page' ? 'selected' : ''}>Page Menu</option><option value="article" ${node.targetType === 'article' ? 'selected' : ''}>Article</option></select></div>
+          <div class="field"><label>Target Main Menu</label><select data-flow-field="moduleId" ${noLink ? 'disabled' : ''}>${flowModuleOptions(node.moduleId)}</select></div>
+          <div class="field"><label>Page Menu</label><select data-flow-field="pageMenu" ${noLink ? 'disabled' : ''}>${flowPageOptions(targetModule, node.pageMenu)}</select></div>
           <div class="field"><label>Article ${articleDisabled ? '(optional)' : ''}</label><select data-flow-field="topicId" ${articleDisabled ? 'disabled' : ''}>${articleOptionsForFlow(targetModule, node.pageMenu, node.topicId)}</select></div>
-          <button class="flowNodeDelete" type="button" data-flow-delete="${esc(node.id)}" aria-label="Delete step">×</button>
+          <div class="field"><label>Position X</label><input type="number" step="1" data-flow-field="posX" value="${esc(String(posX))}" placeholder="Auto"></div>
+          <div class="field"><label>Position Y</label><input type="number" step="1" data-flow-field="posY" value="${esc(String(posY))}" placeholder="Auto"></div>
+          <button class="flowNodePositionReset" type="button" data-flow-clear-position="${esc(node.id)}" title="Reset manual position" aria-label="Reset manual position">⟲</button>
+          <button class="flowNodeDelete" type="button" data-flow-delete="${esc(node.id)}" aria-label="Delete node">×</button>
         </div>`;
-      }).join('') : '<div class="flowchartEmptyBuilder">Belum ada step. Klik <strong>+ Add Step</strong> untuk mulai membuat flowchart.</div>';
-      bindFlowchartNodes(); renderFlowchartPreview();
+      }).join('') : '<div class="flowchartEmptyBuilder">Belum ada node. Klik <strong>+ Add Process</strong> atau <strong>◇ Add Decision</strong> untuk mulai membuat graph.</div>';
+      bindFlowchartNodes(); renderFlowchartConnections(); renderFlowchartPreview();
     }
     function bindFlowchartNodes() {
       $('flowchartNodeBuilder').querySelectorAll('[data-flow-node]').forEach(row => {
         const node = flowchartDraft.nodes.find(item => item.id === row.dataset.flowNode); if (!node) return;
         row.querySelectorAll('[data-flow-field]').forEach(input => {
-          input.onchange = input.oninput = () => {
+          const sync = () => {
             const field = input.dataset.flowField;
             if (field === 'labelId') node.label.id = input.value;
             else if (field === 'labelEn') node.label.en = input.value;
-            else if (field === 'targetType') { node.targetType = input.value === 'article' ? 'article' : 'page'; if (node.targetType === 'page') node.topicId = ''; renderFlowchartNodes(); return; }
+            else if (field === 'kind') { node.kind = input.value === 'decision' ? 'decision' : 'process'; if (node.kind === 'decision') { node.targetType = 'none'; node.topicId = ''; } renderFlowchartNodes(); return; }
+            else if (field === 'targetType') { node.targetType = ['none','article'].includes(input.value) ? input.value : 'page'; if (node.targetType !== 'article') node.topicId = ''; renderFlowchartNodes(); return; }
             else if (field === 'moduleId') { node.moduleId = input.value; const module = flowTargetModule(node); node.pageMenu = flowPagePairs(module)[0]?.id || ''; node.topicId = ''; renderFlowchartNodes(); return; }
             else if (field === 'pageMenu') { node.pageMenu = input.value; if (node.targetType === 'article') node.topicId = ''; renderFlowchartNodes(); return; }
             else if (field === 'topicId') node.topicId = input.value;
+            else if (field === 'posX') {
+              const x = flowNumber(input.value);
+              if (x === null) clearFlowNodePosition(node); else setFlowNodePosition(node, x, node?.position?.y ?? 16);
+            }
+            else if (field === 'posY') {
+              const y = flowNumber(input.value);
+              if (y === null) clearFlowNodePosition(node); else setFlowNodePosition(node, node?.position?.x ?? 16, y);
+            }
             renderFlowchartPreview();
           };
+          input.onchange = sync;
+          if (input.tagName === 'INPUT') input.oninput = sync;
         });
       });
-      $('flowchartNodeBuilder').querySelectorAll('[data-flow-delete]').forEach(button => button.onclick = () => { flowchartDraft.nodes = flowchartDraft.nodes.filter(node => node.id !== button.dataset.flowDelete); renderFlowchartNodes(); });
+      $('flowchartNodeBuilder').querySelectorAll('[data-flow-clear-position]').forEach(button => button.onclick = () => {
+        const node = flowchartDraft.nodes.find(item => item.id === button.dataset.flowClearPosition); if (!node) return;
+        clearFlowNodePosition(node); renderFlowchartNodes();
+      });
+      $('flowchartNodeBuilder').querySelectorAll('[data-flow-delete]').forEach(button => button.onclick = () => {
+        const id = button.dataset.flowDelete;
+        flowchartDraft.nodes = flowchartDraft.nodes.filter(node => node.id !== id);
+        flowchartDraft.edges = flowchartDraft.edges.filter(edge => edge.from !== id && edge.to !== id);
+        renderFlowchartNodes();
+      });
       $('flowchartNodeBuilder').querySelectorAll('[data-flow-up],[data-flow-down]').forEach(button => button.onclick = () => {
         const id = button.dataset.flowUp || button.dataset.flowDown;
         const index = flowchartDraft.nodes.findIndex(node => node.id === id);
@@ -4815,20 +4939,423 @@
         renderFlowchartNodes();
       });
     }
+
+    function flowSideOptions(selected = 'auto') {
+      return [
+        ['auto','Auto'],['top','Top'],['right','Right'],['bottom','Bottom'],['left','Left']
+      ].map(([value,label]) => `<option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>`).join('');
+    }
+    function renderFlowchartConnections() {
+      const root = $('flowchartConnectionBuilder'); if (!root || !flowchartDraft) return;
+      if (flowchartDraft.nodes.length < 2) { root.innerHTML = '<div class="flowchartEmptyBuilder">Tambahkan minimal 2 node untuk membuat connection.</div>'; return; }
+      root.innerHTML = flowchartDraft.edges.length ? flowchartDraft.edges.map((edge, index) => `<div class="flowConnectionEditor ${edge.routeMode === 'manual' ? 'manualRoute' : ''}" data-flow-edge="${esc(edge.id)}">
+        <div class="flowConnectionOrder">${index + 1}</div>
+        <div class="field"><label>Source</label><select data-edge-field="from">${flowNodeOptions(edge.from)}</select></div>
+        <div class="field"><label>Source Port</label><select data-edge-field="sourceSide">${flowSideOptions(edge.sourceSide || 'auto')}</select></div>
+        <div class="field"><label>Branch Label — ID</label><input data-edge-field="labelId" value="${esc(edge.label?.id || '')}" placeholder="Yes / No / Void"></div>
+        <div class="field"><label>Branch Label — EN</label><input data-edge-field="labelEn" value="${esc(edge.label?.en || '')}" placeholder="Yes / No / Void"></div>
+        <div class="field"><label>Target</label><select data-edge-field="to">${flowNodeOptions(edge.to)}</select></div>
+        <div class="field"><label>Target Port</label><select data-edge-field="targetSide">${flowSideOptions(edge.targetSide || 'auto')}</select></div>
+        <div class="field"><label>Line Route</label><div class="flowRouteControls"><select data-edge-field="routeMode"><option value="auto" ${edge.routeMode !== 'manual' ? 'selected' : ''}>Auto 90°</option><option value="manual" ${edge.routeMode === 'manual' ? 'selected' : ''}>Manual 90°</option></select><button class="flowRouteMiniBtn" type="button" data-edge-add-bend="${esc(edge.id)}" ${edge.routeMode === 'manual' ? '' : 'disabled'}>+ Bend</button><button class="flowRouteMiniBtn" type="button" data-edge-reset-route="${esc(edge.id)}" ${edge.routeMode === 'manual' ? '' : 'disabled'}>Reset</button></div></div>
+        <button class="flowConnectionDelete" type="button" data-flow-edge-delete="${esc(edge.id)}" aria-label="Delete connection">×</button>
+      </div>`).join('') : '<div class="flowchartEmptyBuilder">Belum ada connection. Klik <strong>+ Add Connection</strong>. Untuk flow lama, hubungan linear tetap otomatis dimigrasikan.</div>';
+      bindFlowchartConnections();
+    }
+    function seedManualEdgeRoute(edge) {
+      if (!edge || !flowchartDraft) return;
+      const layout = flowGraphLayout(flowchartDraft.nodes, flowchartDraft.edges);
+      const autoEdge = { ...edge, routeMode: 'auto', waypoints: [] };
+      const path = flowGraphPath(layout, autoEdge);
+      const points = path?.points || [];
+      const interior = points.slice(2, -2).filter((point, index, arr) => {
+        if (!index) return true;
+        const prev = arr[index - 1];
+        return Math.abs(point[0] - prev[0]) > 1 || Math.abs(point[1] - prev[1]) > 1;
+      });
+      edge.waypoints = interior.length ? interior.map(([x,y]) => ({ x: Math.round(x / 10) * 10, y: Math.round(y / 10) * 10 })) : [{ x: Math.round((path?.x || 200) / 10) * 10, y: Math.round((path?.y || 160) / 10) * 10 }];
+      edge.routeMode = 'manual';
+    }
+    function bindFlowchartConnections() {
+      $('flowchartConnectionBuilder').querySelectorAll('[data-flow-edge]').forEach(row => {
+        const edge = flowchartDraft.edges.find(item => item.id === row.dataset.flowEdge); if (!edge) return;
+        row.querySelectorAll('[data-edge-field]').forEach(input => {
+          const sync = () => {
+            const field = input.dataset.edgeField;
+            if (field === 'from') edge.from = input.value;
+            else if (field === 'to') edge.to = input.value;
+            else if (field === 'labelId') edge.label.id = input.value;
+            else if (field === 'labelEn') edge.label.en = input.value;
+            else if (field === 'sourceSide') edge.sourceSide = ['top','right','bottom','left'].includes(input.value) ? input.value : 'auto';
+            else if (field === 'targetSide') edge.targetSide = ['top','right','bottom','left'].includes(input.value) ? input.value : 'auto';
+            else if (field === 'routeMode') {
+              if (input.value === 'manual') seedManualEdgeRoute(edge);
+              else { edge.routeMode = 'auto'; edge.waypoints = []; }
+              renderFlowchartConnections(); renderFlowchartPreview(); return;
+            }
+            renderFlowchartPreview();
+          };
+          input.onchange = sync;
+          if (input.tagName === 'INPUT') input.oninput = sync;
+        });
+      });
+      $('flowchartConnectionBuilder').querySelectorAll('[data-edge-add-bend]').forEach(button => button.onclick = () => {
+        const edge = flowchartDraft.edges.find(item => item.id === button.dataset.edgeAddBend); if (!edge) return;
+        if (edge.routeMode !== 'manual') seedManualEdgeRoute(edge);
+        const layout = flowGraphLayout(flowchartDraft.nodes, flowchartDraft.edges);
+        const path = flowGraphPath(layout, edge);
+        const x = Math.round((path?.x || 200) / 10) * 10, y = Math.round((path?.y || 160) / 10) * 10;
+        edge.waypoints = [...(edge.waypoints || []), { x, y }];
+        renderFlowchartConnections(); renderFlowchartPreview();
+      });
+      $('flowchartConnectionBuilder').querySelectorAll('[data-edge-reset-route]').forEach(button => button.onclick = () => {
+        const edge = flowchartDraft.edges.find(item => item.id === button.dataset.edgeResetRoute); if (!edge) return;
+        edge.routeMode = 'manual'; edge.waypoints = []; seedManualEdgeRoute(edge);
+        renderFlowchartConnections(); renderFlowchartPreview();
+      });
+      $('flowchartConnectionBuilder').querySelectorAll('[data-flow-edge-delete]').forEach(button => button.onclick = () => {
+        flowchartDraft.edges = flowchartDraft.edges.filter(edge => edge.id !== button.dataset.flowEdgeDelete);
+        renderFlowchartConnections(); renderFlowchartPreview();
+      });
+    }
+
     function flowTargetLabel(node) {
+      if (node.targetType === 'none') return node.kind === 'decision' ? 'Decision • no direct link' : 'No direct link';
       const module = flowTargetModule(node);
       const moduleLabel = module?.name?.id || module?.name?.en || node.moduleId || 'Main Menu';
       if (node.targetType === 'article') {
         const topic = module?.topics?.find(item => item.id === node.topicId);
-        return topic ? `${moduleLabel} → Article: ${topic.title?.id || topic.title?.en || topic.id}` : `${moduleLabel} → Article: not selected`;
+        return topic ? `${moduleLabel} → Article: ${flowTextValue(topic.title, 'id') || topic.id}` : `${moduleLabel} → Article: not selected`;
       }
       return node.pageMenu ? `${moduleLabel} → Page Menu: ${node.pageMenu}` : `${moduleLabel} → Page Menu: not selected`;
+    }
+    function flowGraphLayout(nodes, edges, options = {}) {
+      const boxW = 180, boxH = 104, xGap = 92, yGap = 42, pad = 28;
+      const ids = new Set(nodes.map(node => node.id));
+      const cleanEdges = (edges || []).filter(edge => ids.has(edge.from) && ids.has(edge.to));
+      const outgoing = new Map(nodes.map(node => [node.id, []]));
+      const incoming = new Map(nodes.map(node => [node.id, []]));
+      cleanEdges.forEach(edge => { outgoing.get(edge.from)?.push(edge); incoming.get(edge.to)?.push(edge); });
+      const level = new Map();
+      const queue = [];
+      if (nodes[0]) { level.set(nodes[0].id, 0); queue.push(nodes[0].id); }
+      while (queue.length) {
+        const id = queue.shift();
+        const base = level.get(id) || 0;
+        (outgoing.get(id) || []).forEach(edge => {
+          if (!level.has(edge.to)) { level.set(edge.to, base + 1); queue.push(edge.to); }
+        });
+      }
+      let nextLevel = Math.max(0, ...level.values());
+      nodes.forEach(node => { if (!level.has(node.id)) level.set(node.id, ++nextLevel); });
+      const groups = new Map();
+      nodes.forEach(node => {
+        const l = level.get(node.id) || 0;
+        if (!groups.has(l)) groups.set(l, []);
+        groups.get(l).push(node);
+      });
+      const levels = [...groups.keys()].sort((a, b) => a - b);
+      const maxRows = Math.max(1, ...[...groups.values()].map(rows => rows.length));
+      const autoPositions = new Map();
+      levels.forEach((l, col) => {
+        const rows = groups.get(l) || [];
+        const offset = (maxRows - rows.length) * (boxH + yGap) / 2;
+        rows.forEach((node, row) => {
+          const x = Math.round((pad + col * (boxW + xGap)) / 20) * 20;
+          const y = Math.round((pad + offset + row * (boxH + yGap)) / 20) * 20;
+          autoPositions.set(node.id, { x, y, level: l, col, row });
+        });
+      });
+      const positions = new Map();
+      nodes.forEach(node => {
+        const fallback = autoPositions.get(node.id) || { x: 20, y: 20, level: 0, col: 0, row: 0 };
+        const manual = options.respectManual === false ? null : flowNodeManualPosition(node);
+        positions.set(node.id, { ...fallback, x: manual?.x ?? fallback.x, y: manual?.y ?? fallback.y, manual: !!manual });
+      });
+      const allPos = [...positions.values()];
+      const waypointRows = cleanEdges.flatMap(edge => Array.isArray(edge.waypoints) ? edge.waypoints : []).map(point => ({ x: flowNumber(point?.x) ?? 0, y: flowNumber(point?.y) ?? 0 }));
+      const maxWaypointX = Math.max(...waypointRows.map(point => point.x), 0), maxWaypointY = Math.max(...waypointRows.map(point => point.y), 0);
+      const maxNodeBottom = Math.max(...allPos.map(pos => pos.y + boxH), 0);
+      const backwardEdges = cleanEdges.filter(edge => {
+        const a = positions.get(edge.from), b = positions.get(edge.to);
+        return a && b && (b.x + boxW / 2) < (a.x + boxW / 2);
+      });
+      const loopExtra = backwardEdges.length ? 100 + Math.max(0, backwardEdges.length - 1) * 22 : 0;
+      return {
+        boxW, boxH, pad, positions, edges: cleanEdges, outgoing, incoming,
+        maxNodeBottom,
+        backwardEdges,
+        width: Math.max(620, Math.max(...allPos.map(pos => pos.x + boxW + pad), maxWaypointX + pad)),
+        height: Math.max(190, maxNodeBottom + pad + loopExtra, maxWaypointY + pad)
+      };
+    }
+    function flowAnchor(pos, side, boxW, boxH) {
+      if (side === 'left') return { x: pos.x, y: pos.y + boxH / 2 };
+      if (side === 'right') return { x: pos.x + boxW, y: pos.y + boxH / 2 };
+      if (side === 'top') return { x: pos.x + boxW / 2, y: pos.y };
+      return { x: pos.x + boxW / 2, y: pos.y + boxH };
+    }
+    function flowSideVector(side) {
+      if (side === 'left') return { x: -1, y: 0 };
+      if (side === 'right') return { x: 1, y: 0 };
+      if (side === 'top') return { x: 0, y: -1 };
+      return { x: 0, y: 1 };
+    }
+    function flowResolvedSides(a, b, edge, boxW, boxH) {
+      const acx = a.x + boxW / 2, acy = a.y + boxH / 2, bcx = b.x + boxW / 2, bcy = b.y + boxH / 2;
+      const dx = bcx - acx, dy = bcy - acy;
+      const horizontal = Math.abs(dx) >= Math.abs(dy);
+      const autoSource = horizontal ? (dx >= 0 ? 'right' : 'left') : (dy >= 0 ? 'bottom' : 'top');
+      const autoTarget = horizontal ? (dx >= 0 ? 'left' : 'right') : (dy >= 0 ? 'top' : 'bottom');
+      return {
+        source: ['top','right','bottom','left'].includes(edge?.sourceSide) ? edge.sourceSide : autoSource,
+        target: ['top','right','bottom','left'].includes(edge?.targetSide) ? edge.targetSide : autoTarget,
+        dx, dy
+      };
+    }
+    function flowRouteOffset(index, count, step = 16) { return (index - (count - 1) / 2) * step; }
+    function flowCompactPoints(points) {
+      const out = [];
+      points.forEach(point => {
+        const p = [Math.round(point[0]), Math.round(point[1])];
+        const last = out[out.length - 1];
+        if (!last || last[0] !== p[0] || last[1] !== p[1]) out.push(p);
+      });
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (let i = 1; i < out.length - 1; i++) {
+          const a = out[i - 1], b = out[i], c = out[i + 1];
+          if ((a[0] === b[0] && b[0] === c[0]) || (a[1] === b[1] && b[1] === c[1])) { out.splice(i,1); changed = true; break; }
+        }
+      }
+      return out;
+    }
+    function flowPolyline(points) { return flowCompactPoints(points).map(([x, y], index) => `${index ? 'L' : 'M'} ${x} ${y}`).join(' '); }
+    function flowLabelFromPoints(points) {
+      const clean = flowCompactPoints(points);
+      let best = null;
+      for (let i = 1; i < clean.length; i++) {
+        const a = clean[i - 1], b = clean[i], length = Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1]);
+        if (!best || length > best.length) best = { a, b, length };
+      }
+      if (!best) return { x: clean[0]?.[0] || 0, y: (clean[0]?.[1] || 0) - 8 };
+      return { x: (best.a[0] + best.b[0]) / 2, y: (best.a[1] + best.b[1]) / 2 - 8 };
+    }
+    function flowSvgPointFromClient(svg, clientX, clientY) {
+      const rect = svg?.getBoundingClientRect?.();
+      const view = svg?.viewBox?.baseVal;
+      if (!rect || !view || !rect.width || !rect.height) return { x: 0, y: 0 };
+      return {
+        x: ((clientX - rect.left) / rect.width) * view.width,
+        y: ((clientY - rect.top) / rect.height) * view.height
+      };
+    }
+    function flowOrthogonalManualPoints(start, startLead, waypoints, targetLead, target, sourceSide, targetSide) {
+      const points = [[start.x,start.y],[startLead.x,startLead.y]];
+      let current = [startLead.x,startLead.y];
+      let horizontalFirst = sourceSide === 'left' || sourceSide === 'right';
+      (waypoints || []).forEach(raw => {
+        const w = [Math.max(10, Math.round(Number(raw.x || 0) / 10) * 10), Math.max(10, Math.round(Number(raw.y || 0) / 10) * 10)];
+        if (current[0] !== w[0] && current[1] !== w[1]) {
+          points.push(horizontalFirst ? [w[0], current[1]] : [current[0], w[1]]);
+        }
+        points.push(w); current = w; horizontalFirst = !horizontalFirst;
+      });
+      const finalHorizontal = targetSide === 'left' || targetSide === 'right';
+      if (current[0] !== targetLead.x && current[1] !== targetLead.y) {
+        points.push(finalHorizontal ? [current[0], targetLead.y] : [targetLead.x, current[1]]);
+      }
+      points.push([targetLead.x,targetLead.y],[target.x,target.y]);
+      return flowCompactPoints(points);
+    }
+    function flowGraphPath(layout, edge) {
+      const a = layout.positions.get(edge.from), b = layout.positions.get(edge.to); if (!a || !b) return null;
+      const sourceEdges = layout.outgoing.get(edge.from) || [], targetEdges = layout.incoming.get(edge.to) || [];
+      const sourceIndex = Math.max(0, sourceEdges.findIndex(item => item.id === edge.id)), targetIndex = Math.max(0, targetEdges.findIndex(item => item.id === edge.id));
+      const sides = flowResolvedSides(a,b,edge,layout.boxW,layout.boxH), sourceOffset = flowRouteOffset(sourceIndex,sourceEdges.length,18), targetOffset = flowRouteOffset(targetIndex,targetEdges.length,14), stub = 20;
+      const sv = flowSideVector(sides.source), tv = flowSideVector(sides.target);
+      const s = flowAnchor(a,sides.source,layout.boxW,layout.boxH), t = flowAnchor(b,sides.target,layout.boxW,layout.boxH);
+      const sShift = (sides.source === 'left' || sides.source === 'right') ? {x:s.x,y:s.y+sourceOffset} : {x:s.x+sourceOffset,y:s.y};
+      const tShift = (sides.target === 'left' || sides.target === 'right') ? {x:t.x,y:t.y+targetOffset} : {x:t.x+targetOffset,y:t.y};
+      const sLead = {x:sShift.x+sv.x*stub,y:sShift.y+sv.y*stub}, tLead = {x:tShift.x+tv.x*stub,y:tShift.y+tv.y*stub};
+
+      if (edge.routeMode === 'manual' && Array.isArray(edge.waypoints) && edge.waypoints.length) {
+        const points = flowOrthogonalManualPoints(sShift,sLead,edge.waypoints,tLead,tShift,sides.source,sides.target), label = flowLabelFromPoints(points);
+        return { d:flowPolyline(points), x:label.x, y:label.y, back:false, manual:true, points, sourceSide:sides.source, targetSide:sides.target };
+      }
+
+      let points=[];
+      const dx=sides.dx,dy=sides.dy;
+      // Auto backward connection only uses the bottom loop when BOTH ports are Auto.
+      if (dx < -8 && (edge.sourceSide || 'auto') === 'auto' && (edge.targetSide || 'auto') === 'auto') {
+        const loopIndex=Math.max(0,layout.backwardEdges.findIndex(item=>item.id===edge.id)),routeY=layout.maxNodeBottom+52+loopIndex*22;
+        points=[[sShift.x,sShift.y],[sLead.x,sLead.y],[sLead.x,routeY],[tLead.x,routeY],[tLead.x,tLead.y],[tShift.x,tShift.y]];
+      } else {
+        const sourceHorizontal=sides.source==='left'||sides.source==='right', targetHorizontal=sides.target==='left'||sides.target==='right';
+        if (sourceHorizontal && targetHorizontal) {
+          const midX=Math.round(((sLead.x+tLead.x)/2)/10)*10;
+          points=[[sShift.x,sShift.y],[sLead.x,sLead.y],[midX,sLead.y],[midX,tLead.y],[tLead.x,tLead.y],[tShift.x,tShift.y]];
+        } else if (!sourceHorizontal && !targetHorizontal) {
+          const midY=Math.round(((sLead.y+tLead.y)/2)/10)*10;
+          points=[[sShift.x,sShift.y],[sLead.x,sLead.y],[sLead.x,midY],[tLead.x,midY],[tLead.x,tLead.y],[tShift.x,tShift.y]];
+        } else if (sourceHorizontal) {
+          points=[[sShift.x,sShift.y],[sLead.x,sLead.y],[tLead.x,sLead.y],[tLead.x,tLead.y],[tShift.x,tShift.y]];
+        } else {
+          points=[[sShift.x,sShift.y],[sLead.x,sLead.y],[sLead.x,tLead.y],[tLead.x,tLead.y],[tShift.x,tShift.y]];
+        }
+      }
+      const label=flowLabelFromPoints(points);
+      return {d:flowPolyline(points),x:label.x,y:label.y,back:false,manual:false,points:flowCompactPoints(points),sourceSide:sides.source,targetSide:sides.target};
+    }
+
+    function flowGraphMarkup(nodes, edges) {
+      const layout = flowGraphLayout(nodes, edges), markerId = 'flow-admin-arrow';
+      const paths = layout.edges.map(edge => { const p = flowGraphPath(layout, edge); if (!p) return ''; const label = flowTextValue(edge.label, 'id'); const handles = edge.routeMode === 'manual' ? (edge.waypoints || []).map((point,pointIndex) => `<circle class="flowGraphWaypointHalo" data-flow-waypoint-edge="${esc(edge.id)}" data-flow-waypoint-index="${pointIndex}" cx="${Number(point.x)||0}" cy="${Number(point.y)||0}" r="9"></circle><rect class="flowGraphWaypoint" data-flow-waypoint-edge="${esc(edge.id)}" data-flow-waypoint-index="${pointIndex}" x="${(Number(point.x)||0)-5}" y="${(Number(point.y)||0)-5}" width="10" height="10" rx="2"></rect>`).join('') : ''; return `<path class="flowGraphPath ${p.back ? 'back' : ''} ${p.manual ? 'manual' : ''}" data-flow-edge-path="${esc(edge.id)}" d="${p.d}" marker-end="url(#${markerId})"></path><path class="flowGraphPathHit" data-flow-edge-hit="${esc(edge.id)}" d="${p.d}"></path>${label ? `<text class="flowGraphEdgeLabel" data-flow-edge-label="${esc(edge.id)}" x="${p.x}" y="${p.y}" text-anchor="middle">${esc(label)}</text>` : ''}${handles}`; }).join('');
+      const nodeHtml = nodes.map((node, index) => { const p = layout.positions.get(node.id); if (!p) return ''; const label = flowTextValue(node.label, 'id') || `Node ${index + 1}`; return `<div class="flowGraphNode ${node.kind === 'decision' ? 'decision' : ''}" data-preview-node-id="${esc(node.id)}" style="left:${p.x}px;top:${p.y}px"><span class="flowGraphNodeKind">${node.kind === 'decision' ? 'Decision' : 'Process'}</span>${esc(label)}<small>${esc(flowTargetLabel(node))}</small></div>`; }).join('');
+      return `<div class="flowGraphViewport"><div class="flowGraphCanvas" style="width:${layout.width}px;height:${layout.height}px"><svg class="flowGraphSvg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" aria-hidden="true"><defs><marker id="${markerId}" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#43AFCF"></path></marker></defs>${paths}</svg>${nodeHtml}</div></div>`;
+    }
+    function applyFlowchartPreviewLayout() {
+      const host = $('flowchartAdminPreview');
+      const canvas = host?.querySelector('.flowGraphCanvas');
+      const svg = host?.querySelector('.flowGraphSvg');
+      if (!canvas || !svg || !flowchartDraft) return;
+      const layout = flowGraphLayout(flowchartDraft.nodes, flowchartDraft.edges);
+      canvas.style.width = `${layout.width}px`;
+      canvas.style.height = `${layout.height}px`;
+      svg.setAttribute('width', String(layout.width));
+      svg.setAttribute('height', String(layout.height));
+      svg.setAttribute('viewBox', `0 0 ${layout.width} ${layout.height}`);
+      host.querySelectorAll('[data-preview-node-id]').forEach(el => { const pos = layout.positions.get(el.dataset.previewNodeId); if (!pos) return; el.style.left = `${pos.x}px`; el.style.top = `${pos.y}px`; });
+      layout.edges.forEach(edge => {
+        const pathEl = host.querySelector(`[data-flow-edge-path="${edge.id}"]`);
+        const labelEl = host.querySelector(`[data-flow-edge-label="${edge.id}"]`);
+        const path = flowGraphPath(layout, edge);
+        if (!pathEl || !path) return;
+        pathEl.setAttribute('d', path.d);
+        pathEl.setAttribute('class', `flowGraphPath ${path.back ? 'back' : ''} ${path.manual ? 'manual' : ''}`.trim());
+        const hitEl = host.querySelector(`[data-flow-edge-hit="${edge.id}"]`);
+        if (hitEl) hitEl.setAttribute('d', path.d);
+        if (labelEl) { labelEl.setAttribute('x', String(path.x)); labelEl.setAttribute('y', String(path.y)); }
+        if (edge.routeMode === 'manual') (edge.waypoints || []).forEach((point,index) => {
+          host.querySelectorAll(`[data-flow-waypoint-edge="${edge.id}"][data-flow-waypoint-index="${index}"]`).forEach(handle => {
+            if (handle.tagName.toLowerCase() === 'rect') { handle.setAttribute('x', String((Number(point.x)||0)-5)); handle.setAttribute('y', String((Number(point.y)||0)-5)); }
+            else { handle.setAttribute('cx', String(Number(point.x)||0)); handle.setAttribute('cy', String(Number(point.y)||0)); }
+          });
+        });
+      });
+    }
+    function syncFlowchartPositionInputs(nodeId = '') {
+      if (!$('flowchartNodeBuilder')) return;
+      const syncRow = row => {
+        const node = flowchartDraft?.nodes?.find(item => item.id === row.dataset.flowNode); if (!node) return;
+        const posX = row.querySelector('[data-flow-field="posX"]');
+        const posY = row.querySelector('[data-flow-field="posY"]');
+        if (posX) posX.value = node?.position?.x ?? '';
+        if (posY) posY.value = node?.position?.y ?? '';
+      };
+      if (nodeId) {
+        const row = $('flowchartNodeBuilder').querySelector(`[data-flow-node="${nodeId}"]`);
+        if (row) syncRow(row);
+        return;
+      }
+      $('flowchartNodeBuilder').querySelectorAll('[data-flow-node]').forEach(syncRow);
+    }
+    function bindFlowchartPreview() {
+      const host = $('flowchartAdminPreview'); if (!host || !flowchartDraft) return;
+      applyFlowchartPreviewLayout();
+      let dragState = null;
+      host.querySelectorAll('[data-flow-waypoint-edge][data-flow-waypoint-index]').forEach(handle => {
+        handle.onpointerdown = event => {
+          if (event.button !== 0) return;
+          const edge = flowchartDraft.edges.find(item => item.id === handle.dataset.flowWaypointEdge), index = Number(handle.dataset.flowWaypointIndex);
+          const point = edge?.waypoints?.[index]; if (!edge || !point) return;
+          dragState = { type:'waypoint', edgeId:edge.id, index, pointerId:event.pointerId, startX:event.clientX, startY:event.clientY, originX:Number(point.x)||0, originY:Number(point.y)||0 };
+          handle.setPointerCapture?.(event.pointerId); event.preventDefault(); event.stopPropagation();
+        };
+        handle.onpointermove = event => {
+          if (!dragState || dragState.type !== 'waypoint' || dragState.edgeId !== handle.dataset.flowWaypointEdge || dragState.index !== Number(handle.dataset.flowWaypointIndex)) return;
+          const edge = flowchartDraft.edges.find(item => item.id === dragState.edgeId), point = edge?.waypoints?.[dragState.index]; if (!point) return;
+          point.x = Math.max(10, Math.round((dragState.originX + event.clientX - dragState.startX) / 10) * 10);
+          point.y = Math.max(10, Math.round((dragState.originY + event.clientY - dragState.startY) / 10) * 10);
+          applyFlowchartPreviewLayout();
+        };
+        const stop = () => { if (dragState?.type === 'waypoint') dragState = null; };
+        handle.onpointerup = stop; handle.onpointercancel = stop; handle.onlostpointercapture = stop;
+      });
+      const svg = host.querySelector('.flowGraphSvg');
+      host.querySelectorAll('[data-flow-edge-hit]').forEach(pathEl => {
+        const finishEdgeDrag = () => {
+          if (dragState?.type !== 'edgehit') return;
+          dragState = null;
+          renderFlowchartConnections();
+          renderFlowchartPreview();
+        };
+        pathEl.onpointerdown = event => {
+          if (event.button !== 0) return;
+          const edge = flowchartDraft.edges.find(item => item.id === pathEl.dataset.flowEdgeHit); if (!edge || !svg) return;
+          const point = flowSvgPointFromClient(svg, event.clientX, event.clientY);
+          const snapped = { x: Math.max(10, Math.round(point.x / 10) * 10), y: Math.max(10, Math.round(point.y / 10) * 10) };
+          edge.routeMode = 'manual';
+          if (!Array.isArray(edge.waypoints)) edge.waypoints = [];
+          let index = edge.waypoints.findIndex(item => Math.abs((Number(item?.x) || 0) - snapped.x) <= 16 && Math.abs((Number(item?.y) || 0) - snapped.y) <= 16);
+          if (index < 0) {
+            edge.waypoints.push(snapped);
+            index = edge.waypoints.length - 1;
+          }
+          const anchor = edge.waypoints[index];
+          dragState = { type:'edgehit', edgeId:edge.id, index, pointerId:event.pointerId, startX:event.clientX, startY:event.clientY, originX:Number(anchor.x)||0, originY:Number(anchor.y)||0 };
+          pathEl.setPointerCapture?.(event.pointerId);
+          applyFlowchartPreviewLayout();
+          event.preventDefault();
+          event.stopPropagation();
+        };
+        pathEl.onpointermove = event => {
+          if (!dragState || dragState.type !== 'edgehit' || dragState.edgeId !== pathEl.dataset.flowEdgeHit) return;
+          const edge = flowchartDraft.edges.find(item => item.id === dragState.edgeId), point = edge?.waypoints?.[dragState.index]; if (!point) return;
+          point.x = Math.max(10, Math.round((dragState.originX + event.clientX - dragState.startX) / 10) * 10);
+          point.y = Math.max(10, Math.round((dragState.originY + event.clientY - dragState.startY) / 10) * 10);
+          applyFlowchartPreviewLayout();
+        };
+        pathEl.onpointerup = finishEdgeDrag;
+        pathEl.onpointercancel = finishEdgeDrag;
+        pathEl.onlostpointercapture = finishEdgeDrag;
+      });
+      host.querySelectorAll('[data-preview-node-id]').forEach(nodeEl => {
+        const stopDrag = () => {
+          if (!dragState || dragState.type === 'waypoint' || dragState.nodeId !== nodeEl.dataset.previewNodeId) return;
+          nodeEl.classList.remove('dragging');
+          dragState = null;
+        };
+        nodeEl.onpointerdown = event => {
+          if (event.button !== 0) return;
+          const nodeId = nodeEl.dataset.previewNodeId;
+          const node = flowchartDraft.nodes.find(item => item.id === nodeId); if (!node) return;
+          const layout = flowGraphLayout(flowchartDraft.nodes, flowchartDraft.edges);
+          const current = layout.positions.get(nodeId); if (!current) return;
+          dragState = { type:'node', nodeId, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, originX: current.x, originY: current.y };
+          nodeEl.classList.add('dragging');
+          nodeEl.setPointerCapture?.(event.pointerId);
+          event.preventDefault();
+        };
+        nodeEl.onpointermove = event => {
+          if (!dragState || dragState.type === 'waypoint' || dragState.nodeId !== nodeEl.dataset.previewNodeId) return;
+          const node = flowchartDraft.nodes.find(item => item.id === dragState.nodeId); if (!node) return;
+          setFlowNodePosition(node, dragState.originX + (event.clientX - dragState.startX), dragState.originY + (event.clientY - dragState.startY));
+          syncFlowchartPositionInputs(node.id);
+          applyFlowchartPreviewLayout();
+        };
+        nodeEl.onpointerup = stopDrag;
+        nodeEl.onpointercancel = stopDrag;
+        nodeEl.onlostpointercapture = stopDrag;
+      });
     }
     function renderFlowchartPreview() {
       if (!$('flowchartAdminPreview') || !flowchartDraft) return;
       syncFlowchartHeaderDraftSilent();
-      $('flowchartAdminPreview').innerHTML = flowchartDraft.nodes.length ? flowchartDraft.nodes.map((node, index) => `${index ? '<div class="flowPreviewArrow">→</div>' : ''}<div class="flowPreviewNode">${esc(node.label.id || node.label.en || `Step ${index + 1}`)}<span class="flowPreviewTarget">${esc(flowTargetLabel(node))}</span></div>`).join('') : '<div class="flowchartEmptyBuilder" style="width:100%">Flowchart preview will appear here.</div>';
+      $('flowchartAdminPreview').innerHTML = flowchartDraft.nodes.length ? flowGraphMarkup(flowchartDraft.nodes, flowchartDraft.edges) : '<div class="flowchartEmptyBuilder" style="width:100%">Flowchart preview will appear here.</div>';
+      bindFlowchartPreview();
     }
+
     function syncFlowchartHeaderDraftSilent() {
       if (!$('flowEnabled') || !flowchartDraft) return;
       flowchartDraft.adminName = $('flowAdminName').value.trim();
@@ -4844,6 +5371,7 @@
         enabled: flowchartDraft.enabled,
         title: clone(flowchartDraft.title),
         nodes: clone(flowchartDraft.nodes),
+        edges: clone(flowchartDraft.edges),
         createdAt: existing?.createdAt || flowchartDraft.createdAt || now,
         updatedAt: now
       };
@@ -4856,12 +5384,22 @@
       if (!flowchartDraft.title.id.trim() && !flowchartDraft.title.en.trim()) { toast('Isi minimal satu Flowchart Title.'); return; }
       if (!flowchartDraft.nodes.length) { toast('Tambahkan minimal 1 flow step sebelum menyimpan.'); return; }
       const invalid = flowchartDraft.nodes.find(node => {
+        if (!node.label.id.trim() && !node.label.en.trim()) return true;
+        if (node.targetType === 'none') return false;
         const module = state.data.find(item => item.id === node.moduleId);
-        if ((!node.label.id.trim() && !node.label.en.trim()) || !module) return true;
+        if (!module) return true;
         if (node.targetType === 'article') return !node.topicId || !module.topics?.some(topic => topic.id === node.topicId);
         return !node.pageMenu || !module.topics?.some(topic => topic?.pageMenu?.id === node.pageMenu || topic?.pageMenu?.en === node.pageMenu || topic?.pageMenu === node.pageMenu);
       });
-      if (invalid) { toast('Lengkapi label, Target Main Menu, dan target link pada semua flow step.'); return; }
+      if (invalid) { toast('Lengkapi label dan direct link pada node yang menggunakan Page Menu / Article. Decision boleh menggunakan “No direct link”.'); return; }
+      const nodeIds = new Set(flowchartDraft.nodes.map(node => node.id));
+      const invalidEdge = flowchartDraft.edges.find(edge => !nodeIds.has(edge.from) || !nodeIds.has(edge.to) || !edge.from || !edge.to || edge.from === edge.to);
+      if (invalidEdge) { toast('Periksa Connections: Source dan Target harus terisi dan tidak boleh node yang sama.'); return; }
+      if (flowchartDraft.nodes.length > 1 && !flowchartDraft.edges.length) { toast('Tambahkan minimal 1 connection untuk flowchart dengan lebih dari 1 node.'); return; }
+      const invalidDecision = flowchartDraft.nodes.find(node => node.kind === 'decision' && flowchartDraft.edges.filter(edge => edge.from === node.id).length < 2);
+      if (invalidDecision) { toast('Decision node harus memiliki minimal 2 outgoing connections.'); return; }
+      const unlabeledDecisionEdge = flowchartDraft.edges.find(edge => flowchartDraft.nodes.find(node => node.id === edge.from)?.kind === 'decision' && !(edge.label?.id || '').trim() && !(edge.label?.en || '').trim());
+      if (unlabeledDecisionEdge) { toast('Isi Branch Label pada setiap connection yang keluar dari Decision, misalnya “Void” dan “Tidak Void”.'); return; }
       const button = $('saveFlowchart'); button.disabled = true; button.textContent = 'Saving…';
       try {
         const latest = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
@@ -4930,7 +5468,9 @@
             copied.flowId = copiedFlowId;
             copied.adminName = copiedAdminName;
             copied.title = { id: copiedTitleId, en: copiedTitleEn };
-            copied.nodes = (source.nodes || []).map(node => ({ ...clone(node), id: flowUid() }));
+            const copiedNodeIds = new Map();
+            copied.nodes = (source.nodes || []).map(node => { const id = flowUid(); copiedNodeIds.set(node.id, id); return { ...clone(node), id }; });
+            copied.edges = (source.edges || []).map(edge => ({ ...clone(edge), id: flowUid(), from: copiedNodeIds.get(edge.from) || '', to: copiedNodeIds.get(edge.to) || '' })).filter(edge => edge.from && edge.to);
             copied.createdAt = now;
             copied.updatedAt = now;
 
@@ -4986,7 +5526,38 @@
     $('flowEnabled').onchange = syncFlowchartHeaderDraft;
     $('flowTitleId').oninput = syncFlowchartHeaderDraft;
     $('flowTitleEn').oninput = syncFlowchartHeaderDraft;
-    $('addFlowNode').onclick = () => { if (!flowchartDraft) flowchartDraft = blankFlowchartDraft(); flowchartDraft.nodes.push(emptyFlowNode(flowDefaultTargetModule())); renderFlowchartNodes(); };
+    $('addFlowNode').onclick = () => { if (!flowchartDraft) flowchartDraft = blankFlowchartDraft(); flowchartDraft.nodes.push(emptyFlowNode(flowDefaultTargetModule(), 'process')); renderFlowchartNodes(); };
+    $('addFlowDecision').onclick = () => { if (!flowchartDraft) flowchartDraft = blankFlowchartDraft(); flowchartDraft.nodes.push(emptyFlowNode(flowDefaultTargetModule(), 'decision')); renderFlowchartNodes(); };
+    function addFlowConnectionRow() {
+      if (!flowchartDraft) flowchartDraft = blankFlowchartDraft();
+      if (flowchartDraft.nodes.length < 2) { toast('Tambahkan minimal 2 node sebelum membuat connection.'); return; }
+      const from = flowchartDraft.nodes[Math.max(0, flowchartDraft.nodes.length - 2)]?.id || '';
+      const to = flowchartDraft.nodes[flowchartDraft.nodes.length - 1]?.id || '';
+      flowchartDraft.edges.push(emptyFlowEdge(from, to));
+      renderFlowchartConnections(); renderFlowchartPreview();
+      const section = document.querySelector('.flowConnectionSection');
+      section?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      setTimeout(() => {
+        const rows = $('flowchartConnectionBuilder')?.querySelectorAll('[data-flow-edge]');
+        rows?.[rows.length - 1]?.querySelector('[data-edge-field="from"]')?.focus();
+      }, 80);
+    }
+    $('addFlowEdge').onclick = addFlowConnectionRow;
+    $('addFlowEdgePreview').onclick = addFlowConnectionRow;
+    $('autoArrangeFlowchart').onclick = () => {
+      if (!flowchartDraft?.nodes?.length) return;
+      const layout = flowGraphLayout(flowchartDraft.nodes, flowchartDraft.edges, { respectManual: false });
+      flowchartDraft.nodes.forEach(node => {
+        const pos = layout.positions.get(node.id); if (!pos) return;
+        setFlowNodePosition(node, pos.x, pos.y);
+      });
+      renderFlowchartNodes();
+    };
+    $('clearFlowNodePositions').onclick = () => {
+      if (!flowchartDraft?.nodes?.length) return;
+      flowchartDraft.nodes.forEach(node => clearFlowNodePosition(node));
+      renderFlowchartNodes();
+    };
     $('saveFlowchart').onclick = saveFlowchart;
 
     function showModal(html, small = false) { $('modalBox').className = 'modal' + (small ? ' small' : ''); $('modalBox').innerHTML = html; $('modalOverlay').classList.add('show'); $('modalBox').querySelectorAll('[data-close]').forEach(x => x.onclick = hideModal) } function hideModal() { $('modalOverlay').classList.remove('show') }
