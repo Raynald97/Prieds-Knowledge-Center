@@ -1851,7 +1851,7 @@
     .flowNodeStyleBtn:hover{background:#EAF9FD;border-color:#8CCDDD}
     .flowGraphNodeWrap{--node-fill:#EFFAFF;--node-border:#9EDBEC;--node-text:#17647B;--node-font:Inter,Segoe UI,Arial,sans-serif;--node-font-size:11px;--node-font-weight:850}.flowGraphNode{background:var(--node-fill)!important;border-color:var(--node-border)!important;color:var(--node-text)!important;font-family:var(--node-font)!important;font-size:var(--node-font-size)!important;font-weight:var(--node-font-weight)!important}
     .flowGraphNode small{color:color-mix(in srgb,var(--node-text) 66%,#687A81)!important;font-family:inherit}
-    .flowGraphNodeKind{color:inherit;font-family:inherit}.flowGraphNode strong{color:inherit;font-family:inherit;font-size:inherit;font-weight:inherit}
+    .flowGraphNodeKind{color:inherit;font-family:inherit}.flowGraphNode strong{color:inherit;font-family:inherit;font-size:inherit;font-weight:inherit}.flowGraphNode span,.flowGraphNode strong,.flowGraphNode small{font-family:inherit!important}.flowGraphNode strong{font-size:inherit!important;font-weight:inherit!important}
     .flowGraphNodeWrap.shape-terminal .flowGraphNode{border-radius:999px}
     .flowGraphNodeWrap.shape-decision .flowGraphNode{border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);padding:18px 28px}
     .flowGraphNodeWrap.shape-manual-input .flowGraphNode{border-radius:7px;clip-path:polygon(0 15%,100% 0,100% 100%,0 100%);padding-top:18px}
@@ -4822,7 +4822,7 @@
     }
     function setFlowNodeStyle(node,style={}) { node.style={...flowNodeStyle(node),...style}; }
     function flowNodeStyleVars(node) {
-      const s=flowNodeStyle(node),font=s.fontFamily.includes(' ')?`"${s.fontFamily}"`:s.fontFamily;
+      const s=flowNodeStyle(node),font=s.fontFamily;
       return `--node-fill:${s.fill};--node-border:${s.border};--node-text:${s.text};--node-font:${font},Segoe UI,Arial,sans-serif;--node-font-size:${s.fontSize}px;--node-font-weight:${s.fontWeight};--multi-fill:${s.fill};--multi-border:${s.border};`;
     }
     function flowAddElement(shape='process') {
@@ -5664,7 +5664,7 @@
     function applyFlowNodeStylePreview(node) {
       if (!node) return;
       const host = $('flowchartAdminPreview'), wrap = host?.querySelector(`[data-preview-node-id="${node.id}"]`); if (!wrap) return;
-      const s = flowNodeStyle(node), font = s.fontFamily.includes(' ') ? `"${s.fontFamily}"` : s.fontFamily;
+      const s = flowNodeStyle(node), font = s.fontFamily;
       wrap.style.setProperty('--node-fill', s.fill);
       wrap.style.setProperty('--node-border', s.border);
       wrap.style.setProperty('--node-text', s.text);
