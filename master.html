@@ -1849,9 +1849,9 @@
     .flowNodeEditor{grid-template-columns:38px 116px 106px minmax(120px,1fr) minmax(120px,1fr) 112px minmax(130px,1fr) minmax(130px,1fr) minmax(150px,1.1fr) 74px 74px 74px 74px 74px 44px 42px}
     .flowNodeStyleBtn{height:38px;border:1px solid #BBD5DE;background:#fff;color:#187B99;border-radius:6px;padding:0 9px;font-size:10px;font-weight:800;white-space:nowrap}
     .flowNodeStyleBtn:hover{background:#EAF9FD;border-color:#8CCDDD}
-    .flowGraphNode{--node-fill:#EFFAFF;--node-border:#9EDBEC;--node-text:#17647B;--node-font:Inter,Segoe UI,Arial,sans-serif;--node-font-size:11px;--node-font-weight:850;background:var(--node-fill)!important;border-color:var(--node-border)!important;color:var(--node-text)!important;font-family:var(--node-font)!important;font-size:var(--node-font-size)!important;font-weight:var(--node-font-weight)!important}
+    .flowGraphNodeWrap{--node-fill:#EFFAFF;--node-border:#9EDBEC;--node-text:#17647B;--node-font:Inter,Segoe UI,Arial,sans-serif;--node-font-size:11px;--node-font-weight:850}.flowGraphNode{background:var(--node-fill)!important;border-color:var(--node-border)!important;color:var(--node-text)!important;font-family:var(--node-font)!important;font-size:var(--node-font-size)!important;font-weight:var(--node-font-weight)!important}
     .flowGraphNode small{color:color-mix(in srgb,var(--node-text) 66%,#687A81)!important;font-family:inherit}
-    .flowGraphNodeKind{color:inherit}
+    .flowGraphNodeKind{color:inherit;font-family:inherit}.flowGraphNode strong{color:inherit;font-family:inherit;font-size:inherit;font-weight:inherit}
     .flowGraphNodeWrap.shape-terminal .flowGraphNode{border-radius:999px}
     .flowGraphNodeWrap.shape-decision .flowGraphNode{border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);padding:18px 28px}
     .flowGraphNodeWrap.shape-manual-input .flowGraphNode{border-radius:7px;clip-path:polygon(0 15%,100% 0,100% 100%,0 100%);padding-top:18px}
@@ -1885,7 +1885,7 @@
     @media(max-width:700px){.flowNodeEditor{grid-template-columns:38px 1fr}.flowNodeEditor .field,.flowNodeStyleBtn,.flowNodePositionReset,.flowNodeDelete{grid-column:2}.flowStyleGrid{grid-template-columns:1fr}}
 
 
-    /* Flowchart graph editor v10 — click element for direct floating style bar */
+    /* Flowchart graph editor v10.1 — direct style bar + live CSS variable fix */
     .flowGraphNodeWrap.selected-node{z-index:16}
     .flowGraphNodeWrap.selected-node .flowGraphNode{box-shadow:0 0 0 3px rgba(20,152,192,.16),0 8px 20px rgba(26,112,138,.16)}
     .flowGraphNodeStyleToolbar{position:absolute;left:50%;z-index:30;display:flex;align-items:center;gap:5px;min-height:40px;padding:5px 6px;border:1px solid #B8DCE6;border-radius:9px;background:#fff;box-shadow:0 9px 24px rgba(25,75,91,.18);transform:translateX(-50%);white-space:nowrap;cursor:default;touch-action:auto}
