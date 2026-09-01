@@ -1842,6 +1842,77 @@
     @media(max-width:1380px){.flowNodeEditor{grid-template-columns:38px 110px 1fr 1fr 120px 1fr 1fr}.flowNodeEditor .field{min-width:0}}
     @media(max-width:700px){.flowNodeEditor{grid-template-columns:38px 1fr}.flowNodeEditor .field{grid-column:2}.flowGraphResizeHandle{width:18px;height:18px;right:-9px;bottom:-9px}}
 
+
+    /* Flowchart graph editor v9 — element library, per-node style, undo/redo */
+    .flowchartBuilderActions{align-items:center}
+    .flowUndoBtn[disabled],.flowRedoBtn[disabled]{opacity:.42;cursor:not-allowed}
+    .flowNodeEditor{grid-template-columns:38px 116px 106px minmax(120px,1fr) minmax(120px,1fr) 112px minmax(130px,1fr) minmax(130px,1fr) minmax(150px,1.1fr) 74px 74px 74px 74px 74px 44px 42px}
+    .flowNodeStyleBtn{height:38px;border:1px solid #BBD5DE;background:#fff;color:#187B99;border-radius:6px;padding:0 9px;font-size:10px;font-weight:800;white-space:nowrap}
+    .flowNodeStyleBtn:hover{background:#EAF9FD;border-color:#8CCDDD}
+    .flowGraphNode{--node-fill:#EFFAFF;--node-border:#9EDBEC;--node-text:#17647B;--node-font:Inter,Segoe UI,Arial,sans-serif;--node-font-size:11px;--node-font-weight:850;background:var(--node-fill)!important;border-color:var(--node-border)!important;color:var(--node-text)!important;font-family:var(--node-font)!important;font-size:var(--node-font-size)!important;font-weight:var(--node-font-weight)!important}
+    .flowGraphNode small{color:color-mix(in srgb,var(--node-text) 66%,#687A81)!important;font-family:inherit}
+    .flowGraphNodeKind{color:inherit}
+    .flowGraphNodeWrap.shape-terminal .flowGraphNode{border-radius:999px}
+    .flowGraphNodeWrap.shape-decision .flowGraphNode{border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);padding:18px 28px}
+    .flowGraphNodeWrap.shape-manual-input .flowGraphNode{border-radius:7px;clip-path:polygon(0 15%,100% 0,100% 100%,0 100%);padding-top:18px}
+    .flowGraphNodeWrap.shape-input .flowGraphNode,.flowGraphNodeWrap.shape-data .flowGraphNode{border-radius:0;clip-path:polygon(12% 0,100% 0,88% 100%,0 100%);padding-left:22px;padding-right:22px}
+    .flowGraphNodeWrap.shape-predefined-process .flowGraphNode{border-radius:4px;padding-left:28px;padding-right:28px}
+    .flowGraphNodeWrap.shape-predefined-process .flowGraphNode:before,.flowGraphNodeWrap.shape-predefined-process .flowGraphNode:after{content:"";position:absolute;top:0;bottom:0;width:1px;background:var(--node-border)}
+    .flowGraphNodeWrap.shape-predefined-process .flowGraphNode:before{left:15px}.flowGraphNodeWrap.shape-predefined-process .flowGraphNode:after{right:15px}
+    .flowGraphNodeWrap.shape-database .flowGraphNode{border-radius:50% / 14%;padding-top:15px;padding-bottom:15px}
+    .flowGraphNodeWrap.shape-manual-operation .flowGraphNode{border-radius:5px;clip-path:polygon(10% 0,90% 0,100% 100%,0 100%);padding-left:18px;padding-right:18px}
+    .flowGraphNodeWrap.shape-document .flowGraphNode{border-radius:4px;clip-path:polygon(0 0,100% 0,100% 84%,82% 89%,66% 84%,50% 91%,34% 84%,18% 90%,0 85%);padding-bottom:18px}
+    .flowGraphNodeWrap.shape-multidocument:before,.flowGraphNodeWrap.shape-multidocument:after{content:"";position:absolute;z-index:-2;border:1px solid var(--multi-border,#9EDBEC);background:var(--multi-fill,#EFFAFF);border-radius:6px;width:calc(100% - 12px);height:calc(100% - 12px)}
+    .flowGraphNodeWrap.shape-multidocument:before{left:12px;top:-9px}.flowGraphNodeWrap.shape-multidocument:after{left:6px;top:-4px;z-index:-1}
+    .flowGraphNodeWrap.shape-multidocument .flowGraphNode{border-radius:5px;clip-path:polygon(0 0,100% 0,100% 84%,82% 89%,66% 84%,50% 91%,34% 84%,18% 90%,0 85%);padding-bottom:18px}
+    .flowGraphNodeWrap.shape-delay .flowGraphNode{border-radius:7px 999px 999px 7px;padding-right:24px}
+    .flowGraphNodeWrap.shape-on-page-reference .flowGraphNode{border-radius:50%;padding:12px}
+    .flowGraphNodeWrap.shape-alternate-process .flowGraphNode{border-radius:18px}
+    .flowGraphNodeWrap.shape-merge .flowGraphNode{border-radius:0;clip-path:polygon(50% 0,100% 100%,0 100%);padding:35% 19px 10px}
+    .flowGraphNodeWrap.shape-preparation .flowGraphNode{border-radius:0;clip-path:polygon(18% 0,82% 0,100% 50%,82% 100%,18% 100%,0 50%);padding-left:25px;padding-right:25px}
+    .flowGraphNodeWrap.shape-off-page-reference .flowGraphNode{border-radius:0;clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);padding-bottom:25px}
+    .flowGraphNodeWrap.shape-decision .flowGraphPort.top,.flowGraphNodeWrap.shape-decision .flowGraphPort.bottom{opacity:1}
+    .flowGraphNodeWrap.shape-on-page-reference .flowGraphPort{opacity:.82}
+    .flowElementPalette{display:grid;grid-template-columns:repeat(4,minmax(135px,1fr));gap:10px;margin-top:14px}
+    .flowElementChoice{min-height:108px;border:1px solid #D4E0E4;background:#fff;border-radius:9px;padding:9px;display:grid;grid-template-rows:65px auto;gap:7px;text-align:center;color:#465960;font-size:10px;font-weight:800}
+    .flowElementChoice:hover{border-color:#72C5DB;background:#F5FCFE;color:#087A9C}
+    .flowElementIcon{width:82px;height:54px;margin:auto;border:1.5px solid #65747B;background:#fff;display:grid;place-items:center;font-size:8px;font-weight:700;color:#52636A;position:relative}
+    .flowElementIcon.shape-terminal{border-radius:999px}.flowElementIcon.shape-decision{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}.flowElementIcon.shape-manual-input{clip-path:polygon(0 15%,100% 0,100% 100%,0 100%)}.flowElementIcon.shape-input,.flowElementIcon.shape-data{clip-path:polygon(12% 0,100% 0,88% 100%,0 100%)}.flowElementIcon.shape-database{border-radius:50% / 15%}.flowElementIcon.shape-manual-operation{clip-path:polygon(10% 0,90% 0,100% 100%,0 100%)}.flowElementIcon.shape-delay{border-radius:5px 999px 999px 5px}.flowElementIcon.shape-on-page-reference{width:54px;border-radius:50%}.flowElementIcon.shape-alternate-process{border-radius:15px}.flowElementIcon.shape-preparation{clip-path:polygon(18% 0,82% 0,100% 50%,82% 100%,18% 100%,0 50%)}.flowElementIcon.shape-merge{clip-path:polygon(50% 0,100% 100%,0 100%);width:65px}.flowElementIcon.shape-off-page-reference{clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);width:58px}.flowElementIcon.shape-document,.flowElementIcon.shape-multidocument{clip-path:polygon(0 0,100% 0,100% 84%,75% 90%,50% 84%,25% 91%,0 85%)}.flowElementIcon.shape-predefined-process:before,.flowElementIcon.shape-predefined-process:after{content:"";position:absolute;top:0;bottom:0;width:1px;background:#65747B}.flowElementIcon.shape-predefined-process:before{left:12px}.flowElementIcon.shape-predefined-process:after{right:12px}
+    .flowStylePreviewWrap{display:grid;place-items:center;padding:18px;border:1px dashed #C9D9DE;background:#F8FBFC;border-radius:8px;margin:0 0 15px;min-height:130px}.flowStylePreview{width:190px;min-height:94px;border:1.5px solid #9EDBEC;background:#EFFAFF;color:#17647B;display:grid;place-items:center;text-align:center;padding:12px;border-radius:8px;overflow-wrap:anywhere}
+    .flowStyleGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.flowStyleGrid .field{min-width:0}.flowStyleColorRow{display:flex;align-items:center;gap:7px}.flowStyleColorRow input[type="color"]{width:46px;height:38px;padding:3px}.flowStyleColorRow input[type="text"]{min-width:0;flex:1}
+    @media(max-width:1380px){.flowNodeEditor{grid-template-columns:38px 112px 100px 1fr 1fr 112px 1fr 1fr}.flowNodeEditor .field{min-width:0}.flowNodeStyleBtn,.flowNodePositionReset,.flowNodeDelete{align-self:end}}
+    @media(max-width:800px){.flowElementPalette{grid-template-columns:repeat(2,minmax(120px,1fr))}.flowStyleGrid{grid-template-columns:1fr 1fr}}
+    @media(max-width:700px){.flowNodeEditor{grid-template-columns:38px 1fr}.flowNodeEditor .field,.flowNodeStyleBtn,.flowNodePositionReset,.flowNodeDelete{grid-column:2}.flowStyleGrid{grid-template-columns:1fr}}
+
+
+    /* Flowchart graph editor v10 — click element for direct floating style bar */
+    .flowGraphNodeWrap.selected-node{z-index:16}
+    .flowGraphNodeWrap.selected-node .flowGraphNode{box-shadow:0 0 0 3px rgba(20,152,192,.16),0 8px 20px rgba(26,112,138,.16)}
+    .flowGraphNodeStyleToolbar{position:absolute;left:50%;z-index:30;display:flex;align-items:center;gap:5px;min-height:40px;padding:5px 6px;border:1px solid #B8DCE6;border-radius:9px;background:#fff;box-shadow:0 9px 24px rgba(25,75,91,.18);transform:translateX(-50%);white-space:nowrap;cursor:default;touch-action:auto}
+    .flowGraphNodeStyleToolbar.above{bottom:calc(100% + 11px)}
+    .flowGraphNodeStyleToolbar.below{top:calc(100% + 11px)}
+    .flowGraphNodeStyleToolbar:after{content:"";position:absolute;left:50%;width:9px;height:9px;background:#fff;border-right:1px solid #B8DCE6;border-bottom:1px solid #B8DCE6;transform:translateX(-50%) rotate(45deg)}
+    .flowGraphNodeStyleToolbar.above:after{bottom:-5px}
+    .flowGraphNodeStyleToolbar.below:after{top:-5px;transform:translateX(-50%) rotate(225deg)}
+    .flowGraphNodeStyleToolbar .flowDirectStyleLabel{padding:0 3px;color:#62757D;font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+    .flowGraphNodeStyleToolbar .flowDirectColor{position:relative;width:31px;height:30px;border:1px solid #CAD9DE;border-radius:6px;background:#fff;overflow:hidden;padding:0;cursor:pointer}
+    .flowGraphNodeStyleToolbar .flowDirectColor input[type="color"]{position:absolute;inset:-6px;width:44px;height:44px;border:0;padding:0;cursor:pointer;background:transparent}
+    .flowGraphNodeStyleToolbar .flowDirectColor span{position:absolute;right:2px;bottom:1px;z-index:2;padding:0 2px;border-radius:3px;background:rgba(255,255,255,.9);color:#52676F;font-size:7px;font-weight:900;pointer-events:none}
+    .flowGraphNodeStyleToolbar select,.flowGraphNodeStyleToolbar input[type="number"]{height:30px;border:1px solid #CAD9DE;border-radius:6px;background:#fff;color:#42565E;font-size:10px;outline:none}
+    .flowGraphNodeStyleToolbar select:focus,.flowGraphNodeStyleToolbar input[type="number"]:focus{border-color:#28B8E2;box-shadow:0 0 0 2px rgba(40,184,226,.12)}
+    .flowGraphNodeStyleToolbar .flowDirectFont{width:105px;padding:0 6px}
+    .flowGraphNodeStyleToolbar .flowDirectSize{width:48px;padding:0 5px;text-align:center}
+    .flowGraphNodeStyleToolbar button{height:30px;min-width:30px;border:1px solid #CAD9DE;border-radius:6px;background:#fff;color:#42565E;padding:0 8px;font-size:10px;font-weight:800}
+    .flowGraphNodeStyleToolbar button:hover{border-color:#8CCDDD;background:#EFFAFF;color:#087B9D}
+    .flowGraphNodeStyleToolbar button.active{border-color:#28B8E2;background:#E6F8FD;color:#067899}
+    .flowGraphNodeStyleToolbar .flowDirectMore{font-size:15px;line-height:1;padding:0 7px}
+    .flowchartPreview.cleanPreview .flowGraphNodeStyleToolbar{display:none!important}
+    @media(max-width:800px){
+      .flowGraphNodeStyleToolbar{white-space:normal;flex-wrap:wrap;width:min(310px,calc(100vw - 54px));justify-content:center}
+      .flowGraphNodeStyleToolbar .flowDirectStyleLabel{display:none}
+      .flowGraphNodeStyleToolbar .flowDirectFont{width:92px}
+    }
+
 </style>
 </head>
 
@@ -2112,7 +2183,7 @@
           <div class="card">
             <div class="sectionRow flowchartBuilderHead">
               <div><h2>Flow Nodes</h2><p class="helper">Buat process node atau decision node. Hubungan antar-node diatur terpisah sehingga satu node bisa bercabang, bergabung kembali, atau kembali ke node sebelumnya.</p></div>
-              <div class="flowchartBuilderActions"><button class="primaryBtn" id="addFlowNode" type="button">+ Add Process</button><button class="ghostBtn" id="addFlowDecision" type="button">◇ Add Decision</button></div>
+              <div class="flowchartBuilderActions"><button class="primaryBtn" id="addFlowElement" type="button">＋ Element</button><button class="ghostBtn" id="addFlowNode" type="button">+ Process</button><button class="ghostBtn" id="addFlowDecision" type="button">◇ Decision</button></div>
             </div>
             <div class="flowchartNodeBuilder" id="flowchartNodeBuilder"></div>
             <div class="flowchartPreviewWrap">
@@ -2120,6 +2191,8 @@
                 <div class="flowchartPreviewLabel">Graph Editor</div>
                 <div class="flowchartPreviewTools">
                   <span class="directHint">Drag titik biru untuk connect</span>
+                  <button class="ghostBtn flowUndoBtn" id="undoFlowchart" type="button" title="Undo (Ctrl/Cmd+Z)" disabled>↶ Undo</button>
+                  <button class="ghostBtn flowRedoBtn" id="redoFlowchart" type="button" title="Redo (Ctrl/Cmd+Shift+Z)" disabled>↷ Redo</button>
                   <button class="ghostBtn" id="toggleFlowCleanPreview" type="button">Clean Preview</button>
                   <button class="ghostBtn" id="autoArrangeFlowchart" type="button">Auto Arrange</button>
                   <button class="ghostBtn" id="clearFlowNodePositions" type="button">Reset Manual Position</button>
@@ -4641,7 +4714,37 @@
     let selectedFlowId = '';
     let flowchartEditorInitialized = false;
     let flowchartDraft = null;
-    let flowchartUiState = { selectedEdgeId: '', selectedWaypoint: null, cleanPreview: false };
+    let flowchartUiState = { selectedEdgeId: '', selectedWaypoint: null, selectedNodeId: '', cleanPreview: false };
+    const flowHistory = { undo: [], redo: [], max: 80, restoring: false };
+    function flowHistorySnapshot() { return flowchartDraft ? clone(flowchartDraft) : null; }
+    function updateFlowHistoryButtons() {
+      const undo=$('undoFlowchart'),redo=$('redoFlowchart');
+      if(undo){undo.disabled=!flowHistory.undo.length;undo.title=flowHistory.undo.length?`Undo: ${flowHistory.undo[flowHistory.undo.length-1].label} (Ctrl/Cmd+Z)`:'Nothing to undo';}
+      if(redo){redo.disabled=!flowHistory.redo.length;redo.title=flowHistory.redo.length?`Redo: ${flowHistory.redo[flowHistory.redo.length-1].label} (Ctrl/Cmd+Shift+Z)`:'Nothing to redo';}
+    }
+    function resetFlowHistory() { flowHistory.undo=[];flowHistory.redo=[];updateFlowHistoryButtons(); }
+    function rememberFlowState(label='Edit flowchart') {
+      if(flowHistory.restoring||!flowchartDraft)return;
+      const snapshot=flowHistorySnapshot();
+      const last=flowHistory.undo[flowHistory.undo.length-1]?.snapshot;
+      if(last&&JSON.stringify(last)===JSON.stringify(snapshot))return;
+      flowHistory.undo.push({snapshot,label});
+      if(flowHistory.undo.length>flowHistory.max)flowHistory.undo.shift();
+      flowHistory.redo=[];updateFlowHistoryButtons();
+    }
+    function restoreFlowHistorySnapshot(snapshot) {
+      if(!snapshot)return;
+      flowHistory.restoring=true;flowchartDraft=clone(snapshot);flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';
+      renderFlowchartEditor();flowHistory.restoring=false;updateFlowHistoryButtons();
+    }
+    function undoFlowchartEdit() {
+      const item=flowHistory.undo.pop(); if(!item||!flowchartDraft){updateFlowHistoryButtons();return;}
+      flowHistory.redo.push({snapshot:flowHistorySnapshot(),label:item.label});restoreFlowHistorySnapshot(item.snapshot);toast(`Undo: ${item.label}`);
+    }
+    function redoFlowchartEdit() {
+      const item=flowHistory.redo.pop(); if(!item||!flowchartDraft){updateFlowHistoryButtons();return;}
+      flowHistory.undo.push({snapshot:flowHistorySnapshot(),label:item.label});restoreFlowHistorySnapshot(item.snapshot);toast(`Redo: ${item.label}`);
+    }
     const flowUid = () => 'flow-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
     const flowNow = () => new Date().toISOString();
     function flowchartsState() { state.flowcharts = state.flowcharts && typeof state.flowcharts === 'object' ? state.flowcharts : {}; return state.flowcharts }
@@ -4686,27 +4789,96 @@
     function clearFlowNodePosition(node) {
       node.position = { x: '', y: '' };
     }
+    const FLOW_SHAPES = [
+      ['process','Process'],['terminal','Terminal'],['decision','Decision'],['manual-input','Manual Input'],
+      ['input','Input'],['predefined-process','Predefined Process'],['database','Database'],['manual-operation','Manual Operation'],
+      ['document','Document'],['multidocument','Multidocument'],['delay','Delay'],['on-page-reference','On-page Reference'],
+      ['alternate-process','Alternate Process'],['data','Data'],['merge','Merge'],['preparation','Preparation'],['off-page-reference','Off-page Reference']
+    ];
+    const FLOW_FONTS = ['Inter','Segoe UI','Arial','Verdana','Trebuchet MS','Georgia','Times New Roman','Courier New'];
+    function flowShapeMeta(shape='process') { const key=FLOW_SHAPES.some(([value])=>value===shape)?shape:'process'; return { key,label:FLOW_SHAPES.find(([value])=>value===key)?.[1]||'Process' }; }
+    function flowShapeOptions(selected='process') { return FLOW_SHAPES.map(([value,label])=>`<option value="${value}" ${value===selected?'selected':''}>${label}</option>`).join(''); }
+    function flowDefaultNodeSize(shape='process') {
+      if(shape==='on-page-reference')return{w:100,h:100};
+      if(shape==='off-page-reference')return{w:130,h:105};
+      if(shape==='merge')return{w:145,h:100};
+      if(shape==='terminal')return{w:180,h:90};
+      if(shape==='delay')return{w:180,h:100};
+      return{w:180,h:104};
+    }
+    function flowDefaultNodeStyle(shape='process') {
+      if(shape==='decision')return{fill:'#FFF8D9',border:'#D6B84C',text:'#715C0C',fontFamily:'Inter',fontSize:11,fontWeight:850};
+      return{fill:'#EFFAFF',border:'#9EDBEC',text:'#17647B',fontFamily:'Inter',fontSize:11,fontWeight:850};
+    }
+    function flowSafeColor(value,fallback) { const text=String(value||'').trim(); return /^#[0-9a-f]{6}$/i.test(text)?text:fallback; }
+    function flowNodeStyle(node) {
+      const defaults=flowDefaultNodeStyle(node?.shape||node?.kind||'process'),raw=node?.style&&typeof node.style==='object'?node.style:{};
+      return{
+        fill:flowSafeColor(raw.fill,defaults.fill),border:flowSafeColor(raw.border,defaults.border),text:flowSafeColor(raw.text,defaults.text),
+        fontFamily:FLOW_FONTS.includes(raw.fontFamily)?raw.fontFamily:defaults.fontFamily,
+        fontSize:Math.max(8,Math.min(32,Math.round(flowNumber(raw.fontSize)??defaults.fontSize))),
+        fontWeight:[400,500,600,700,800,850,900].includes(Number(raw.fontWeight))?Number(raw.fontWeight):defaults.fontWeight
+      };
+    }
+    function setFlowNodeStyle(node,style={}) { node.style={...flowNodeStyle(node),...style}; }
+    function flowNodeStyleVars(node) {
+      const s=flowNodeStyle(node),font=s.fontFamily.includes(' ')?`"${s.fontFamily}"`:s.fontFamily;
+      return `--node-fill:${s.fill};--node-border:${s.border};--node-text:${s.text};--node-font:${font},Segoe UI,Arial,sans-serif;--node-font-size:${s.fontSize}px;--node-font-weight:${s.fontWeight};--multi-fill:${s.fill};--multi-border:${s.border};`;
+    }
+    function flowAddElement(shape='process') {
+      if(!flowchartDraft)flowchartDraft=blankFlowchartDraft();
+      rememberFlowState(`Add ${flowShapeMeta(shape).label}`);
+      flowchartDraft.nodes.push(emptyFlowNode(flowDefaultTargetModule(),shape));renderFlowchartNodes();
+    }
+    function openFlowElementPalette() {
+      const choices=FLOW_SHAPES.map(([shape,label])=>`<button class="flowElementChoice" type="button" data-add-flow-shape="${shape}"><span class="flowElementIcon shape-${shape}"></span><span>${label}</span></button>`).join('');
+      showModal(`<div class="modalHeader"><div><h2>Add Flowchart Element</h2><p class="helper">Pilih simbol flowchart. Setelah ditambahkan, element tetap bisa di-resize, diberi link, warna, dan font sendiri.</p></div><button class="closeModal" data-close>×</button></div><div class="flowElementPalette">${choices}</div>`);
+      $('modalBox').querySelectorAll('[data-add-flow-shape]').forEach(button=>button.onclick=()=>{hideModal();flowAddElement(button.dataset.addFlowShape);});
+    }
+    function openFlowNodeStyleEditor(node) {
+      if(!node)return; const s=flowNodeStyle(node),shape=flowShapeMeta(node.shape).key;
+      showModal(`<div class="modalHeader"><div><h2>Element Style</h2><p class="helper">Atur warna, font, ukuran teks, dan ketebalan font hanya untuk element ini.</p></div><button class="closeModal" data-close>×</button></div>
+        <div class="flowStylePreviewWrap"><div class="flowStylePreview" id="flowStylePreview">${esc(flowTextValue(node.label,'id')||flowShapeMeta(shape).label)}</div></div>
+        <div class="flowStyleGrid">
+          <div class="field"><label>Fill Color</label><div class="flowStyleColorRow"><input type="color" id="flowStyleFillColor" value="${s.fill}"><input type="text" id="flowStyleFill" value="${s.fill}" maxlength="7"></div></div>
+          <div class="field"><label>Border Color</label><div class="flowStyleColorRow"><input type="color" id="flowStyleBorderColor" value="${s.border}"><input type="text" id="flowStyleBorder" value="${s.border}" maxlength="7"></div></div>
+          <div class="field"><label>Text Color</label><div class="flowStyleColorRow"><input type="color" id="flowStyleTextColor" value="${s.text}"><input type="text" id="flowStyleText" value="${s.text}" maxlength="7"></div></div>
+          <div class="field"><label>Font</label><select id="flowStyleFont">${FLOW_FONTS.map(font=>`<option value="${font}" ${font===s.fontFamily?'selected':''}>${font}</option>`).join('')}</select></div>
+          <div class="field"><label>Font Size</label><input type="number" id="flowStyleFontSize" min="8" max="32" step="1" value="${s.fontSize}"></div>
+          <div class="field"><label>Font Weight</label><select id="flowStyleFontWeight"><option value="400" ${s.fontWeight===400?'selected':''}>Regular</option><option value="500" ${s.fontWeight===500?'selected':''}>Medium</option><option value="600" ${s.fontWeight===600?'selected':''}>Semi Bold</option><option value="700" ${s.fontWeight===700?'selected':''}>Bold</option><option value="800" ${s.fontWeight===800?'selected':''}>Extra Bold</option><option value="900" ${s.fontWeight===900?'selected':''}>Black</option></select></div>
+        </div>
+        <div class="submitBar" style="justify-content:space-between"><button class="ghostBtn" id="resetFlowNodeStyle" type="button">Reset Style</button><button class="primaryBtn" id="saveFlowNodeStyle" type="button">Apply Style</button></div>`);
+      const preview=$('flowStylePreview');
+      const syncColor=(picker,text)=>{picker.oninput=()=>{text.value=picker.value;updatePreview()};text.oninput=()=>{if(/^#[0-9a-f]{6}$/i.test(text.value))picker.value=text.value;updatePreview()};};
+      function readStyle(){return{fill:flowSafeColor($('flowStyleFill').value,s.fill),border:flowSafeColor($('flowStyleBorder').value,s.border),text:flowSafeColor($('flowStyleText').value,s.text),fontFamily:$('flowStyleFont').value,fontSize:Math.max(8,Math.min(32,Number($('flowStyleFontSize').value)||11)),fontWeight:Number($('flowStyleFontWeight').value)||700};}
+      function updatePreview(){const x=readStyle();preview.style.background=x.fill;preview.style.borderColor=x.border;preview.style.color=x.text;preview.style.fontFamily=x.fontFamily;preview.style.fontSize=`${x.fontSize}px`;preview.style.fontWeight=String(x.fontWeight);preview.style.borderRadius=shape==='terminal'?'999px':'8px';preview.style.clipPath=shape==='decision'?'polygon(50% 0,100% 50%,50% 100%,0 50%)':'';}
+      syncColor($('flowStyleFillColor'),$('flowStyleFill'));syncColor($('flowStyleBorderColor'),$('flowStyleBorder'));syncColor($('flowStyleTextColor'),$('flowStyleText'));
+      ['flowStyleFont','flowStyleFontSize','flowStyleFontWeight'].forEach(id=>$(id).oninput=updatePreview);updatePreview();
+      $('resetFlowNodeStyle').onclick=()=>{const d=flowDefaultNodeStyle(shape);$('flowStyleFill').value=$('flowStyleFillColor').value=d.fill;$('flowStyleBorder').value=$('flowStyleBorderColor').value=d.border;$('flowStyleText').value=$('flowStyleTextColor').value=d.text;$('flowStyleFont').value=d.fontFamily;$('flowStyleFontSize').value=d.fontSize;$('flowStyleFontWeight').value=d.fontWeight;updatePreview();};
+      $('saveFlowNodeStyle').onclick=()=>{rememberFlowState('Change element style');setFlowNodeStyle(node,readStyle());flowchartUiState.selectedNodeId=node.id;hideModal();renderFlowchartNodes();};
+    }
     function flowClampNodeSize(value, fallback, min, max) {
       const num = flowNumber(value);
       return Math.max(min, Math.min(max, Math.round((num ?? fallback) / 10) * 10));
     }
     function flowNodeSize(node) {
+      const d=flowDefaultNodeSize(node?.shape||node?.kind||'process');
       return {
-        w: flowClampNodeSize(node?.size?.w ?? node?.width, 180, 140, 420),
-        h: flowClampNodeSize(node?.size?.h ?? node?.height, 104, 80, 260)
+        w: flowClampNodeSize(node?.size?.w ?? node?.width, d.w, 80, 520),
+        h: flowClampNodeSize(node?.size?.h ?? node?.height, d.h, 70, 360)
       };
     }
     function setFlowNodeSize(node, w, h) {
       const current = flowNodeSize(node);
       node.size = {
-        w: flowClampNodeSize(w, current.w, 140, 420),
-        h: flowClampNodeSize(h, current.h, 80, 260)
+        w: flowClampNodeSize(w, current.w, 80, 520),
+        h: flowClampNodeSize(h, current.h, 70, 360)
       };
     }
-    function emptyFlowNode(module, kind = 'process') {
+    function emptyFlowNode(module, shape = 'process') {
       const firstPage = flowPagePairs(module)[0]?.id || '';
-      const nodeKind = kind === 'decision' ? 'decision' : 'process';
-      return { id: flowUid(), kind: nodeKind, label: { id: '', en: '' }, targetType: nodeKind === 'decision' ? 'none' : 'page', moduleId: module?.id || '', pageMenu: firstPage, topicId: '', position: { x: '', y: '' }, size: { w: 180, h: 104 } };
+      const shapeKey=flowShapeMeta(shape).key,nodeKind=shapeKey==='decision'?'decision':'process',size=flowDefaultNodeSize(shapeKey),style=flowDefaultNodeStyle(shapeKey);
+      return { id: flowUid(), kind: nodeKind, shape: shapeKey, label: { id: '', en: '' }, targetType: nodeKind === 'decision' ? 'none' : 'page', moduleId: module?.id || '', pageMenu: firstPage, topicId: '', position: { x: '', y: '' }, size, style };
     }
     function emptyFlowEdge(from = '', to = '') {
       return { id: flowUid(), from, to, label: { id: '', en: '' }, sourceSide: 'auto', targetSide: 'auto', routeMode: 'auto', waypoints: [] };
@@ -4724,7 +4896,8 @@
       const firstModule = flowModuleById(moduleIds[0]) || state.data[0];
       const nodes = Array.isArray(raw.nodes) ? raw.nodes.map(node => ({
         id: node.id || flowUid(),
-        kind: node.kind === 'decision' ? 'decision' : 'process',
+        kind: (node.shape === 'decision' || node.kind === 'decision') ? 'decision' : 'process',
+        shape: flowShapeMeta(node.shape || (node.kind === 'decision' ? 'decision' : 'process')).key,
         label: { id: flowTextValue(node.label?.id ?? node.label, 'id'), en: flowTextValue(node.label?.en ?? node.label, 'en') },
         targetType: node.targetType === 'none' ? 'none' : (node.targetType === 'article' ? 'article' : 'page'),
         moduleId: node.moduleId || fallbackModuleId || firstModule?.id || '',
@@ -4734,10 +4907,8 @@
           x: flowNumber(node?.position?.x ?? node?.x) ?? '',
           y: flowNumber(node?.position?.y ?? node?.y) ?? ''
         },
-        size: {
-          w: flowClampNodeSize(node?.size?.w ?? node?.width, 180, 140, 420),
-          h: flowClampNodeSize(node?.size?.h ?? node?.height, 104, 80, 260)
-        }
+        size: (()=>{const d=flowDefaultNodeSize(node.shape || (node.kind === 'decision' ? 'decision' : 'process'));return{w:flowClampNodeSize(node?.size?.w ?? node?.width,d.w,80,520),h:flowClampNodeSize(node?.size?.h ?? node?.height,d.h,70,360)}})(),
+        style: (()=>{const shape=node.shape || (node.kind === 'decision' ? 'decision' : 'process'),d=flowDefaultNodeStyle(shape),raw=node?.style&&typeof node.style==='object'?node.style:{};return{fill:flowSafeColor(raw.fill,d.fill),border:flowSafeColor(raw.border,d.border),text:flowSafeColor(raw.text,d.text),fontFamily:FLOW_FONTS.includes(raw.fontFamily)?raw.fontFamily:d.fontFamily,fontSize:Math.max(8,Math.min(32,Math.round(flowNumber(raw.fontSize)??d.fontSize))),fontWeight:[400,500,600,700,800,850,900].includes(Number(raw.fontWeight))?Number(raw.fontWeight):d.fontWeight}})()
       })) : [];
       const nodeIds = new Set(nodes.map(node => node.id));
       const legacyEdges = nodes.slice(1).map((node, index) => emptyFlowEdge(nodes[index].id, node.id));
@@ -4905,6 +5076,7 @@
       renderFlowModulePicker(); renderFlowchartStatus(); renderFlowchartNodes();
     }
     function renderFlowchartEditor() {
+      updateFlowHistoryButtons();
       ensureFlowListControls();
       if (!flowchartEditorInitialized) {
         flowchartEditorInitialized = true;
@@ -4924,7 +5096,7 @@
       }
     }
     function startNewFlowchart() {
-      flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null; flowchartUiState.cleanPreview = false;
+      flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null; flowchartUiState.selectedNodeId = ''; flowchartUiState.cleanPreview = false; resetFlowHistory();
       selectedFlowId = '';
       flowchartDraft = blankFlowchartDraft();
       setFlowchartView('editor');
@@ -4933,7 +5105,7 @@
       setTimeout(() => $('flowAdminName')?.focus(), 80);
     }
     function loadFlowchartForEdit(flowId) {
-      flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null; flowchartUiState.cleanPreview = false;
+      flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null; flowchartUiState.selectedNodeId = ''; flowchartUiState.cleanPreview = false; resetFlowHistory();
       const config = flowchartCollection()[flowId]; if (!config) { toast('Flowchart tidak ditemukan.'); renderFlowchartLibrary(); return; }
       selectedFlowId = flowId;
       flowchartDraft = normalizeFlowchartConfig(flowId, config);
@@ -4971,9 +5143,11 @@
         const posX = node?.position?.x ?? '';
         const posY = node?.position?.y ?? '';
         const nodeSize = flowNodeSize(node);
+        const shape=flowShapeMeta(node.shape || (node.kind === 'decision' ? 'decision' : 'process'));
         return `<div class="flowNodeEditor ${node.kind === 'decision' ? 'decision' : ''}" data-flow-node="${esc(node.id)}">
-          <div><div class="flowNodeOrder">${index + 1}</div><div class="flowNodeTypeBadge">${node.kind === 'decision' ? 'Decision' : 'Process'}</div><div class="flowNodeMove"><button type="button" data-flow-up="${esc(node.id)}" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" data-flow-down="${esc(node.id)}" ${index === flowchartDraft.nodes.length - 1 ? 'disabled' : ''}>↓</button></div></div>
-          <div class="field"><label>Node Type</label><select data-flow-field="kind"><option value="process" ${node.kind !== 'decision' ? 'selected' : ''}>Process</option><option value="decision" ${node.kind === 'decision' ? 'selected' : ''}>Decision</option></select></div>
+          <div><div class="flowNodeOrder">${index + 1}</div><div class="flowNodeTypeBadge">${esc(shape.label)}</div><div class="flowNodeMove"><button type="button" data-flow-up="${esc(node.id)}" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" data-flow-down="${esc(node.id)}" ${index === flowchartDraft.nodes.length - 1 ? 'disabled' : ''}>↓</button></div></div>
+          <div class="field"><label>Element</label><select data-flow-field="shape">${flowShapeOptions(shape.key)}</select></div>
+          <button class="flowNodeStyleBtn" type="button" data-flow-style="${esc(node.id)}" title="Color, font, and text size">🎨 Style</button>
           <div class="field"><label>Label — ID</label><input data-flow-field="labelId" value="${esc(node.label.id)}" placeholder="Contoh: Create PO"></div>
           <div class="field"><label>Label — EN</label><input data-flow-field="labelEn" value="${esc(node.label.en)}" placeholder="Example: Create PO"></div>
           <div class="field"><label>Direct Link</label><select data-flow-field="targetType"><option value="none" ${node.targetType === 'none' ? 'selected' : ''}>No direct link</option><option value="page" ${node.targetType === 'page' ? 'selected' : ''}>Page Menu</option><option value="article" ${node.targetType === 'article' ? 'selected' : ''}>Article</option></select></div>
@@ -4982,8 +5156,8 @@
           <div class="field"><label>Article ${articleDisabled ? '(optional)' : ''}</label><select data-flow-field="topicId" ${articleDisabled ? 'disabled' : ''}>${articleOptionsForFlow(targetModule, node.pageMenu, node.topicId)}</select></div>
           <div class="field"><label>Position X</label><input type="number" step="1" data-flow-field="posX" value="${esc(String(posX))}" placeholder="Auto"></div>
           <div class="field"><label>Position Y</label><input type="number" step="1" data-flow-field="posY" value="${esc(String(posY))}" placeholder="Auto"></div>
-          <div class="field"><label>Width</label><input type="number" min="140" max="420" step="10" data-flow-field="nodeW" value="${nodeSize.w}"></div>
-          <div class="field"><label>Height</label><input type="number" min="80" max="260" step="10" data-flow-field="nodeH" value="${nodeSize.h}"></div>
+          <div class="field"><label>Width</label><input type="number" min="80" max="520" step="10" data-flow-field="nodeW" value="${nodeSize.w}"></div>
+          <div class="field"><label>Height</label><input type="number" min="70" max="360" step="10" data-flow-field="nodeH" value="${nodeSize.h}"></div>
           <button class="flowNodePositionReset" type="button" data-flow-clear-position="${esc(node.id)}" title="Reset manual position" aria-label="Reset manual position">⟲</button>
           <button class="flowNodeDelete" type="button" data-flow-delete="${esc(node.id)}" aria-label="Delete node">×</button>
         </div>`;
@@ -4994,11 +5168,14 @@
       $('flowchartNodeBuilder').querySelectorAll('[data-flow-node]').forEach(row => {
         const node = flowchartDraft.nodes.find(item => item.id === row.dataset.flowNode); if (!node) return;
         row.querySelectorAll('[data-flow-field]').forEach(input => {
+          input.onfocus=()=>{input.dataset.flowHistoryArmed='1';};
+          input.onblur=()=>{input.dataset.flowHistoryArmed='';};
           const sync = () => {
             const field = input.dataset.flowField;
+            if(input.dataset.flowHistoryArmed==='1'){rememberFlowState(`Edit ${flowShapeMeta(node.shape).label}`);input.dataset.flowHistoryArmed='0';}
             if (field === 'labelId') node.label.id = input.value;
             else if (field === 'labelEn') node.label.en = input.value;
-            else if (field === 'kind') { node.kind = input.value === 'decision' ? 'decision' : 'process'; if (node.kind === 'decision') { node.targetType = 'none'; node.topicId = ''; } renderFlowchartNodes(); return; }
+            else if (field === 'shape') { const oldShape=node.shape||'process',shape=flowShapeMeta(input.value).key;node.shape=shape;node.kind=shape==='decision'?'decision':'process';if(shape==='decision'){node.targetType='none';node.topicId='';}const oldDefault=flowDefaultNodeStyle(oldShape),current=flowNodeStyle(node);if(!node.style||((current.fill===oldDefault.fill)&&(current.border===oldDefault.border)&&(current.text===oldDefault.text)))node.style=flowDefaultNodeStyle(shape);renderFlowchartNodes();return; }
             else if (field === 'targetType') { node.targetType = ['none','article'].includes(input.value) ? input.value : 'page'; if (node.targetType !== 'article') node.topicId = ''; renderFlowchartNodes(); return; }
             else if (field === 'moduleId') { node.moduleId = input.value; const module = flowTargetModule(node); node.pageMenu = flowPagePairs(module)[0]?.id || ''; node.topicId = ''; renderFlowchartNodes(); return; }
             else if (field === 'pageMenu') { node.pageMenu = input.value; if (node.targetType === 'article') node.topicId = ''; renderFlowchartNodes(); return; }
@@ -5019,12 +5196,14 @@
           if (input.tagName === 'INPUT') input.oninput = sync;
         });
       });
+      $('flowchartNodeBuilder').querySelectorAll('[data-flow-style]').forEach(button=>button.onclick=()=>{const node=flowchartDraft.nodes.find(item=>item.id===button.dataset.flowStyle);openFlowNodeStyleEditor(node);});
       $('flowchartNodeBuilder').querySelectorAll('[data-flow-clear-position]').forEach(button => button.onclick = () => {
         const node = flowchartDraft.nodes.find(item => item.id === button.dataset.flowClearPosition); if (!node) return;
-        clearFlowNodePosition(node); renderFlowchartNodes();
+        rememberFlowState('Reset node position'); clearFlowNodePosition(node); renderFlowchartNodes();
       });
       $('flowchartNodeBuilder').querySelectorAll('[data-flow-delete]').forEach(button => button.onclick = () => {
         const id = button.dataset.flowDelete;
+        rememberFlowState('Delete element');
         flowchartDraft.nodes = flowchartDraft.nodes.filter(node => node.id !== id);
         flowchartDraft.edges = flowchartDraft.edges.filter(edge => edge.from !== id && edge.to !== id);
         renderFlowchartNodes();
@@ -5034,6 +5213,7 @@
         const index = flowchartDraft.nodes.findIndex(node => node.id === id);
         const next = button.dataset.flowUp ? index - 1 : index + 1;
         if (index < 0 || next < 0 || next >= flowchartDraft.nodes.length) return;
+        rememberFlowState('Reorder element');
         [flowchartDraft.nodes[index], flowchartDraft.nodes[next]] = [flowchartDraft.nodes[next], flowchartDraft.nodes[index]];
         renderFlowchartNodes();
       });
@@ -5112,6 +5292,7 @@
         renderFlowchartConnections(); renderFlowchartPreview();
       });
       $('flowchartConnectionBuilder').querySelectorAll('[data-flow-edge-delete]').forEach(button => button.onclick = () => {
+        rememberFlowState('Delete connection');
         const deletedId = button.dataset.flowEdgeDelete;
         flowchartDraft.edges = flowchartDraft.edges.filter(edge => edge.id !== deletedId);
         if (flowchartUiState.selectedEdgeId === deletedId) { flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null; }
@@ -5320,10 +5501,25 @@
       const nodeHtml = nodes.map((node, index) => {
         const p = layout.positions.get(node.id); if (!p) return '';
         const label = flowTextValue(node.label, 'id') || `Node ${index + 1}`;
-        const kind = node.kind === 'decision' ? 'decision' : 'process';
+        const kind = node.kind === 'decision' ? 'decision' : 'process',shape=flowShapeMeta(node.shape || kind);
         const ports = flowchartUiState.cleanPreview ? '' : ['top','right','bottom','left'].map(side => `<button type="button" class="flowGraphPort ${side}" data-flow-port-node="${esc(node.id)}" data-flow-port-side="${side}" title="Drag to connect from ${portNames[side]}" aria-label="Connect ${esc(label)} from ${portNames[side]}"></button>`).join('');
         const resize = flowchartUiState.cleanPreview ? '' : `<button type="button" class="flowGraphResizeHandle" data-flow-resize-node="${esc(node.id)}" title="Drag to resize node" aria-label="Resize ${esc(label)}"></button>`;
-        return `<div class="flowGraphNodeWrap ${kind}" data-preview-node-id="${esc(node.id)}" style="left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px"><div class="flowGraphNode ${kind}"><span class="flowGraphNodeKind">${kind === 'decision' ? 'Decision' : 'Process'}</span>${esc(label)}<small>${esc(flowTargetLabel(node))}</small></div>${ports}${resize}</div>`;
+        const nodeSelected = !flowchartUiState.cleanPreview && flowchartUiState.selectedNodeId === node.id;
+        let styleToolbar = '';
+        if (nodeSelected) {
+          const style = flowNodeStyle(node), toolbarPosition = p.y < 90 ? 'below' : 'above';
+          styleToolbar = `<div class="flowGraphNodeStyleToolbar ${toolbarPosition}" data-flow-node-toolbar data-flow-node-style-id="${esc(node.id)}" role="toolbar" aria-label="Style ${esc(label)}">
+            <span class="flowDirectStyleLabel">Style</span>
+            <label class="flowDirectColor" title="Fill color"><input type="color" data-node-style-field="fill" value="${style.fill}"><span>Fill</span></label>
+            <label class="flowDirectColor" title="Border color"><input type="color" data-node-style-field="border" value="${style.border}"><span>Line</span></label>
+            <label class="flowDirectColor" title="Text color"><input type="color" data-node-style-field="text" value="${style.text}"><span>Text</span></label>
+            <select class="flowDirectFont" data-node-style-field="fontFamily" title="Font family">${FLOW_FONTS.map(font=>`<option value="${esc(font)}" ${font===style.fontFamily?'selected':''}>${esc(font)}</option>`).join('')}</select>
+            <input class="flowDirectSize" type="number" min="8" max="32" step="1" data-node-style-field="fontSize" value="${style.fontSize}" title="Font size" aria-label="Font size">
+            <button type="button" class="${style.fontWeight>=700?'active':''}" data-node-style-bold title="Bold text" aria-pressed="${style.fontWeight>=700?'true':'false'}"><strong>B</strong></button>
+            <button type="button" class="flowDirectMore" data-node-style-more title="More style options" aria-label="More style options">•••</button>
+          </div>`;
+        }
+        return `<div class="flowGraphNodeWrap ${kind} shape-${shape.key} ${nodeSelected?'selected-node':''}" data-preview-node-id="${esc(node.id)}" style="left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;${flowNodeStyleVars(node)}"><div class="flowGraphNode ${kind}"><span class="flowGraphNodeKind">${esc(shape.label)}</span><strong>${esc(label)}</strong><small>${esc(flowTargetLabel(node))}</small></div>${ports}${resize}${styleToolbar}</div>`;
       }).join('');
       let toolbar = '';
       const selectedEdge = flowchartUiState.cleanPreview ? null : layout.edges.find(edge => edge.id === flowchartUiState.selectedEdgeId);
@@ -5462,8 +5658,23 @@
     function openFlowEdgeLabelEditor(edge) {
       if(!edge)return;
       showModal(`<div class="modalHeader"><h2>Connection Label</h2><button class="closeModal" data-close>×</button></div><p class="helper">Untuk connection dari Decision, isi label seperti Yes / No atau Void / Tidak Void. Kosongkan jika connection tidak membutuhkan label.</p><div class="formGrid"><div class="field"><label>Branch Label — ID</label><input id="flowQuickLabelId" value="${esc(edge.label?.id||'')}" placeholder="Contoh: Void"></div><div class="field"><label>Branch Label — EN</label><input id="flowQuickLabelEn" value="${esc(edge.label?.en||'')}" placeholder="Example: Void"></div></div><div class="submitBar"><button class="primaryBtn" id="saveFlowQuickLabel" type="button">Save Label</button></div>`);
-      $('saveFlowQuickLabel').onclick=()=>{ edge.label=edge.label||{id:'',en:''}; edge.label.id=$('flowQuickLabelId').value; edge.label.en=$('flowQuickLabelEn').value; hideModal(); renderFlowchartConnections(); renderFlowchartPreview(); };
+      $('saveFlowQuickLabel').onclick=()=>{ rememberFlowState('Edit connection label');edge.label=edge.label||{id:'',en:''}; edge.label.id=$('flowQuickLabelId').value; edge.label.en=$('flowQuickLabelEn').value; hideModal(); renderFlowchartConnections(); renderFlowchartPreview(); };
       setTimeout(()=>$('flowQuickLabelId')?.focus(),40);
+    }
+    function applyFlowNodeStylePreview(node) {
+      if (!node) return;
+      const host = $('flowchartAdminPreview'), wrap = host?.querySelector(`[data-preview-node-id="${node.id}"]`); if (!wrap) return;
+      const s = flowNodeStyle(node), font = s.fontFamily.includes(' ') ? `"${s.fontFamily}"` : s.fontFamily;
+      wrap.style.setProperty('--node-fill', s.fill);
+      wrap.style.setProperty('--node-border', s.border);
+      wrap.style.setProperty('--node-text', s.text);
+      wrap.style.setProperty('--node-font', `${font},Segoe UI,Arial,sans-serif`);
+      wrap.style.setProperty('--node-font-size', `${s.fontSize}px`);
+      wrap.style.setProperty('--node-font-weight', String(s.fontWeight));
+      wrap.style.setProperty('--multi-fill', s.fill);
+      wrap.style.setProperty('--multi-border', s.border);
+      const bold = wrap.querySelector('[data-node-style-bold]');
+      if (bold) { bold.classList.toggle('active', s.fontWeight >= 700); bold.setAttribute('aria-pressed', s.fontWeight >= 700 ? 'true' : 'false'); }
     }
     function bindFlowchartPreview() {
       const host=$('flowchartAdminPreview'); if(!host||!flowchartDraft)return;
@@ -5471,6 +5682,35 @@
       let dragState=null;
       const svg=host.querySelector('.flowGraphSvg'), draftPath=host.querySelector('[data-flow-draft-path]');
       const refocus=()=>setTimeout(()=>$('flowchartAdminPreview')?.focus({preventScroll:true}),0);
+
+      host.querySelectorAll('[data-flow-node-toolbar][data-flow-node-style-id]').forEach(toolbar=>{
+        const node=flowchartDraft.nodes.find(item=>item.id===toolbar.dataset.flowNodeStyleId); if(!node)return;
+        let historyCaptured=false;
+        const captureHistory=()=>{ if(historyCaptured)return; rememberFlowState('Change element style'); historyCaptured=true; };
+        const releaseHistory=()=>{ historyCaptured=false; };
+        toolbar.onpointerdown=event=>event.stopPropagation();
+        toolbar.onclick=event=>event.stopPropagation();
+        toolbar.querySelectorAll('[data-node-style-field]').forEach(control=>{
+          const field=control.dataset.nodeStyleField;
+          control.onfocus=captureHistory;
+          control.onpointerdown=captureHistory;
+          const apply=()=>{
+            const style=flowNodeStyle(node);
+            if(field==='fontSize') style.fontSize=Math.max(8,Math.min(32,Math.round(Number(control.value)||style.fontSize)));
+            else if(field==='fontFamily') style.fontFamily=FLOW_FONTS.includes(control.value)?control.value:style.fontFamily;
+            else if(['fill','border','text'].includes(field)) style[field]=flowSafeColor(control.value,style[field]);
+            setFlowNodeStyle(node,style); applyFlowNodeStylePreview(node);
+          };
+          control.oninput=apply;
+          control.onchange=()=>{apply();releaseHistory();renderFlowchartNodes();flowchartUiState.selectedNodeId=node.id;renderFlowchartPreview();};
+          control.onblur=releaseHistory;
+          control.onkeydown=event=>event.stopPropagation();
+        });
+        toolbar.querySelector('[data-node-style-bold]')?.addEventListener('click',event=>{
+          rememberFlowState('Change element font weight'); const style=flowNodeStyle(node); style.fontWeight=style.fontWeight>=700?400:700; setFlowNodeStyle(node,style); applyFlowNodeStylePreview(node); renderFlowchartNodes(); flowchartUiState.selectedNodeId=node.id; renderFlowchartPreview(); event.stopPropagation();
+        });
+        toolbar.querySelector('[data-node-style-more]')?.addEventListener('click',event=>{openFlowNodeStyleEditor(node);event.stopPropagation();});
+      });
       const clearTarget=()=>host.querySelectorAll('.connection-target').forEach(el=>el.classList.remove('connection-target'));
       const pointFromEvent=event=>flowSvgPointFromClient(svg,event.clientX,event.clientY);
       const connectionDraftD=(nodeId,side,point)=>{ const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),pos=layout.positions.get(nodeId); if(!pos)return''; const start=flowAnchor(pos,side,layout.boxW,layout.boxH),v=flowSideVector(side),lead={x:start.x+v.x*26,y:start.y+v.y*26},p=flowSnapPoint(point,10),horizontal=side==='left'||side==='right',pts=horizontal?[[start.x,start.y],[lead.x,lead.y],[p.x,lead.y],[p.x,p.y]]:[[start.x,start.y],[lead.x,lead.y],[lead.x,p.y],[p.x,p.y]]; return flowPolyline(pts); };
@@ -5479,22 +5719,22 @@
       host.querySelectorAll('[data-flow-port-node][data-flow-port-side]').forEach(port=>{
         port.onpointerdown=event=>{ if(event.button!==0)return; dragState={type:'connect',from:port.dataset.flowPortNode,sourceSide:port.dataset.flowPortSide,pointerId:event.pointerId}; port.setPointerCapture?.(event.pointerId); host.focus({preventScroll:true}); if(draftPath){draftPath.setAttribute('d',connectionDraftD(dragState.from,dragState.sourceSide,pointFromEvent(event)));draftPath.classList.add('show')} event.preventDefault();event.stopPropagation(); };
         port.onpointermove=event=>{ if(!dragState||dragState.type!=='connect'||dragState.pointerId!==event.pointerId)return; if(draftPath){draftPath.setAttribute('d',connectionDraftD(dragState.from,dragState.sourceSide,pointFromEvent(event)));draftPath.classList.add('show')} clearTarget(); const candidate=candidateAt(event); if(candidate?.nodeId&&candidate.nodeId!==dragState.from)candidate.element?.classList.add('connection-target'); };
-        port.onpointerup=event=>{ if(!dragState||dragState.type!=='connect'||dragState.pointerId!==event.pointerId)return; const source=dragState,candidate=candidateAt(event); dragState=null;clearTarget();if(draftPath){draftPath.classList.remove('show');draftPath.setAttribute('d','')} if(!candidate?.nodeId||candidate.nodeId===source.from)return; const duplicate=flowchartDraft.edges.find(edge=>edge.from===source.from&&edge.to===candidate.nodeId&&(edge.sourceSide||'auto')===source.sourceSide&&(edge.targetSide||'auto')===candidate.side); if(duplicate){flowchartUiState.selectedEdgeId=duplicate.id;flowchartUiState.selectedWaypoint=null;toast('Connection yang sama sudah ada.');renderFlowchartPreview();refocus();return} const edge=emptyFlowEdge(source.from,candidate.nodeId);edge.sourceSide=source.sourceSide;edge.targetSide=['top','right','bottom','left'].includes(candidate.side)?candidate.side:'auto';flowchartDraft.edges.push(edge);flowchartUiState.selectedEdgeId=edge.id;flowchartUiState.selectedWaypoint=null;renderFlowchartConnections();renderFlowchartPreview();refocus(); };
+        port.onpointerup=event=>{ if(!dragState||dragState.type!=='connect'||dragState.pointerId!==event.pointerId)return; const source=dragState,candidate=candidateAt(event); dragState=null;clearTarget();if(draftPath){draftPath.classList.remove('show');draftPath.setAttribute('d','')} if(!candidate?.nodeId||candidate.nodeId===source.from)return; const duplicate=flowchartDraft.edges.find(edge=>edge.from===source.from&&edge.to===candidate.nodeId&&(edge.sourceSide||'auto')===source.sourceSide&&(edge.targetSide||'auto')===candidate.side); if(duplicate){flowchartUiState.selectedEdgeId=duplicate.id;flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';toast('Connection yang sama sudah ada.');renderFlowchartPreview();refocus();return} rememberFlowState('Create connection'); const edge=emptyFlowEdge(source.from,candidate.nodeId);edge.sourceSide=source.sourceSide;edge.targetSide=['top','right','bottom','left'].includes(candidate.side)?candidate.side:'auto';flowchartDraft.edges.push(edge);flowchartUiState.selectedEdgeId=edge.id;flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';renderFlowchartConnections();renderFlowchartPreview();refocus(); };
         const cancel=event=>{ if(!dragState||dragState.type!=='connect'||dragState.pointerId!==event.pointerId)return;dragState=null;clearTarget();if(draftPath){draftPath.classList.remove('show');draftPath.setAttribute('d','')} };
         port.onpointercancel=cancel; port.onlostpointercapture=cancel;
       });
 
       host.querySelectorAll('[data-flow-waypoint-edge][data-flow-waypoint-index]').forEach(handle=>{
-        handle.onpointerdown=event=>{ if(event.button!==0)return; const edge=flowchartDraft.edges.find(item=>item.id===handle.dataset.flowWaypointEdge),index=Number(handle.dataset.flowWaypointIndex),point=edge?.waypoints?.[index]; if(!edge||!point)return; flowchartUiState.selectedEdgeId=edge.id;flowchartUiState.selectedWaypoint=index;dragState={type:'waypoint',edgeId:edge.id,index,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,originX:Number(point.x)||0,originY:Number(point.y)||0};handle.setPointerCapture?.(event.pointerId);host.focus({preventScroll:true});applyFlowchartPreviewLayout();event.preventDefault();event.stopPropagation(); };
+        handle.onpointerdown=event=>{ if(event.button!==0)return; const edge=flowchartDraft.edges.find(item=>item.id===handle.dataset.flowWaypointEdge),index=Number(handle.dataset.flowWaypointIndex),point=edge?.waypoints?.[index]; if(!edge||!point)return; rememberFlowState('Move line bend'); flowchartUiState.selectedEdgeId=edge.id;flowchartUiState.selectedWaypoint=index;dragState={type:'waypoint',edgeId:edge.id,index,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,originX:Number(point.x)||0,originY:Number(point.y)||0};handle.setPointerCapture?.(event.pointerId);host.focus({preventScroll:true});applyFlowchartPreviewLayout();event.preventDefault();event.stopPropagation(); };
         handle.onpointermove=event=>{ if(!dragState||dragState.type!=='waypoint'||dragState.edgeId!==handle.dataset.flowWaypointEdge||dragState.index!==Number(handle.dataset.flowWaypointIndex))return;const edge=flowchartDraft.edges.find(item=>item.id===dragState.edgeId),point=edge?.waypoints?.[dragState.index];if(!point)return;point.x=Math.max(10,Math.round((dragState.originX+event.clientX-dragState.startX)/10)*10);point.y=Math.max(10,Math.round((dragState.originY+event.clientY-dragState.startY)/10)*10);applyFlowchartPreviewLayout(); };
         const stop=()=>{ if(dragState?.type!=='waypoint')return;dragState=null;renderFlowchartConnections();renderFlowchartPreview();refocus(); };
         handle.onpointerup=stop;handle.onpointercancel=stop;handle.onlostpointercapture=stop;
-        handle.ondblclick=event=>{const edge=flowchartDraft.edges.find(item=>item.id===handle.dataset.flowWaypointEdge),index=Number(handle.dataset.flowWaypointIndex);if(flowDeleteWaypoint(edge,index)){flowchartUiState.selectedEdgeId=edge.id;renderFlowchartConnections();renderFlowchartPreview();refocus()}event.preventDefault();event.stopPropagation();};
+        handle.ondblclick=event=>{const edge=flowchartDraft.edges.find(item=>item.id===handle.dataset.flowWaypointEdge),index=Number(handle.dataset.flowWaypointIndex);rememberFlowState('Delete line bend');if(flowDeleteWaypoint(edge,index)){flowchartUiState.selectedEdgeId=edge.id;renderFlowchartConnections();renderFlowchartPreview();refocus()}event.preventDefault();event.stopPropagation();};
       });
 
       host.querySelectorAll('[data-flow-edge-hit]').forEach(pathEl=>{
-        pathEl.onpointerdown=event=>{if(event.button!==0||!svg)return;const edge=flowchartDraft.edges.find(item=>item.id===pathEl.dataset.flowEdgeHit);if(!edge)return;flowchartUiState.selectedEdgeId=edge.id;flowchartUiState.selectedWaypoint=null;dragState={type:'edgepending',edgeId:edge.id,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,startPoint:pointFromEvent(event),waypointIndex:-1,originX:0,originY:0};pathEl.setPointerCapture?.(event.pointerId);host.focus({preventScroll:true});applyFlowchartPreviewLayout();event.preventDefault();event.stopPropagation();};
-        pathEl.onpointermove=event=>{if(!dragState||!['edgepending','edgebend'].includes(dragState.type)||dragState.edgeId!==pathEl.dataset.flowEdgeHit||dragState.pointerId!==event.pointerId)return;const edge=flowchartDraft.edges.find(item=>item.id===dragState.edgeId);if(!edge)return;if(dragState.type==='edgepending'){if(Math.hypot(event.clientX-dragState.startX,event.clientY-dragState.startY)<5)return;const index=flowInsertWaypointAt(edge,dragState.startPoint),point=edge.waypoints?.[index];if(!point)return;dragState.type='edgebend';dragState.waypointIndex=index;dragState.originX=Number(point.x)||0;dragState.originY=Number(point.y)||0;flowchartUiState.selectedWaypoint=index;}const point=edge.waypoints?.[dragState.waypointIndex];if(!point)return;point.x=Math.max(10,Math.round((dragState.originX+event.clientX-dragState.startX)/10)*10);point.y=Math.max(10,Math.round((dragState.originY+event.clientY-dragState.startY)/10)*10);applyFlowchartPreviewLayout();};
+        pathEl.onpointerdown=event=>{if(event.button!==0||!svg)return;const edge=flowchartDraft.edges.find(item=>item.id===pathEl.dataset.flowEdgeHit);if(!edge)return;flowchartUiState.selectedEdgeId=edge.id;flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';dragState={type:'edgepending',edgeId:edge.id,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,startPoint:pointFromEvent(event),waypointIndex:-1,originX:0,originY:0};pathEl.setPointerCapture?.(event.pointerId);host.focus({preventScroll:true});applyFlowchartPreviewLayout();event.preventDefault();event.stopPropagation();};
+        pathEl.onpointermove=event=>{if(!dragState||!['edgepending','edgebend'].includes(dragState.type)||dragState.edgeId!==pathEl.dataset.flowEdgeHit||dragState.pointerId!==event.pointerId)return;const edge=flowchartDraft.edges.find(item=>item.id===dragState.edgeId);if(!edge)return;if(dragState.type==='edgepending'){if(Math.hypot(event.clientX-dragState.startX,event.clientY-dragState.startY)<5)return;rememberFlowState('Adjust connection route');const index=flowInsertWaypointAt(edge,dragState.startPoint),point=edge.waypoints?.[index];if(!point)return;dragState.type='edgebend';dragState.waypointIndex=index;dragState.originX=Number(point.x)||0;dragState.originY=Number(point.y)||0;flowchartUiState.selectedWaypoint=index;}const point=edge.waypoints?.[dragState.waypointIndex];if(!point)return;point.x=Math.max(10,Math.round((dragState.originX+event.clientX-dragState.startX)/10)*10);point.y=Math.max(10,Math.round((dragState.originY+event.clientY-dragState.startY)/10)*10);applyFlowchartPreviewLayout();};
         const finish=()=>{if(!dragState||!['edgepending','edgebend'].includes(dragState.type)||dragState.edgeId!==pathEl.dataset.flowEdgeHit)return;const wasDrag=dragState.type==='edgebend';dragState=null;if(wasDrag)renderFlowchartConnections();renderFlowchartPreview();refocus();};
         pathEl.onpointerup=finish;pathEl.onpointercancel=finish;pathEl.onlostpointercapture=finish;
       });
@@ -5502,7 +5742,7 @@
       host.querySelectorAll('[data-flow-resize-node]').forEach(handle=>{
         const finishResize=()=>{ if(!dragState||dragState.type!=='resize'||dragState.nodeId!==handle.dataset.flowResizeNode)return; dragState=null; renderFlowchartPreview(); refocus(); };
         handle.onpointerdown=event=>{
-          if(event.button!==0)return; const node=flowchartDraft.nodes.find(item=>item.id===handle.dataset.flowResizeNode); if(!node)return; const size=flowNodeSize(node);
+          if(event.button!==0)return; const node=flowchartDraft.nodes.find(item=>item.id===handle.dataset.flowResizeNode); if(!node)return; rememberFlowState('Resize element'); const size=flowNodeSize(node);
           dragState={type:'resize',nodeId:node.id,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,originW:size.w,originH:size.h};
           handle.setPointerCapture?.(event.pointerId); host.focus({preventScroll:true}); event.preventDefault(); event.stopPropagation();
         };
@@ -5517,20 +5757,20 @@
 
       host.querySelectorAll('[data-preview-node-id]').forEach(nodeEl=>{
         const stopDrag=()=>{if(!dragState||dragState.type!=='node'||dragState.nodeId!==nodeEl.dataset.previewNodeId)return;nodeEl.classList.remove('dragging');dragState=null;renderFlowchartPreview();refocus();};
-        nodeEl.onpointerdown=event=>{if(event.button!==0||event.target.closest('[data-flow-port-node],[data-flow-resize-node]'))return;const nodeId=nodeEl.dataset.previewNodeId,node=flowchartDraft.nodes.find(item=>item.id===nodeId);if(!node)return;const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),current=layout.positions.get(nodeId);if(!current)return;dragState={type:'node',nodeId,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,originX:current.x,originY:current.y};nodeEl.classList.add('dragging');nodeEl.setPointerCapture?.(event.pointerId);host.focus({preventScroll:true});event.preventDefault();};
+        nodeEl.onpointerdown=event=>{if(event.button!==0||event.target.closest('[data-flow-port-node],[data-flow-resize-node],[data-flow-node-toolbar]'))return;const nodeId=nodeEl.dataset.previewNodeId,node=flowchartDraft.nodes.find(item=>item.id===nodeId);if(!node)return;flowchartUiState.selectedNodeId=nodeId;flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),current=layout.positions.get(nodeId);if(!current)return;rememberFlowState('Move element');dragState={type:'node',nodeId,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,originX:current.x,originY:current.y};nodeEl.classList.add('dragging');nodeEl.setPointerCapture?.(event.pointerId);host.focus({preventScroll:true});event.preventDefault();};
         nodeEl.onpointermove=event=>{if(!dragState||dragState.type!=='node'||dragState.nodeId!==nodeEl.dataset.previewNodeId)return;const node=flowchartDraft.nodes.find(item=>item.id===dragState.nodeId);if(!node)return;setFlowNodePosition(node,dragState.originX+(event.clientX-dragState.startX),dragState.originY+(event.clientY-dragState.startY));syncFlowchartPositionInputs(node.id);applyFlowchartPreviewLayout();};
         nodeEl.onpointerup=stopDrag;nodeEl.onpointercancel=stopDrag;nodeEl.onlostpointercapture=stopDrag;
       });
 
       const selectedEdge=()=>flowchartDraft.edges.find(edge=>edge.id===flowchartUiState.selectedEdgeId);
       host.querySelector('[data-flow-edit-edge-label]')?.addEventListener('click',event=>{openFlowEdgeLabelEditor(selectedEdge());event.stopPropagation()});
-      host.querySelector('[data-flow-toolbar-add-bend]')?.addEventListener('click',event=>{const edge=selectedEdge();if(!edge)return;const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),p=flowGraphPath(layout,edge),index=flowInsertWaypointAt(edge,{x:p?.x||200,y:(p?.y||160)+8});flowchartUiState.selectedWaypoint=index;renderFlowchartConnections();renderFlowchartPreview();refocus();event.stopPropagation()});
-      host.querySelector('[data-flow-toolbar-delete-bend]')?.addEventListener('click',event=>{const edge=selectedEdge();if(flowDeleteWaypoint(edge,Number(flowchartUiState.selectedWaypoint))){renderFlowchartConnections();renderFlowchartPreview();refocus()}event.stopPropagation()});
-      host.querySelector('[data-flow-toolbar-auto]')?.addEventListener('click',event=>{const edge=selectedEdge();if(!edge)return;edge.routeMode='auto';edge.waypoints=[];flowchartUiState.selectedWaypoint=null;renderFlowchartConnections();renderFlowchartPreview();refocus();event.stopPropagation()});
-      host.querySelector('[data-flow-toolbar-delete-edge]')?.addEventListener('click',event=>{if(flowDeleteSelectedEdge()){renderFlowchartConnections();renderFlowchartPreview();refocus()}event.stopPropagation()});
+      host.querySelector('[data-flow-toolbar-add-bend]')?.addEventListener('click',event=>{const edge=selectedEdge();if(!edge)return;rememberFlowState('Add line bend');const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),p=flowGraphPath(layout,edge),index=flowInsertWaypointAt(edge,{x:p?.x||200,y:(p?.y||160)+8});flowchartUiState.selectedWaypoint=index;renderFlowchartConnections();renderFlowchartPreview();refocus();event.stopPropagation()});
+      host.querySelector('[data-flow-toolbar-delete-bend]')?.addEventListener('click',event=>{const edge=selectedEdge();rememberFlowState('Delete line bend');if(flowDeleteWaypoint(edge,Number(flowchartUiState.selectedWaypoint))){renderFlowchartConnections();renderFlowchartPreview();refocus()}event.stopPropagation()});
+      host.querySelector('[data-flow-toolbar-auto]')?.addEventListener('click',event=>{const edge=selectedEdge();if(!edge)return;rememberFlowState('Auto route connection');edge.routeMode='auto';edge.waypoints=[];flowchartUiState.selectedWaypoint=null;renderFlowchartConnections();renderFlowchartPreview();refocus();event.stopPropagation()});
+      host.querySelector('[data-flow-toolbar-delete-edge]')?.addEventListener('click',event=>{rememberFlowState('Delete connection');if(flowDeleteSelectedEdge()){renderFlowchartConnections();renderFlowchartPreview();refocus()}event.stopPropagation()});
 
-      host.onkeydown=event=>{const editable=event.target?.matches?.('input,textarea,select,[contenteditable="true"]');if(editable)return;if(event.key==='Escape'){flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;renderFlowchartPreview();refocus();return}if(event.key!=='Delete'&&event.key!=='Backspace')return;const edge=selectedEdge();if(!edge)return;if(Number.isInteger(Number(flowchartUiState.selectedWaypoint))&&flowchartUiState.selectedWaypoint!==null&&edge.waypoints?.[Number(flowchartUiState.selectedWaypoint)])flowDeleteWaypoint(edge,Number(flowchartUiState.selectedWaypoint));else flowDeleteSelectedEdge();renderFlowchartConnections();renderFlowchartPreview();refocus();event.preventDefault();};
-      host.onpointerdown=event=>{if(event.target.closest('[data-flow-edge-hit],[data-flow-waypoint-edge],[data-preview-node-id],[data-flow-edge-toolbar]'))return;if(flowchartUiState.selectedEdgeId||flowchartUiState.selectedWaypoint!==null){flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;renderFlowchartPreview();}};
+      host.onkeydown=event=>{const editable=event.target?.matches?.('input,textarea,select,[contenteditable="true"]');if(editable)return;if(event.key==='Escape'){flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';renderFlowchartPreview();refocus();return}if(event.key!=='Delete'&&event.key!=='Backspace')return;const edge=selectedEdge();if(!edge)return;rememberFlowState((Number.isInteger(Number(flowchartUiState.selectedWaypoint))&&flowchartUiState.selectedWaypoint!==null)?'Delete line bend':'Delete connection');if(Number.isInteger(Number(flowchartUiState.selectedWaypoint))&&flowchartUiState.selectedWaypoint!==null&&edge.waypoints?.[Number(flowchartUiState.selectedWaypoint)])flowDeleteWaypoint(edge,Number(flowchartUiState.selectedWaypoint));else flowDeleteSelectedEdge();renderFlowchartConnections();renderFlowchartPreview();refocus();event.preventDefault();};
+      host.onpointerdown=event=>{if(event.target.closest('[data-flow-edge-hit],[data-flow-waypoint-edge],[data-preview-node-id],[data-flow-edge-toolbar],[data-flow-node-toolbar]'))return;if(flowchartUiState.selectedEdgeId||flowchartUiState.selectedWaypoint!==null||flowchartUiState.selectedNodeId){flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';renderFlowchartPreview();}};
     }
     function renderFlowchartPreview() {
       if (!$('flowchartAdminPreview') || !flowchartDraft) return;
@@ -5713,13 +5953,17 @@
     $('flowEnabled').onchange = syncFlowchartHeaderDraft;
     $('flowTitleId').oninput = syncFlowchartHeaderDraft;
     $('flowTitleEn').oninput = syncFlowchartHeaderDraft;
-    $('addFlowNode').onclick = () => { if (!flowchartDraft) flowchartDraft = blankFlowchartDraft(); flowchartDraft.nodes.push(emptyFlowNode(flowDefaultTargetModule(), 'process')); renderFlowchartNodes(); };
-    $('addFlowDecision').onclick = () => { if (!flowchartDraft) flowchartDraft = blankFlowchartDraft(); flowchartDraft.nodes.push(emptyFlowNode(flowDefaultTargetModule(), 'decision')); renderFlowchartNodes(); };
+    $('addFlowElement').onclick = openFlowElementPalette;
+    $('addFlowNode').onclick = () => flowAddElement('process');
+    $('addFlowDecision').onclick = () => flowAddElement('decision');
+    $('undoFlowchart').onclick = undoFlowchartEdit;
+    $('redoFlowchart').onclick = redoFlowchartEdit;
     function addFlowConnectionRow() {
       if (!flowchartDraft) flowchartDraft = blankFlowchartDraft();
       if (flowchartDraft.nodes.length < 2) { toast('Tambahkan minimal 2 node sebelum membuat connection.'); return; }
       const from = flowchartDraft.nodes[Math.max(0, flowchartDraft.nodes.length - 2)]?.id || '';
       const to = flowchartDraft.nodes[flowchartDraft.nodes.length - 1]?.id || '';
+      rememberFlowState('Add connection via form');
       flowchartDraft.edges.push(emptyFlowEdge(from, to));
       renderFlowchartConnections(); renderFlowchartPreview();
       const section = document.querySelector('.flowConnectionSection');
@@ -5739,6 +5983,7 @@
     };
     $('autoArrangeFlowchart').onclick = () => {
       if (!flowchartDraft?.nodes?.length) return;
+      rememberFlowState('Auto arrange');
       const layout = flowGraphLayout(flowchartDraft.nodes, flowchartDraft.edges, { respectManual: false });
       flowchartDraft.nodes.forEach(node => {
         const pos = layout.positions.get(node.id); if (!pos) return;
@@ -5748,10 +5993,19 @@
     };
     $('clearFlowNodePositions').onclick = () => {
       if (!flowchartDraft?.nodes?.length) return;
+      rememberFlowState('Reset all positions');
       flowchartDraft.nodes.forEach(node => clearFlowNodePosition(node));
       renderFlowchartNodes();
     };
     $('saveFlowchart').onclick = saveFlowchart;
+    document.addEventListener('keydown',event=>{
+      const panel=$('panel-flowchart'); if(!panel?.classList.contains('active')||flowchartView!=='editor')return;
+      const editable=event.target?.matches?.('input,textarea,select,[contenteditable="true"]'); if(editable)return;
+      const mod=event.ctrlKey||event.metaKey;if(!mod)return;
+      const key=event.key.toLowerCase();
+      if(key==='z'&&!event.shiftKey){undoFlowchartEdit();event.preventDefault();}
+      else if((key==='z'&&event.shiftKey)||key==='y'){redoFlowchartEdit();event.preventDefault();}
+    });
 
     function showModal(html, small = false) { $('modalBox').className = 'modal' + (small ? ' small' : ''); $('modalBox').innerHTML = html; $('modalOverlay').classList.add('show'); $('modalBox').querySelectorAll('[data-close]').forEach(x => x.onclick = hideModal) } function hideModal() { $('modalOverlay').classList.remove('show') }
     function successModal(message) { showModal(`<button class="closeModal" style="float:right" data-close>×</button><div class="successIcon">✓</div><h2>Success</h2><p>${esc(message)}</p><div class="modalActions"><button class="primaryBtn" data-close>Close</button></div>`, true) }
