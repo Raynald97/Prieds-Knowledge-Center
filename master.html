@@ -3197,6 +3197,7 @@
       if (currentTab === 'create' && name !== 'create' && hasUnsavedCreateDraft()) await saveCreateDraftNow();
       document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name));
       document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + name));
+      saveFlowchartWorkspace();
       await refreshSharedState({ refreshGuides: true });
       if (name === 'list') renderGuideList();
       if (name === 'arrange') renderArrangement();
@@ -4715,6 +4716,44 @@
     let flowchartEditorInitialized = false;
     let flowchartDraft = null;
     let flowchartUiState = { selectedEdgeId: '', selectedWaypoint: null, selectedNodeId: '', cleanPreview: false };
+    const FLOW_WORKSPACE_KEY = 'prieds_kc_flowchart_workspace_v1';
+    function saveFlowchartWorkspace() {
+      try {
+        const activeTab = document.querySelector('.tab.active')?.dataset.tab || 'create';
+        if (activeTab === 'flowchart' && flowchartView === 'editor' && flowchartDraft) {
+          if (typeof syncFlowchartHeaderDraftSilent === 'function') syncFlowchartHeaderDraftSilent();
+        }
+        localStorage.setItem(FLOW_WORKSPACE_KEY, JSON.stringify({
+          activeTab,
+          flowchartView,
+          selectedFlowId,
+          flowchartDraft: flowchartView === 'editor' && flowchartDraft ? clone(flowchartDraft) : null,
+          flowchartUiState: clone(flowchartUiState),
+          scrollY: window.scrollY || 0,
+          savedAt: Date.now()
+        }));
+      } catch (error) { console.warn('Flowchart workspace could not be saved.', error); }
+    }
+    function readFlowchartWorkspace() {
+      try {
+        const raw = localStorage.getItem(FLOW_WORKSPACE_KEY);
+        if (!raw) return null;
+        const saved = JSON.parse(raw);
+        if (!saved || Date.now() - Number(saved.savedAt || 0) > 1000 * 60 * 60 * 24 * 7) return null;
+        return saved;
+      } catch (_) { return null; }
+    }
+    function clearFlowchartWorkspaceDraft() {
+      try {
+        const saved = readFlowchartWorkspace() || {};
+        saved.flowchartView = 'list';
+        saved.selectedFlowId = '';
+        saved.flowchartDraft = null;
+        saved.flowchartUiState = { selectedEdgeId: '', selectedWaypoint: null, selectedNodeId: '', cleanPreview: false };
+        saved.savedAt = Date.now();
+        localStorage.setItem(FLOW_WORKSPACE_KEY, JSON.stringify(saved));
+      } catch (_) {}
+    }
     const flowHistory = { undo: [], redo: [], max: 80, restoring: false };
     function flowHistorySnapshot() { return flowchartDraft ? clone(flowchartDraft) : null; }
     function updateFlowHistoryButtons() {
@@ -5080,13 +5119,13 @@
       ensureFlowListControls();
       if (!flowchartEditorInitialized) {
         flowchartEditorInitialized = true;
-        selectedFlowId = '';
-        flowchartDraft = blankFlowchartDraft();
-        flowchartView = 'list';
+        if (!flowchartDraft) flowchartDraft = blankFlowchartDraft();
       }
       if (flowchartView === 'editor') {
         const collection = flowchartCollection();
-        if (selectedFlowId && collection[selectedFlowId]) flowchartDraft = normalizeFlowchartConfig(selectedFlowId, collection[selectedFlowId]);
+        // Keep the in-memory draft while editing. Smart sync/focus refresh must never
+        // replace unsaved flowchart work with the last saved server copy.
+        if (!flowchartDraft && selectedFlowId && collection[selectedFlowId]) flowchartDraft = normalizeFlowchartConfig(selectedFlowId, collection[selectedFlowId]);
         else if (!flowchartDraft) flowchartDraft = blankFlowchartDraft();
         setFlowchartView('editor');
         applyFlowchartDraftToForm();
@@ -5101,6 +5140,7 @@
       flowchartDraft = blankFlowchartDraft();
       setFlowchartView('editor');
       applyFlowchartDraftToForm();
+      saveFlowchartWorkspace();
       $('panel-flowchart')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setTimeout(() => $('flowAdminName')?.focus(), 80);
     }
@@ -5111,12 +5151,15 @@
       flowchartDraft = normalizeFlowchartConfig(flowId, config);
       setFlowchartView('editor');
       applyFlowchartDraftToForm();
+      saveFlowchartWorkspace();
       $('panel-flowchart')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     function backToFlowchartList() {
       selectedFlowId = '';
       flowchartDraft = null;
       setFlowchartView('list');
+      clearFlowchartWorkspaceDraft();
+      saveFlowchartWorkspace();
       renderFlowchartLibrary();
       $('panel-flowchart')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -5126,6 +5169,7 @@
       flowchartDraft.enabled = $('flowEnabled').checked;
       flowchartDraft.title = { id: $('flowTitleId').value.trim(), en: $('flowTitleEn').value.trim() };
       renderFlowchartStatus(); renderFlowchartPreview();
+      saveFlowchartWorkspace();
     }
     function flowNodeOptionLabel(node, index) {
       const label = node?.label?.id || node?.label?.en || `${node?.kind === 'decision' ? 'Decision' : 'Step'} ${index + 1}`;
@@ -6978,9 +7022,13 @@
     }
 
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && hasUnsavedCreateDraft()) void saveCreateDraftNow();
+      if (document.hidden) {
+        saveFlowchartWorkspace();
+        if (hasUnsavedCreateDraft()) void saveCreateDraftNow();
+      }
     });
     window.addEventListener('pagehide', () => {
+      saveFlowchartWorkspace();
       if (hasUnsavedCreateDraft()) void saveCreateDraftNow();
     });
 
@@ -6993,7 +7041,9 @@
         if (nextFingerprint !== knowledgeFingerprint) {
           // Never replace an active Create/Edit draft. Submit already refreshes the latest
           // cloud state immediately before merging and saving the user's draft.
-          if (hasUnsavedCreateDraft()) {
+          if (hasUnsavedCreateDraft() || ($('panel-flowchart')?.classList.contains('active') && flowchartView === 'editor' && flowchartDraft)) {
+            // Keep the active editor untouched. The latest shared state will be merged
+            // when the user explicitly saves the guide/flowchart.
             setSynced('Remote update available');
             if ($('panel-feedback')?.classList.contains('active')) renderFeedbackReport({ skipRefresh: true });
             return;
@@ -7014,6 +7064,24 @@
     resetCreate({ clearDraft: false });
     await restoreCreateDraft();
     initFeedbackReport();
+
+    // Restore the exact admin workspace after browser tab discard/reload.
+    const restoredFlowWorkspace = readFlowchartWorkspace();
+    if (restoredFlowWorkspace?.activeTab === 'flowchart') {
+      flowchartEditorInitialized = true;
+      flowchartView = restoredFlowWorkspace.flowchartView === 'editor' ? 'editor' : 'list';
+      selectedFlowId = String(restoredFlowWorkspace.selectedFlowId || '');
+      if (flowchartView === 'editor' && restoredFlowWorkspace.flowchartDraft) {
+        flowchartDraft = clone(restoredFlowWorkspace.flowchartDraft);
+        flowchartUiState = { ...flowchartUiState, ...(restoredFlowWorkspace.flowchartUiState || {}) };
+      } else if (flowchartView === 'editor' && selectedFlowId && flowchartCollection()[selectedFlowId]) {
+        flowchartDraft = normalizeFlowchartConfig(selectedFlowId, flowchartCollection()[selectedFlowId]);
+      }
+      document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === 'flowchart'));
+      document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-flowchart'));
+      renderFlowchartEditor();
+      requestAnimationFrame(() => window.scrollTo({ top: Number(restoredFlowWorkspace.scrollY || 0), behavior: 'auto' }));
+    }
   </script>
 </body>
 
