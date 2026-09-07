@@ -1913,7 +1913,52 @@
       .flowGraphNodeStyleToolbar .flowDirectFont{width:92px}
     }
 
-</style>
+
+    /* Flowchart graph editor v11 — original element size, compact ports, clearer grouping */
+    .flowGraphEdgeLabel{pointer-events:all;cursor:grab;user-select:none;touch-action:none}
+    .flowGraphEdgeLabel:active{cursor:grabbing}
+    .flowGraphPath.manual,.flowGraphPath{stroke:var(--edge-color,#43AFCF)}
+    .flowGraphPath.selected{stroke:#087FA4!important}
+
+    /* Only the 4 connection points are 50% smaller; the element itself keeps its original size. */
+    .flowGraphPort{width:8px;height:8px;border-width:1px;box-shadow:0 0 0 1px #1498C0,0 1px 4px rgba(28,99,121,.20)}
+    .flowGraphPort:hover,.flowGraphPort:focus-visible{box-shadow:0 0 0 3px rgba(20,152,192,.16),0 1px 4px rgba(28,99,121,.20)}
+    @media(max-width:700px){.flowGraphPort{width:9px;height:9px}}
+
+    /* Selected elements are intentionally obvious. */
+    .flowGraphNodeWrap.multi-selected{z-index:17}
+    .flowGraphNodeWrap.multi-selected:before{content:"";position:absolute;inset:-7px;z-index:-1;border:2px dashed #1598C0;border-radius:12px;background:rgba(40,184,226,.07);pointer-events:none}
+    .flowGraphNodeWrap.multi-selected:after{content:"✓";position:absolute;right:-13px;top:-13px;z-index:22;width:20px;height:20px;border:2px solid #fff;border-radius:50%;display:grid;place-items:center;background:#1598C0;color:#fff;font-size:11px;font-weight:900;box-shadow:0 2px 7px rgba(21,94,116,.28);pointer-events:none}
+    .flowGraphNodeWrap.multi-selected .flowGraphNode{box-shadow:0 0 0 3px rgba(20,152,192,.20),0 8px 20px rgba(26,112,138,.14)}
+    .flowGraphNodeWrap.grouped-node:not(.multi-selected) .flowGraphNode{box-shadow:0 0 0 2px rgba(131,103,190,.12),0 3px 9px rgba(26,112,138,.08)}
+    .flowGraphNodeWrap.selected-existing-group:before{border-color:#7657B7;background:rgba(118,87,183,.07)}
+    .flowGraphNodeWrap.selected-existing-group:after{background:#7657B7}
+
+    /* Floating group toolbar appears next to the current selection. */
+    .flowGraphSelectionToolbar{position:absolute;z-index:45;display:flex;align-items:center;gap:6px;min-height:38px;padding:5px 7px;border:1px solid #A9D9E6;border-radius:9px;background:#fff;box-shadow:0 10px 26px rgba(25,75,91,.20);transform:translate(-50%,-100%);white-space:nowrap;pointer-events:auto}
+    .flowGraphSelectionToolbar.below{transform:translate(-50%,0)}
+    .flowGraphSelectionToolbar .selectionCount{display:inline-flex;align-items:center;gap:5px;padding:0 5px;color:#3E5963;font-size:10px;font-weight:900}
+    .flowGraphSelectionToolbar .selectionCount:before{content:"✓";display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#1598C0;color:#fff;font-size:9px}
+    .flowGraphSelectionToolbar.existingGroup .selectionCount:before{content:"G";background:#7657B7}
+    .flowGraphSelectionToolbar button{height:29px;border:1px solid #BBD5DE;border-radius:6px;background:#fff;color:#187B99;padding:0 9px;font-size:10px;font-weight:850}
+    .flowGraphSelectionToolbar button:hover{background:#EAF9FD;border-color:#72C5DB}
+    .flowGraphSelectionToolbar button.groupPrimary{border-color:#28B8E2;background:#28B8E2;color:#fff}
+    .flowGraphSelectionToolbar button.groupPrimary:hover{background:#1598C0}
+    .flowGraphSelectionToolbar button.ungroupAction{border-color:#C9BCE6;color:#65449E}
+    .flowGraphSelectionToolbar button.ungroupAction:hover{background:#F4F0FB}
+    .flowchartPreview.cleanPreview .flowGraphSelectionToolbar{display:none!important}
+
+    .flowSelectionStatus{display:inline-flex;align-items:center;min-height:36px;padding:0 10px;border:1px solid #D2E3E8;border-radius:7px;background:#F8FBFC;color:#60757D;font-size:10px;font-weight:800}
+    .flowSelectionStatus.active{border-color:#9EDBEC;background:#EAF9FD;color:#087B9D}
+
+    .flowGraphEdgeToolbar .flowEdgeColorControl{display:inline-flex;align-items:center;gap:4px;height:30px;border:1px solid #C5D8DE;border-radius:6px;padding:0 6px;color:#47636D;font-size:9px;font-weight:800;background:#fff}
+    .flowGraphEdgeToolbar .flowEdgeColorControl input{width:24px;height:22px;border:0;padding:0;background:transparent;cursor:pointer}
+    .flowConnectionEditor{grid-template-columns:34px minmax(150px,1.05fr) 100px minmax(105px,.75fr) minmax(105px,.75fr) minmax(150px,1.05fr) 100px 86px minmax(145px,.9fr) 42px}
+    .flowConnectionEditor .flowEdgeColorField input[type="color"]{height:38px;padding:3px}
+    .flowNodeEditor{grid-template-columns:38px 116px 106px minmax(120px,1fr) minmax(120px,1fr) 112px minmax(130px,1fr) minmax(130px,1fr) minmax(150px,1.1fr) 74px 74px 44px 42px}
+    @media(max-width:1380px){.flowConnectionEditor{grid-template-columns:34px 1fr 100px 1fr 1fr}.flowConnectionEditor .field{min-width:0}.flowConnectionDelete{align-self:end}}
+
+  </style>
 </head>
 
 <body>
@@ -2195,11 +2240,14 @@
                   <button class="ghostBtn flowRedoBtn" id="redoFlowchart" type="button" title="Redo (Ctrl/Cmd+Shift+Z)" disabled>↷ Redo</button>
                   <button class="ghostBtn" id="toggleFlowCleanPreview" type="button">Clean Preview</button>
                   <button class="ghostBtn" id="autoArrangeFlowchart" type="button">Auto Arrange</button>
+                  <span class="flowSelectionStatus" id="flowSelectionStatus">No element selected</span>
+                  <button class="ghostBtn" id="groupFlowNodes" type="button" disabled>Group</button>
+                  <button class="ghostBtn" id="ungroupFlowNodes" type="button" disabled>Ungroup</button>
                   <button class="ghostBtn" id="clearFlowNodePositions" type="button">Reset Manual Position</button>
                   <button class="ghostBtn" id="addFlowEdgePreview" type="button">+ Connection via Form</button>
                 </div>
               </div>
-              <p class="flowchartPreviewHint"><strong>Seperti Miro:</strong> drag node untuk memindahkan posisi. Untuk membuat connection, <strong>tarik titik biru di sisi node</strong> lalu drop ke node / titik biru tujuan. <strong>Drag langsung garis</strong> untuk membuat atau menggeser bend. Klik bend lalu tekan <strong>Delete</strong> atau gunakan tombol <strong>Delete Bend</strong> untuk menghapus sudut yang tidak diperlukan. Klik garis untuk membuka toolbar Label / Bend / Auto Route / Delete Line. Semua garis tetap orthogonal 90°.</p>
+              <p class="flowchartPreviewHint"><strong>Seperti Miro:</strong> drag element untuk memindahkan posisi. <strong>Shift/Ctrl/Cmd + klik</strong> untuk multi-select; element terpilih akan di-highlight dan toolbar Group/Ungroup muncul di dekat selection. Untuk membuat connection, <strong>tarik titik biru kecil di sisi element</strong>. <strong>Drag label langsung di sepanjang garis</strong> untuk memindahkan label. Drag garis untuk membuat/menggeser bend. Klik garis untuk edit label, warna, route, atau delete. Semua garis tetap orthogonal 90°.</p>
               <div class="flowchartPreview" id="flowchartAdminPreview"></div>
             </div>
             <details class="flowConnectionSection">
@@ -4715,7 +4763,7 @@
     let selectedFlowId = '';
     let flowchartEditorInitialized = false;
     let flowchartDraft = null;
-    let flowchartUiState = { selectedEdgeId: '', selectedWaypoint: null, selectedNodeId: '', cleanPreview: false };
+    let flowchartUiState = { selectedEdgeId: '', selectedWaypoint: null, selectedNodeId: '', selectedNodeIds: [], cleanPreview: false };
     const FLOW_WORKSPACE_KEY = 'prieds_kc_flowchart_workspace_v1';
     function saveFlowchartWorkspace() {
       try {
@@ -4749,7 +4797,7 @@
         saved.flowchartView = 'list';
         saved.selectedFlowId = '';
         saved.flowchartDraft = null;
-        saved.flowchartUiState = { selectedEdgeId: '', selectedWaypoint: null, selectedNodeId: '', cleanPreview: false };
+        saved.flowchartUiState = { selectedEdgeId: '', selectedWaypoint: null, selectedNodeId: '', selectedNodeIds: [], cleanPreview: false };
         saved.savedAt = Date.now();
         localStorage.setItem(FLOW_WORKSPACE_KEY, JSON.stringify(saved));
       } catch (_) {}
@@ -4773,7 +4821,7 @@
     }
     function restoreFlowHistorySnapshot(snapshot) {
       if(!snapshot)return;
-      flowHistory.restoring=true;flowchartDraft=clone(snapshot);flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';
+      flowHistory.restoring=true;flowchartDraft=clone(snapshot);flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';flowchartUiState.selectedNodeIds=[];
       renderFlowchartEditor();flowHistory.restoring=false;updateFlowHistoryButtons();
     }
     function undoFlowchartEdit() {
@@ -4864,10 +4912,26 @@
       const s=flowNodeStyle(node),font=s.fontFamily;
       return `--node-fill:${s.fill};--node-border:${s.border};--node-text:${s.text};--node-font:${font},Segoe UI,Arial,sans-serif;--node-font-size:${s.fontSize}px;--node-font-weight:${s.fontWeight};--multi-fill:${s.fill};--multi-border:${s.border};`;
     }
+    function flowNextTopLeftPosition(size) {
+      const occupied=(flowchartDraft?.nodes||[]).map(node=>{const pos=flowNodeManualPosition(node);if(!pos)return null;const s=flowNodeSize(node);return{x:pos.x,y:pos.y,w:s.w,h:s.h}}).filter(Boolean);
+      const gap=28,startX=40,startY=40;
+      for(let row=0;row<30;row++){
+        for(let col=0;col<6;col++){
+          const x=startX+col*(Math.max(90,size.w)+gap),y=startY+row*(Math.max(52,size.h)+gap);
+          const overlaps=occupied.some(box=>x<box.x+box.w+12&&x+size.w+12>box.x&&y<box.y+box.h+12&&y+size.h+12>box.y);
+          if(!overlaps)return{x,y};
+        }
+      }
+      return{x:startX,y:startY};
+    }
     function flowAddElement(shape='process') {
       if(!flowchartDraft)flowchartDraft=blankFlowchartDraft();
       rememberFlowState(`Add ${flowShapeMeta(shape).label}`);
-      flowchartDraft.nodes.push(emptyFlowNode(flowDefaultTargetModule(),shape));renderFlowchartNodes();
+      const node=emptyFlowNode(flowDefaultTargetModule(),shape),pos=flowNextTopLeftPosition(flowNodeSize(node));
+      setFlowNodePosition(node,pos.x,pos.y);
+      flowchartDraft.nodes.push(node);
+      flowchartUiState.selectedNodeId=node.id;flowchartUiState.selectedNodeIds=[node.id];
+      renderFlowchartNodes();
     }
     function openFlowElementPalette() {
       const choices=FLOW_SHAPES.map(([shape,label])=>`<button class="flowElementChoice" type="button" data-add-flow-shape="${shape}"><span class="flowElementIcon shape-${shape}"></span><span>${label}</span></button>`).join('');
@@ -4917,13 +4981,13 @@
     function emptyFlowNode(module, shape = 'process') {
       const firstPage = flowPagePairs(module)[0]?.id || '';
       const shapeKey=flowShapeMeta(shape).key,nodeKind=shapeKey==='decision'?'decision':'process',size=flowDefaultNodeSize(shapeKey),style=flowDefaultNodeStyle(shapeKey);
-      return { id: flowUid(), kind: nodeKind, shape: shapeKey, label: { id: '', en: '' }, targetType: nodeKind === 'decision' ? 'none' : 'page', moduleId: module?.id || '', pageMenu: firstPage, topicId: '', position: { x: '', y: '' }, size, style };
+      return { id: flowUid(), kind: nodeKind, shape: shapeKey, label: { id: '', en: '' }, targetType: nodeKind === 'decision' ? 'none' : 'page', moduleId: module?.id || '', pageMenu: firstPage, topicId: '', position: { x: '', y: '' }, size, style, groupId: '' };
     }
     function emptyFlowEdge(from = '', to = '') {
-      return { id: flowUid(), from, to, label: { id: '', en: '' }, sourceSide: 'auto', targetSide: 'auto', routeMode: 'auto', waypoints: [] };
+      return { id: flowUid(), from, to, label: { id: '', en: '' }, sourceSide: 'auto', targetSide: 'auto', routeMode: 'auto', waypoints: [], color: '#43AFCF', labelPosition: null };
     }
     function blankFlowchartDraft() {
-      return { flowId: flowUid(), adminName: '', moduleIds: [], enabled: true, title: { id: '', en: '' }, nodes: [], edges: [], createdAt: '', updatedAt: '' };
+      return { flowId: flowUid(), adminName: '', moduleIds: [], enabled: true, title: { id: '', en: '' }, nodes: [], edges: [], nodeScaleVersion: 3, createdAt: '', updatedAt: '' };
     }
 
     function normalizeFlowchartConfig(flowId, value, fallbackModuleId = '') {
@@ -4946,7 +5010,8 @@
           x: flowNumber(node?.position?.x ?? node?.x) ?? '',
           y: flowNumber(node?.position?.y ?? node?.y) ?? ''
         },
-        size: (()=>{const d=flowDefaultNodeSize(node.shape || (node.kind === 'decision' ? 'decision' : 'process'));return{w:flowClampNodeSize(node?.size?.w ?? node?.width,d.w,80,520),h:flowClampNodeSize(node?.size?.h ?? node?.height,d.h,70,360)}})(),
+        size: (()=>{const d=flowDefaultNodeSize(node.shape || (node.kind === 'decision' ? 'decision' : 'process')),restoreScale=Number(raw.nodeScaleVersion)===2?2:1,rawW=flowNumber(node?.size?.w ?? node?.width),rawH=flowNumber(node?.size?.h ?? node?.height);return{w:flowClampNodeSize(rawW===null?d.w:rawW*restoreScale,d.w,80,520),h:flowClampNodeSize(rawH===null?d.h:rawH*restoreScale,d.h,70,360)}})(),
+        groupId: String(node?.groupId || ''),
         style: (()=>{const shape=node.shape || (node.kind === 'decision' ? 'decision' : 'process'),d=flowDefaultNodeStyle(shape),raw=node?.style&&typeof node.style==='object'?node.style:{};return{fill:flowSafeColor(raw.fill,d.fill),border:flowSafeColor(raw.border,d.border),text:flowSafeColor(raw.text,d.text),fontFamily:FLOW_FONTS.includes(raw.fontFamily)?raw.fontFamily:d.fontFamily,fontSize:Math.max(8,Math.min(32,Math.round(flowNumber(raw.fontSize)??d.fontSize))),fontWeight:[400,500,600,700,800,850,900].includes(Number(raw.fontWeight))?Number(raw.fontWeight):d.fontWeight}})()
       })) : [];
       const nodeIds = new Set(nodes.map(node => node.id));
@@ -4961,7 +5026,9 @@
         sourceSide: validSides.has(edge.sourceSide) ? edge.sourceSide : 'auto',
         targetSide: validSides.has(edge.targetSide) ? edge.targetSide : 'auto',
         routeMode: edge.routeMode === 'manual' ? 'manual' : 'auto',
-        waypoints: Array.isArray(edge.waypoints) ? edge.waypoints.map(point => ({ x: flowNumber(point?.x) ?? 20, y: flowNumber(point?.y) ?? 20 })) : []
+        waypoints: Array.isArray(edge.waypoints) ? edge.waypoints.map(point => ({ x: flowNumber(point?.x) ?? 20, y: flowNumber(point?.y) ?? 20 })) : [],
+        color: flowSafeColor(edge?.color, '#43AFCF'),
+        labelPosition: (()=>{const n=flowNumber(edge?.labelPosition);return n===null?null:Math.max(0,Math.min(1,n));})()
       })).filter(edge => nodeIds.has(edge.from) && nodeIds.has(edge.to));
       return {
         flowId: raw.flowId || flowId || flowUid(),
@@ -4975,7 +5042,8 @@
         nodes,
         edges,
         createdAt: raw.createdAt || '',
-        updatedAt: raw.updatedAt || ''
+        updatedAt: raw.updatedAt || '',
+        nodeScaleVersion: 3
       };
     }
 
@@ -5135,7 +5203,7 @@
       }
     }
     function startNewFlowchart() {
-      flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null; flowchartUiState.selectedNodeId = ''; flowchartUiState.cleanPreview = false; resetFlowHistory();
+      flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null; flowchartUiState.selectedNodeId = ''; flowchartUiState.selectedNodeIds = []; flowchartUiState.cleanPreview = false; resetFlowHistory();
       selectedFlowId = '';
       flowchartDraft = blankFlowchartDraft();
       setFlowchartView('editor');
@@ -5145,7 +5213,7 @@
       setTimeout(() => $('flowAdminName')?.focus(), 80);
     }
     function loadFlowchartForEdit(flowId) {
-      flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null; flowchartUiState.selectedNodeId = ''; flowchartUiState.cleanPreview = false; resetFlowHistory();
+      flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null; flowchartUiState.selectedNodeId = ''; flowchartUiState.selectedNodeIds = []; flowchartUiState.cleanPreview = false; resetFlowHistory();
       const config = flowchartCollection()[flowId]; if (!config) { toast('Flowchart tidak ditemukan.'); renderFlowchartLibrary(); return; }
       selectedFlowId = flowId;
       flowchartDraft = normalizeFlowchartConfig(flowId, config);
@@ -5198,10 +5266,8 @@
           <div class="field"><label>Target Main Menu</label><select data-flow-field="moduleId" ${noLink ? 'disabled' : ''}>${flowModuleOptions(node.moduleId)}</select></div>
           <div class="field"><label>Page Menu</label><select data-flow-field="pageMenu" ${noLink ? 'disabled' : ''}>${flowPageOptions(targetModule, node.pageMenu)}</select></div>
           <div class="field"><label>Article ${articleDisabled ? '(optional)' : ''}</label><select data-flow-field="topicId" ${articleDisabled ? 'disabled' : ''}>${articleOptionsForFlow(targetModule, node.pageMenu, node.topicId)}</select></div>
-          <div class="field"><label>Position X</label><input type="number" step="1" data-flow-field="posX" value="${esc(String(posX))}" placeholder="Auto"></div>
-          <div class="field"><label>Position Y</label><input type="number" step="1" data-flow-field="posY" value="${esc(String(posY))}" placeholder="Auto"></div>
-          <div class="field"><label>Width</label><input type="number" min="80" max="520" step="10" data-flow-field="nodeW" value="${nodeSize.w}"></div>
-          <div class="field"><label>Height</label><input type="number" min="70" max="360" step="10" data-flow-field="nodeH" value="${nodeSize.h}"></div>
+          <div class="field"><label>Width</label><input type="number" min="45" max="520" step="5" data-flow-field="nodeW" value="${nodeSize.w}"></div>
+          <div class="field"><label>Height</label><input type="number" min="35" max="360" step="5" data-flow-field="nodeH" value="${nodeSize.h}"></div>
           <button class="flowNodePositionReset" type="button" data-flow-clear-position="${esc(node.id)}" title="Reset manual position" aria-label="Reset manual position">⟲</button>
           <button class="flowNodeDelete" type="button" data-flow-delete="${esc(node.id)}" aria-label="Delete node">×</button>
         </div>`;
@@ -5279,6 +5345,7 @@
         <div class="field"><label>Branch Label — EN</label><input data-edge-field="labelEn" value="${esc(edge.label?.en || '')}" placeholder="Yes / No / Void"></div>
         <div class="field"><label>Target</label><select data-edge-field="to">${flowNodeOptions(edge.to)}</select></div>
         <div class="field"><label>Target Port</label><select data-edge-field="targetSide">${flowSideOptions(edge.targetSide || 'auto')}</select></div>
+        <div class="field flowEdgeColorField"><label>Line Color</label><input type="color" data-edge-field="color" value="${flowSafeColor(edge.color,'#43AFCF')}"></div>
         <div class="field"><label>Line Route</label><div class="flowRouteControls"><select data-edge-field="routeMode"><option value="auto" ${edge.routeMode !== 'manual' ? 'selected' : ''}>Auto 90°</option><option value="manual" ${edge.routeMode === 'manual' ? 'selected' : ''}>Manual 90°</option></select><button class="flowRouteMiniBtn" type="button" data-edge-add-bend="${esc(edge.id)}" ${edge.routeMode === 'manual' ? '' : 'disabled'}>+ Bend</button><button class="flowRouteMiniBtn" type="button" data-edge-reset-route="${esc(edge.id)}" ${edge.routeMode === 'manual' ? '' : 'disabled'}>Reset</button></div></div>
         <button class="flowConnectionDelete" type="button" data-flow-edge-delete="${esc(edge.id)}" aria-label="Delete connection">×</button>
       </div>`).join('') : '<div class="flowchartEmptyBuilder">Belum ada connection. Klik <strong>+ Add Connection</strong>. Untuk flow lama, hubungan linear tetap otomatis dimigrasikan.</div>';
@@ -5310,6 +5377,7 @@
             else if (field === 'labelEn') edge.label.en = input.value;
             else if (field === 'sourceSide') edge.sourceSide = ['top','right','bottom','left'].includes(input.value) ? input.value : 'auto';
             else if (field === 'targetSide') edge.targetSide = ['top','right','bottom','left'].includes(input.value) ? input.value : 'auto';
+            else if (field === 'color') edge.color = flowSafeColor(input.value,'#43AFCF');
             else if (field === 'routeMode') {
               if (input.value === 'manual') seedManualEdgeRoute(edge);
               else { edge.routeMode = 'auto'; edge.waypoints = []; }
@@ -5345,7 +5413,7 @@
     }
 
     function flowTargetLabel(node) {
-      if (node.targetType === 'none') return node.kind === 'decision' ? 'Decision • no direct link' : 'No direct link';
+      if (node.targetType === 'none') return '';
       const module = flowTargetModule(node);
       const moduleLabel = module?.name?.id || module?.name?.en || node.moduleId || 'Main Menu';
       if (node.targetType === 'article') {
@@ -5456,6 +5524,20 @@
       if (!best) return { x: clean[0]?.[0] || 0, y: (clean[0]?.[1] || 0) - 8 };
       return { x: (best.a[0] + best.b[0]) / 2, y: (best.a[1] + best.b[1]) / 2 - 8 };
     }
+    function flowPointAlongPolyline(points, progress) {
+      const clean=flowCompactPoints(points),segments=[];let total=0;
+      for(let i=1;i<clean.length;i++){const a=clean[i-1],b=clean[i],len=Math.abs(b[0]-a[0])+Math.abs(b[1]-a[1]);if(len>0){segments.push({a,b,len,start:total});total+=len;}}
+      if(!segments.length)return{x:clean[0]?.[0]||0,y:(clean[0]?.[1]||0)-8};
+      const target=Math.max(0,Math.min(1,Number(progress)||0))*total;
+      const seg=segments.find(item=>target<=item.start+item.len)||segments[segments.length-1],local=Math.max(0,Math.min(seg.len,target-seg.start))/seg.len;
+      return{x:seg.a[0]+(seg.b[0]-seg.a[0])*local,y:seg.a[1]+(seg.b[1]-seg.a[1])*local-8};
+    }
+    function flowLabelPointForEdge(points,edge){const pos=flowNumber(edge?.labelPosition);return pos===null?flowLabelFromPoints(points):flowPointAlongPolyline(points,pos);}
+    function flowProgressOnPolyline(points,point){
+      const clean=flowCompactPoints(points);let total=0,best=null,cumulative=0;
+      for(let i=1;i<clean.length;i++){const a=clean[i-1],b=clean[i],len=Math.abs(b[0]-a[0])+Math.abs(b[1]-a[1]);if(!len)continue;const hit=flowDistanceToSegment(point,a,b);const along=Math.abs(hit.point.x-a[0])+Math.abs(hit.point.y-a[1]);if(!best||hit.distance<best.distance)best={distance:hit.distance,at:cumulative+along};cumulative+=len;total+=len;}
+      return total&&best?Math.max(0,Math.min(1,best.at/total)):.5;
+    }
     function flowSvgPointFromClient(svg, clientX, clientY) {
       const rect = svg?.getBoundingClientRect?.();
       const view = svg?.viewBox?.baseVal;
@@ -5495,7 +5577,7 @@
       const sLead = {x:sShift.x+sv.x*stub,y:sShift.y+sv.y*stub}, tLead = {x:tShift.x+tv.x*stub,y:tShift.y+tv.y*stub};
 
       if (edge.routeMode === 'manual' && Array.isArray(edge.waypoints) && edge.waypoints.length) {
-        const points = flowOrthogonalManualPoints(sShift,sLead,edge.waypoints,tLead,tShift,sides.source,sides.target), label = flowLabelFromPoints(points);
+        const points = flowOrthogonalManualPoints(sShift,sLead,edge.waypoints,tLead,tShift,sides.source,sides.target), label = flowLabelPointForEdge(points, edge);
         return { d:flowPolyline(points), x:label.x, y:label.y, back:false, manual:true, points, sourceSide:sides.source, targetSide:sides.target };
       }
 
@@ -5519,19 +5601,21 @@
           points=[[sShift.x,sShift.y],[sLead.x,sLead.y],[sLead.x,tLead.y],[tLead.x,tLead.y],[tShift.x,tShift.y]];
         }
       }
-      const label=flowLabelFromPoints(points);
+      const label=flowLabelPointForEdge(points, edge);
       return {d:flowPolyline(points),x:label.x,y:label.y,back:false,manual:false,points:flowCompactPoints(points),sourceSide:sides.source,targetSide:sides.target};
     }
 
     function flowGraphMarkup(nodes, edges) {
-      const layout = flowGraphLayout(nodes, edges), markerId = 'flow-admin-arrow';
+      const layout = flowGraphLayout(nodes, edges), markerBase = 'flow-admin-arrow';
       if (flowchartUiState.selectedEdgeId && !layout.edges.some(edge => edge.id === flowchartUiState.selectedEdgeId)) {
         flowchartUiState.selectedEdgeId = '';
         flowchartUiState.selectedWaypoint = null;
       }
+      const selectedIds=new Set(Array.isArray(flowchartUiState.selectedNodeIds)?flowchartUiState.selectedNodeIds:[]);
+      const markerDefs=layout.edges.map(edge=>{const color=flowSafeColor(edge?.color,'#43AFCF'),id=`${markerBase}-${String(edge.id).replace(/[^a-z0-9_-]/gi,'-')}`;return `<marker id="${id}" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="${color}"></path></marker>`}).join('');
       const paths = layout.edges.map(edge => {
         const p = flowGraphPath(layout, edge); if (!p) return '';
-        const label = flowTextValue(edge.label, 'id');
+        const label = flowTextValue(edge.label, 'id'), color=flowSafeColor(edge?.color,'#43AFCF'), markerId=`${markerBase}-${String(edge.id).replace(/[^a-z0-9_-]/gi,'-')}`;
         const selected = flowchartUiState.selectedEdgeId === edge.id;
         const handles = !flowchartUiState.cleanPreview && edge.routeMode === 'manual'
           ? (edge.waypoints || []).map((point, pointIndex) => {
@@ -5539,18 +5623,21 @@
               return `<circle class="flowGraphWaypointHalo" data-flow-waypoint-edge="${esc(edge.id)}" data-flow-waypoint-index="${pointIndex}" cx="${Number(point.x)||0}" cy="${Number(point.y)||0}" r="12"></circle><rect class="flowGraphWaypoint ${active ? 'selected' : ''}" data-flow-waypoint-edge="${esc(edge.id)}" data-flow-waypoint-index="${pointIndex}" x="${(Number(point.x)||0)-6}" y="${(Number(point.y)||0)-6}" width="12" height="12" rx="3"></rect>`;
             }).join('')
           : '';
-        return `<path class="flowGraphPath ${p.back ? 'back' : ''} ${p.manual ? 'manual' : ''} ${selected ? 'selected' : ''}" data-flow-edge-path="${esc(edge.id)}" d="${p.d}" marker-end="url(#${markerId})"></path>${flowchartUiState.cleanPreview ? '' : `<path class="flowGraphPathHit" data-flow-edge-hit="${esc(edge.id)}" d="${p.d}"></path>`}${label ? `<text class="flowGraphEdgeLabel" data-flow-edge-label="${esc(edge.id)}" x="${p.x}" y="${p.y}" text-anchor="middle">${esc(label)}</text>` : ''}${handles}`;
+        return `<path class="flowGraphPath ${p.back ? 'back' : ''} ${p.manual ? 'manual' : ''} ${selected ? 'selected' : ''}" style="--edge-color:${color}" data-flow-edge-path="${esc(edge.id)}" d="${p.d}" marker-end="url(#${markerId})"></path>${flowchartUiState.cleanPreview ? '' : `<path class="flowGraphPathHit" data-flow-edge-hit="${esc(edge.id)}" d="${p.d}"></path>`}${label ? `<text class="flowGraphEdgeLabel" data-flow-edge-label="${esc(edge.id)}" x="${p.x}" y="${p.y}" text-anchor="middle">${esc(label)}</text>` : ''}${handles}`;
       }).join('');
       const portNames = { top:'Top', right:'Right', bottom:'Bottom', left:'Left' };
       const nodeHtml = nodes.map((node, index) => {
         const p = layout.positions.get(node.id); if (!p) return '';
         const label = flowTextValue(node.label, 'id') || `Node ${index + 1}`;
-        const kind = node.kind === 'decision' ? 'decision' : 'process',shape=flowShapeMeta(node.shape || kind);
+        const kind = node.kind === 'decision' ? 'decision' : 'process',shape=flowShapeMeta(node.shape || kind),targetLabel=flowTargetLabel(node);
         const ports = flowchartUiState.cleanPreview ? '' : ['top','right','bottom','left'].map(side => `<button type="button" class="flowGraphPort ${side}" data-flow-port-node="${esc(node.id)}" data-flow-port-side="${side}" title="Drag to connect from ${portNames[side]}" aria-label="Connect ${esc(label)} from ${portNames[side]}"></button>`).join('');
         const resize = flowchartUiState.cleanPreview ? '' : `<button type="button" class="flowGraphResizeHandle" data-flow-resize-node="${esc(node.id)}" title="Drag to resize node" aria-label="Resize ${esc(label)}"></button>`;
-        const nodeSelected = !flowchartUiState.cleanPreview && flowchartUiState.selectedNodeId === node.id;
+        const nodeSelected = !flowchartUiState.cleanPreview && (selectedIds.has(node.id)||flowchartUiState.selectedNodeId === node.id);
+        const selectedGroupIds=[...new Set(nodes.filter(item=>selectedIds.has(item.id)&&item.groupId).map(item=>item.groupId))];
+        const selectedExistingGroup = nodeSelected && !!node.groupId && selectedGroupIds.length===1 && nodes.filter(item=>item.groupId===node.groupId).every(item=>selectedIds.has(item.id));
+        const activeNode = !flowchartUiState.cleanPreview && flowchartUiState.selectedNodeId === node.id;
         let styleToolbar = '';
-        if (nodeSelected) {
+        if (activeNode && selectedIds.size <= 1) {
           const style = flowNodeStyle(node), toolbarPosition = p.y < 90 ? 'below' : 'above';
           styleToolbar = `<div class="flowGraphNodeStyleToolbar ${toolbarPosition}" data-flow-node-toolbar data-flow-node-style-id="${esc(node.id)}" role="toolbar" aria-label="Style ${esc(label)}">
             <span class="flowDirectStyleLabel">Style</span>
@@ -5563,8 +5650,21 @@
             <button type="button" class="flowDirectMore" data-node-style-more title="More style options" aria-label="More style options">•••</button>
           </div>`;
         }
-        return `<div class="flowGraphNodeWrap ${kind} shape-${shape.key} ${nodeSelected?'selected-node':''}" data-preview-node-id="${esc(node.id)}" style="left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;${flowNodeStyleVars(node)}"><div class="flowGraphNode ${kind}"><span class="flowGraphNodeKind">${esc(shape.label)}</span><strong>${esc(label)}</strong><small>${esc(flowTargetLabel(node))}</small></div>${ports}${resize}${styleToolbar}</div>`;
+        return `<div class="flowGraphNodeWrap ${kind} shape-${shape.key} ${nodeSelected?'multi-selected':''} ${node.groupId?'grouped-node':''} ${selectedExistingGroup?'selected-existing-group':''}" data-preview-node-id="${esc(node.id)}" style="left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;${flowNodeStyleVars(node)}"><div class="flowGraphNode ${kind}"><span class="flowGraphNodeKind">${esc(shape.label)}</span><strong>${esc(label)}</strong>${targetLabel?`<small>${esc(targetLabel)}</small>`:''}</div>${ports}${resize}${styleToolbar}</div>`;
       }).join('');
+      let selectionToolbar = '';
+      if(!flowchartUiState.cleanPreview && selectedIds.size>1){
+        const selectedNodes=nodes.filter(node=>selectedIds.has(node.id));
+        const selectedPos=selectedNodes.map(node=>layout.positions.get(node.id)).filter(Boolean);
+        if(selectedPos.length){
+          const left=Math.min(...selectedPos.map(p=>p.x)),right=Math.max(...selectedPos.map(p=>p.x+p.w)),top=Math.min(...selectedPos.map(p=>p.y));
+          const groups=[...new Set(selectedNodes.map(node=>node.groupId).filter(Boolean))];
+          const isExistingGroup=groups.length===1&&selectedNodes.length>1&&selectedNodes.every(node=>node.groupId===groups[0])&&nodes.filter(node=>node.groupId===groups[0]).every(node=>selectedIds.has(node.id));
+          const canGroup=selectedNodes.length>1&&!isExistingGroup,canUngroup=selectedNodes.some(node=>node.groupId);
+          const tx=Math.max(115,Math.min(layout.width-115,(left+right)/2)),below=top<54,ty=below?Math.max(...selectedPos.map(p=>p.y+p.h))+12:top-10;
+          selectionToolbar=`<div class="flowGraphSelectionToolbar ${below?'below':''} ${isExistingGroup?'existingGroup':''}" data-flow-selection-toolbar style="left:${tx}px;top:${ty}px" role="toolbar" aria-label="Selection actions"><span class="selectionCount">${selectedNodes.length} selected${isExistingGroup?' • grouped':''}</span>${canGroup?'<button type="button" class="groupPrimary" data-flow-group-selection>Group</button>':''}${canUngroup?'<button type="button" class="ungroupAction" data-flow-ungroup-selection>Ungroup</button>':''}</div>`;
+        }
+      }
       let toolbar = '';
       const selectedEdge = flowchartUiState.cleanPreview ? null : layout.edges.find(edge => edge.id === flowchartUiState.selectedEdgeId);
       if (selectedEdge) {
@@ -5574,10 +5674,11 @@
           const ty = Math.max(58, Number(p.y) || 58);
           const selectedIndex = Number(flowchartUiState.selectedWaypoint);
           const hasWaypoint = selectedEdge.routeMode === 'manual' && Number.isInteger(selectedIndex) && !!selectedEdge.waypoints?.[selectedIndex];
-          toolbar = `<div class="flowGraphEdgeToolbar" data-flow-edge-toolbar style="left:${tx}px;top:${ty}px"><strong>Connection</strong><button type="button" data-flow-edit-edge-label>✎ Label</button><button type="button" data-flow-toolbar-add-bend>+ Bend</button>${hasWaypoint ? '<button type="button" class="danger" data-flow-toolbar-delete-bend>Delete Bend</button>' : ''}<button type="button" data-flow-toolbar-auto>Auto Route</button><button type="button" class="danger" data-flow-toolbar-delete-edge>Delete Line</button></div>`;
+          const edgeColor=flowSafeColor(selectedEdge?.color,'#43AFCF');
+          toolbar = `<div class="flowGraphEdgeToolbar" data-flow-edge-toolbar style="left:${tx}px;top:${ty}px"><strong>Connection</strong><button type="button" data-flow-edit-edge-label>✎ Label</button><label class="flowEdgeColorControl">Color <input type="color" data-flow-toolbar-edge-color value="${edgeColor}"></label><button type="button" data-flow-toolbar-add-bend>+ Bend</button>${hasWaypoint ? '<button type="button" class="danger" data-flow-toolbar-delete-bend>Delete Bend</button>' : ''}<button type="button" data-flow-toolbar-auto>Auto Route</button><button type="button" class="danger" data-flow-toolbar-delete-edge>Delete Line</button></div>`;
         }
       }
-      return `<div class="flowGraphViewport"><div class="flowGraphCanvas" style="width:${layout.width}px;height:${layout.height}px"><svg class="flowGraphSvg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" aria-hidden="true"><defs><marker id="${markerId}" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#43AFCF"></path></marker></defs>${paths}<path class="flowGraphConnectionDraft" data-flow-draft-path d=""></path></svg>${nodeHtml}${toolbar}</div></div>`;
+      return `<div class="flowGraphViewport"><div class="flowGraphCanvas" style="width:${layout.width}px;height:${layout.height}px"><svg class="flowGraphSvg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" aria-hidden="true"><defs>${markerDefs}</defs>${paths}<path class="flowGraphConnectionDraft" data-flow-draft-path d=""></path></svg>${nodeHtml}${selectionToolbar}${toolbar}</div></div>`;
     }
     function applyFlowchartPreviewLayout() {
       const host = $('flowchartAdminPreview');
@@ -5600,6 +5701,7 @@
         const path = flowGraphPath(layout, edge);
         if (!pathEl || !path) return;
         pathEl.setAttribute('d', path.d);
+        pathEl.style.setProperty('--edge-color', flowSafeColor(edge?.color,'#43AFCF'));
         const selected = flowchartUiState.selectedEdgeId === edge.id;
         pathEl.setAttribute('class', `flowGraphPath ${path.back ? 'back' : ''} ${path.manual ? 'manual' : ''} ${selected ? 'selected' : ''}`.trim());
         const hitEl = host.querySelector(`[data-flow-edge-hit="${edge.id}"]`);
@@ -5720,6 +5822,61 @@
       const bold = wrap.querySelector('[data-node-style-bold]');
       if (bold) { bold.classList.toggle('active', s.fontWeight >= 700); bold.setAttribute('aria-pressed', s.fontWeight >= 700 ? 'true' : 'false'); }
     }
+    function flowSelectedNodeIds() {
+      const ids=Array.isArray(flowchartUiState.selectedNodeIds)?flowchartUiState.selectedNodeIds.filter(id=>flowchartDraft?.nodes?.some(node=>node.id===id)):[];
+      if(!ids.length&&flowchartUiState.selectedNodeId&&flowchartDraft?.nodes?.some(node=>node.id===flowchartUiState.selectedNodeId))ids.push(flowchartUiState.selectedNodeId);
+      flowchartUiState.selectedNodeIds=[...new Set(ids)];
+      return flowchartUiState.selectedNodeIds;
+    }
+    function updateFlowGroupButtons(){
+      const ids=flowSelectedNodeIds(),nodes=ids.map(id=>flowchartDraft?.nodes?.find(node=>node.id===id)).filter(Boolean);
+      const groupBtn=$('groupFlowNodes'),ungroupBtn=$('ungroupFlowNodes'),status=$('flowSelectionStatus');
+      const groups=[...new Set(nodes.map(node=>node.groupId).filter(Boolean))];
+      const isSingleExistingGroup=groups.length===1&&nodes.length>1&&nodes.every(node=>node.groupId===groups[0]);
+      if(groupBtn){groupBtn.disabled=nodes.length<2||isSingleExistingGroup;groupBtn.textContent=nodes.length>=2&&!isSingleExistingGroup?`Group (${nodes.length})`:'Group';}
+      if(ungroupBtn){ungroupBtn.disabled=!nodes.some(node=>node.groupId);ungroupBtn.textContent=isSingleExistingGroup?`Ungroup (${nodes.length})`:'Ungroup';}
+      if(status){
+        status.classList.toggle('active',nodes.length>0);
+        status.textContent=!nodes.length?'No element selected':(isSingleExistingGroup?`${nodes.length} selected • Grouped`:`${nodes.length} element${nodes.length>1?'s':''} selected`);
+      }
+    }
+    function selectFlowNode(nodeId,event={}){
+      const node=flowchartDraft?.nodes?.find(item=>item.id===nodeId);if(!node)return;
+      const additive=!!(event.shiftKey||event.ctrlKey||event.metaKey),current=new Set(flowSelectedNodeIds());
+      const groupMembers=node.groupId?flowchartDraft.nodes.filter(item=>item.groupId===node.groupId).map(item=>item.id):[];
+      if(additive){
+        if(groupMembers.length){
+          const allSelected=groupMembers.every(id=>current.has(id));
+          groupMembers.forEach(id=>allSelected?current.delete(id):current.add(id));
+        }else if(current.has(nodeId))current.delete(nodeId);else current.add(nodeId);
+      }else if(current.size>1&&current.has(nodeId)){
+        /* Keep the existing multi-selection so it can be dragged without holding a modifier. */
+      }else if(groupMembers.length){
+        current.clear();groupMembers.forEach(id=>current.add(id));
+      }else{current.clear();current.add(nodeId);}
+      flowchartUiState.selectedNodeIds=[...current];flowchartUiState.selectedNodeId=current.has(nodeId)?nodeId:(flowchartUiState.selectedNodeIds[0]||'');
+      flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;updateFlowGroupButtons();
+    }
+    function groupSelectedFlowNodes(){
+      const ids=flowSelectedNodeIds();if(ids.length<2)return;
+      const selectedNodes=ids.map(id=>flowchartDraft?.nodes?.find(node=>node.id===id)).filter(Boolean);
+      const groups=[...new Set(selectedNodes.map(node=>node.groupId).filter(Boolean))];
+      if(groups.length===1&&selectedNodes.every(node=>node.groupId===groups[0]))return;
+      rememberFlowState('Group elements');
+      const groupId=`group-${flowUid()}`;
+      flowchartDraft.nodes.forEach(node=>{if(ids.includes(node.id))node.groupId=groupId;});
+      flowchartUiState.selectedNodeIds=[...ids];flowchartUiState.selectedNodeId=ids[0]||'';
+      renderFlowchartPreview();updateFlowGroupButtons();
+    }
+    function ungroupSelectedFlowNodes(){
+      const ids=flowSelectedNodeIds();if(!ids.length)return;
+      const groups=new Set(flowchartDraft.nodes.filter(node=>ids.includes(node.id)&&node.groupId).map(node=>node.groupId));
+      if(!groups.size)return;
+      rememberFlowState('Ungroup elements');
+      flowchartDraft.nodes.forEach(node=>{if(groups.has(node.groupId))node.groupId='';});
+      flowchartUiState.selectedNodeIds=[...ids];flowchartUiState.selectedNodeId=ids[0]||'';
+      renderFlowchartPreview();updateFlowGroupButtons();
+    }
     function bindFlowchartPreview() {
       const host=$('flowchartAdminPreview'); if(!host||!flowchartDraft)return;
       applyFlowchartPreviewLayout(); if(flowchartUiState.cleanPreview){host.tabIndex=-1;return;} host.tabIndex=0; host.setAttribute('aria-label','Flowchart editor. Drag node ports to create connections; drag lines to create bends.');
@@ -5755,6 +5912,13 @@
         });
         toolbar.querySelector('[data-node-style-more]')?.addEventListener('click',event=>{openFlowNodeStyleEditor(node);event.stopPropagation();});
       });
+      const selectionToolbar=host.querySelector('[data-flow-selection-toolbar]');
+      if(selectionToolbar){
+        selectionToolbar.onpointerdown=event=>event.stopPropagation();
+        selectionToolbar.onclick=event=>event.stopPropagation();
+        selectionToolbar.querySelector('[data-flow-group-selection]')?.addEventListener('click',event=>{event.stopPropagation();groupSelectedFlowNodes();});
+        selectionToolbar.querySelector('[data-flow-ungroup-selection]')?.addEventListener('click',event=>{event.stopPropagation();ungroupSelectedFlowNodes();});
+      }
       const clearTarget=()=>host.querySelectorAll('.connection-target').forEach(el=>el.classList.remove('connection-target'));
       const pointFromEvent=event=>flowSvgPointFromClient(svg,event.clientX,event.clientY);
       const connectionDraftD=(nodeId,side,point)=>{ const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),pos=layout.positions.get(nodeId); if(!pos)return''; const start=flowAnchor(pos,side,layout.boxW,layout.boxH),v=flowSideVector(side),lead={x:start.x+v.x*26,y:start.y+v.y*26},p=flowSnapPoint(point,10),horizontal=side==='left'||side==='right',pts=horizontal?[[start.x,start.y],[lead.x,lead.y],[p.x,lead.y],[p.x,p.y]]:[[start.x,start.y],[lead.x,lead.y],[lead.x,p.y],[p.x,p.y]]; return flowPolyline(pts); };
@@ -5774,6 +5938,13 @@
         const stop=()=>{ if(dragState?.type!=='waypoint')return;dragState=null;renderFlowchartConnections();renderFlowchartPreview();refocus(); };
         handle.onpointerup=stop;handle.onpointercancel=stop;handle.onlostpointercapture=stop;
         handle.ondblclick=event=>{const edge=flowchartDraft.edges.find(item=>item.id===handle.dataset.flowWaypointEdge),index=Number(handle.dataset.flowWaypointIndex);rememberFlowState('Delete line bend');if(flowDeleteWaypoint(edge,index)){flowchartUiState.selectedEdgeId=edge.id;renderFlowchartConnections();renderFlowchartPreview();refocus()}event.preventDefault();event.stopPropagation();};
+      });
+
+      host.querySelectorAll('[data-flow-edge-label]').forEach(labelEl=>{
+        const finishLabel=()=>{if(!dragState||dragState.type!=='label'||dragState.edgeId!==labelEl.dataset.flowEdgeLabel)return;dragState=null;renderFlowchartConnections();renderFlowchartPreview();refocus();};
+        labelEl.onpointerdown=event=>{if(event.button!==0||!svg)return;const edge=flowchartDraft.edges.find(item=>item.id===labelEl.dataset.flowEdgeLabel);if(!edge)return;rememberFlowState('Move connection label');flowchartUiState.selectedEdgeId=edge.id;flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';flowchartUiState.selectedNodeIds=[];dragState={type:'label',edgeId:edge.id,pointerId:event.pointerId};labelEl.setPointerCapture?.(event.pointerId);host.focus({preventScroll:true});event.preventDefault();event.stopPropagation();};
+        labelEl.onpointermove=event=>{if(!dragState||dragState.type!=='label'||dragState.edgeId!==labelEl.dataset.flowEdgeLabel||dragState.pointerId!==event.pointerId)return;const edge=flowchartDraft.edges.find(item=>item.id===dragState.edgeId);if(!edge)return;const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),path=flowGraphPath(layout,edge);if(!path?.points)return;edge.labelPosition=flowProgressOnPolyline(path.points,pointFromEvent(event));applyFlowchartPreviewLayout();event.preventDefault();event.stopPropagation();};
+        labelEl.onpointerup=finishLabel;labelEl.onpointercancel=finishLabel;labelEl.onlostpointercapture=finishLabel;
       });
 
       host.querySelectorAll('[data-flow-edge-hit]').forEach(pathEl=>{
@@ -5801,30 +5972,33 @@
 
       host.querySelectorAll('[data-preview-node-id]').forEach(nodeEl=>{
         const stopDrag=()=>{if(!dragState||dragState.type!=='node'||dragState.nodeId!==nodeEl.dataset.previewNodeId)return;nodeEl.classList.remove('dragging');dragState=null;renderFlowchartPreview();refocus();};
-        nodeEl.onpointerdown=event=>{if(event.button!==0||event.target.closest('[data-flow-port-node],[data-flow-resize-node],[data-flow-node-toolbar]'))return;const nodeId=nodeEl.dataset.previewNodeId,node=flowchartDraft.nodes.find(item=>item.id===nodeId);if(!node)return;flowchartUiState.selectedNodeId=nodeId;flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),current=layout.positions.get(nodeId);if(!current)return;rememberFlowState('Move element');dragState={type:'node',nodeId,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,originX:current.x,originY:current.y};nodeEl.classList.add('dragging');nodeEl.setPointerCapture?.(event.pointerId);host.focus({preventScroll:true});event.preventDefault();};
-        nodeEl.onpointermove=event=>{if(!dragState||dragState.type!=='node'||dragState.nodeId!==nodeEl.dataset.previewNodeId)return;const node=flowchartDraft.nodes.find(item=>item.id===dragState.nodeId);if(!node)return;setFlowNodePosition(node,dragState.originX+(event.clientX-dragState.startX),dragState.originY+(event.clientY-dragState.startY));syncFlowchartPositionInputs(node.id);applyFlowchartPreviewLayout();};
+        nodeEl.onpointerdown=event=>{if(event.button!==0||event.target.closest('[data-flow-port-node],[data-flow-resize-node],[data-flow-node-toolbar]'))return;const nodeId=nodeEl.dataset.previewNodeId,node=flowchartDraft.nodes.find(item=>item.id===nodeId);if(!node)return;selectFlowNode(nodeId,event);const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),current=layout.positions.get(nodeId);if(!current)return;const selected=flowSelectedNodeIds(),memberIds=node.groupId?flowchartDraft.nodes.filter(item=>item.groupId===node.groupId).map(item=>item.id):(selected.includes(nodeId)&&selected.length>1?selected:[nodeId]),origins={};memberIds.forEach(id=>{const pos=layout.positions.get(id);if(pos)origins[id]={x:pos.x,y:pos.y};});rememberFlowState(memberIds.length>1?'Move grouped elements':'Move element');dragState={type:'node',nodeId,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,memberIds,origins};nodeEl.classList.add('dragging');nodeEl.setPointerCapture?.(event.pointerId);host.focus({preventScroll:true});applyFlowchartPreviewLayout();event.preventDefault();};
+        nodeEl.onpointermove=event=>{if(!dragState||dragState.type!=='node'||dragState.nodeId!==nodeEl.dataset.previewNodeId)return;const dx=event.clientX-dragState.startX,dy=event.clientY-dragState.startY;(dragState.memberIds||[dragState.nodeId]).forEach(id=>{const node=flowchartDraft.nodes.find(item=>item.id===id),origin=dragState.origins?.[id];if(!node||!origin)return;setFlowNodePosition(node,origin.x+dx,origin.y+dy);syncFlowchartPositionInputs(node.id);});applyFlowchartPreviewLayout();};
         nodeEl.onpointerup=stopDrag;nodeEl.onpointercancel=stopDrag;nodeEl.onlostpointercapture=stopDrag;
       });
 
       const selectedEdge=()=>flowchartDraft.edges.find(edge=>edge.id===flowchartUiState.selectedEdgeId);
       host.querySelector('[data-flow-edit-edge-label]')?.addEventListener('click',event=>{openFlowEdgeLabelEditor(selectedEdge());event.stopPropagation()});
+      host.querySelector('[data-flow-toolbar-edge-color]')?.addEventListener('change',event=>{const edge=selectedEdge();if(!edge)return;rememberFlowState('Change line color');edge.color=flowSafeColor(event.currentTarget.value,'#43AFCF');renderFlowchartConnections();renderFlowchartPreview();event.stopPropagation()});
       host.querySelector('[data-flow-toolbar-add-bend]')?.addEventListener('click',event=>{const edge=selectedEdge();if(!edge)return;rememberFlowState('Add line bend');const layout=flowGraphLayout(flowchartDraft.nodes,flowchartDraft.edges),p=flowGraphPath(layout,edge),index=flowInsertWaypointAt(edge,{x:p?.x||200,y:(p?.y||160)+8});flowchartUiState.selectedWaypoint=index;renderFlowchartConnections();renderFlowchartPreview();refocus();event.stopPropagation()});
       host.querySelector('[data-flow-toolbar-delete-bend]')?.addEventListener('click',event=>{const edge=selectedEdge();rememberFlowState('Delete line bend');if(flowDeleteWaypoint(edge,Number(flowchartUiState.selectedWaypoint))){renderFlowchartConnections();renderFlowchartPreview();refocus()}event.stopPropagation()});
       host.querySelector('[data-flow-toolbar-auto]')?.addEventListener('click',event=>{const edge=selectedEdge();if(!edge)return;rememberFlowState('Auto route connection');edge.routeMode='auto';edge.waypoints=[];flowchartUiState.selectedWaypoint=null;renderFlowchartConnections();renderFlowchartPreview();refocus();event.stopPropagation()});
       host.querySelector('[data-flow-toolbar-delete-edge]')?.addEventListener('click',event=>{rememberFlowState('Delete connection');if(flowDeleteSelectedEdge()){renderFlowchartConnections();renderFlowchartPreview();refocus()}event.stopPropagation()});
 
-      host.onkeydown=event=>{const editable=event.target?.matches?.('input,textarea,select,[contenteditable="true"]');if(editable)return;if(event.key==='Escape'){flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';renderFlowchartPreview();refocus();return}if(event.key!=='Delete'&&event.key!=='Backspace')return;const edge=selectedEdge();if(!edge)return;rememberFlowState((Number.isInteger(Number(flowchartUiState.selectedWaypoint))&&flowchartUiState.selectedWaypoint!==null)?'Delete line bend':'Delete connection');if(Number.isInteger(Number(flowchartUiState.selectedWaypoint))&&flowchartUiState.selectedWaypoint!==null&&edge.waypoints?.[Number(flowchartUiState.selectedWaypoint)])flowDeleteWaypoint(edge,Number(flowchartUiState.selectedWaypoint));else flowDeleteSelectedEdge();renderFlowchartConnections();renderFlowchartPreview();refocus();event.preventDefault();};
-      host.onpointerdown=event=>{if(event.target.closest('[data-flow-edge-hit],[data-flow-waypoint-edge],[data-preview-node-id],[data-flow-edge-toolbar],[data-flow-node-toolbar]'))return;if(flowchartUiState.selectedEdgeId||flowchartUiState.selectedWaypoint!==null||flowchartUiState.selectedNodeId){flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';renderFlowchartPreview();}};
+      host.onkeydown=event=>{const editable=event.target?.matches?.('input,textarea,select,[contenteditable="true"]');if(editable)return;if(event.key==='Escape'){flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';flowchartUiState.selectedNodeIds=[];renderFlowchartPreview();refocus();return}if(event.key!=='Delete'&&event.key!=='Backspace')return;const edge=selectedEdge();if(!edge)return;rememberFlowState((Number.isInteger(Number(flowchartUiState.selectedWaypoint))&&flowchartUiState.selectedWaypoint!==null)?'Delete line bend':'Delete connection');if(Number.isInteger(Number(flowchartUiState.selectedWaypoint))&&flowchartUiState.selectedWaypoint!==null&&edge.waypoints?.[Number(flowchartUiState.selectedWaypoint)])flowDeleteWaypoint(edge,Number(flowchartUiState.selectedWaypoint));else flowDeleteSelectedEdge();renderFlowchartConnections();renderFlowchartPreview();refocus();event.preventDefault();};
+      host.onpointerdown=event=>{if(event.target.closest('[data-flow-edge-hit],[data-flow-waypoint-edge],[data-preview-node-id],[data-flow-edge-toolbar],[data-flow-node-toolbar],[data-flow-selection-toolbar]'))return;if(flowchartUiState.selectedEdgeId||flowchartUiState.selectedWaypoint!==null||flowchartUiState.selectedNodeId||flowSelectedNodeIds().length){flowchartUiState.selectedEdgeId='';flowchartUiState.selectedWaypoint=null;flowchartUiState.selectedNodeId='';flowchartUiState.selectedNodeIds=[];updateFlowGroupButtons();renderFlowchartPreview();}};
     }
     function renderFlowchartPreview() {
       if (!$('flowchartAdminPreview') || !flowchartDraft) return;
       syncFlowchartHeaderDraftSilent();
-      const previewHost = $('flowchartAdminPreview');
+      const previewHost = $('flowchartAdminPreview'),previousViewport=previewHost.querySelector('.flowGraphViewport');
+      const scrollState=previousViewport?{left:previousViewport.scrollLeft,top:previousViewport.scrollTop}:null;
       previewHost.classList.toggle('cleanPreview', !!flowchartUiState.cleanPreview);
       const toggle = $('toggleFlowCleanPreview');
       if (toggle) toggle.textContent = flowchartUiState.cleanPreview ? '← Edit Mode' : 'Clean Preview';
       previewHost.innerHTML = flowchartDraft.nodes.length ? flowGraphMarkup(flowchartDraft.nodes, flowchartDraft.edges) : '<div class="flowchartEmptyBuilder" style="width:100%">Flowchart preview will appear here.</div>';
-      bindFlowchartPreview();
+      bindFlowchartPreview();updateFlowGroupButtons();
+      if(scrollState){const nextViewport=previewHost.querySelector('.flowGraphViewport');if(nextViewport){nextViewport.scrollLeft=scrollState.left;nextViewport.scrollTop=scrollState.top;}}
     }
 
     function syncFlowchartHeaderDraftSilent() {
@@ -5843,6 +6017,7 @@
         title: clone(flowchartDraft.title),
         nodes: clone(flowchartDraft.nodes),
         edges: clone(flowchartDraft.edges),
+        nodeScaleVersion: 3,
         createdAt: existing?.createdAt || flowchartDraft.createdAt || now,
         updatedAt: now
       };
@@ -6025,6 +6200,8 @@
       flowchartUiState.selectedEdgeId = ''; flowchartUiState.selectedWaypoint = null;
       renderFlowchartPreview();
     };
+    $('groupFlowNodes').onclick = groupSelectedFlowNodes;
+    $('ungroupFlowNodes').onclick = ungroupSelectedFlowNodes;
     $('autoArrangeFlowchart').onclick = () => {
       if (!flowchartDraft?.nodes?.length) return;
       rememberFlowState('Auto arrange');
