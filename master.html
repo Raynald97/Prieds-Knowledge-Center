@@ -1765,6 +1765,7 @@
     .flowchartNodeBuilder{display:grid;gap:10px;margin-top:12px}
     .flowNodeEditor{display:grid;grid-template-columns:38px 112px minmax(125px,1fr) minmax(125px,1fr) 125px minmax(145px,1fr) minmax(145px,1fr) minmax(165px,1.2fr) 86px 86px 44px 42px;gap:8px;align-items:end;border:1px solid #D7E2E6;background:#FBFDFD;border-radius:8px;padding:12px}
     .flowNodeEditor.decision{border-color:#D8C987;background:#FFFDF4}
+    .flowNodeEditor.freetext{border-color:#CFE3E9;background:#F8FCFE}
     .flowNodeTypeBadge{font-size:8px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#087C9D;margin-top:5px;text-align:center}.flowNodeEditor.decision .flowNodeTypeBadge{color:#8A6B00}
     .flowConnectionSection{margin-top:18px;padding:16px;border:1px solid #CFE3E9;border-radius:9px;background:#F9FCFD}.flowConnectionSection .flowchartBuilderHead{margin-bottom:10px}.flowConnectionSection h2{display:flex;align-items:center;gap:8px}.flowConnectionSection h2:before{content:"↗";display:grid;place-items:center;width:24px;height:24px;border-radius:6px;background:#EAF9FD;color:#0B84A9;font-size:13px}
     .flowConnectionBuilder{display:grid;gap:8px}.flowConnectionEditor{display:grid;grid-template-columns:34px minmax(160px,1.15fr) 105px minmax(115px,.8fr) minmax(115px,.8fr) minmax(160px,1.15fr) 105px minmax(150px,.9fr) 42px;gap:8px;align-items:end;border:1px solid #D9E4E8;background:#F8FBFC;border-radius:8px;padding:10px 12px}.flowConnectionEditor.manualRoute{border-color:#9EDBEC;background:#F3FBFD}.flowConnectionEditor .field label{font-size:9px}.flowConnectionOrder{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#EAF2F5;color:#547079;font-size:10px;font-weight:900}.flowConnectionDelete{width:38px;height:38px;border:1px solid #F1C7C2;background:#FFF5F3;color:#C45443;border-radius:6px;font-size:16px}.flowRouteControls{display:flex;gap:5px;align-items:center}.flowRouteControls select{min-width:82px}.flowRouteMiniBtn{height:38px;padding:0 9px;border:1px solid #BBD5DE;background:#fff;color:#187B99;border-radius:6px;font-size:10px;font-weight:800;white-space:nowrap}.flowRouteMiniBtn:hover{background:#EAF9FD}.flowRouteMiniBtn:disabled{opacity:.4;cursor:not-allowed}
@@ -1871,6 +1872,10 @@
     .flowGraphNodeWrap.shape-merge .flowGraphNode{border-radius:0;clip-path:polygon(50% 0,100% 100%,0 100%);padding:35% 19px 10px}
     .flowGraphNodeWrap.shape-preparation .flowGraphNode{border-radius:0;clip-path:polygon(18% 0,82% 0,100% 50%,82% 100%,18% 100%,0 50%);padding-left:25px;padding-right:25px}
     .flowGraphNodeWrap.shape-off-page-reference .flowGraphNode{border-radius:0;clip-path:polygon(0 0,100% 0,100% 70%,50% 100%,0 70%);padding-bottom:25px}
+    .flowGraphNodeWrap.shape-freetext .flowGraphNode{background:transparent!important;border-color:transparent!important;box-shadow:none!important;padding:0 4px;justify-content:flex-start;align-items:flex-start;text-align:left;overflow:visible}
+    .flowGraphNodeWrap.shape-freetext .flowGraphNode strong{white-space:pre-wrap;line-height:1.2}
+    .flowGraphNodeWrap.shape-freetext .flowGraphNode small,.flowGraphNodeWrap.shape-freetext .flowGraphNodeKind{display:none!important}
+    .flowNodeEditor textarea{width:100%;min-height:70px;resize:vertical;font:inherit;padding:9px 10px;border:1px solid #D6E0E4;border-radius:6px;background:#fff;color:#31444C;line-height:1.35}
     .flowGraphNodeWrap.shape-decision .flowGraphPort.top,.flowGraphNodeWrap.shape-decision .flowGraphPort.bottom{opacity:1}
     .flowGraphNodeWrap.shape-on-page-reference .flowGraphPort{opacity:.82}
     .flowElementPalette{display:grid;grid-template-columns:repeat(4,minmax(135px,1fr));gap:10px;margin-top:14px}
@@ -4880,7 +4885,7 @@
       ['process','Process'],['terminal','Terminal'],['decision','Decision'],['manual-input','Manual Input'],
       ['input','Input'],['predefined-process','Predefined Process'],['database','Database'],['manual-operation','Manual Operation'],
       ['document','Document'],['multidocument','Multidocument'],['delay','Delay'],['on-page-reference','On-page Reference'],
-      ['alternate-process','Alternate Process'],['data','Data'],['merge','Merge'],['preparation','Preparation'],['off-page-reference','Off-page Reference']
+      ['alternate-process','Alternate Process'],['data','Data'],['merge','Merge'],['preparation','Preparation'],['off-page-reference','Off-page Reference'],['freetext','Free Text']
     ];
     const FLOW_FONTS = ['Inter','Segoe UI','Arial','Verdana','Trebuchet MS','Georgia','Times New Roman','Courier New'];
     function flowShapeMeta(shape='process') { const key=FLOW_SHAPES.some(([value])=>value===shape)?shape:'process'; return { key,label:FLOW_SHAPES.find(([value])=>value===key)?.[1]||'Process' }; }
@@ -4891,10 +4896,12 @@
       if(shape==='merge')return{w:145,h:100};
       if(shape==='terminal')return{w:180,h:90};
       if(shape==='delay')return{w:180,h:100};
+      if(shape==='freetext')return{w:240,h:64};
       return{w:180,h:104};
     }
     function flowDefaultNodeStyle(shape='process') {
       if(shape==='decision')return{fill:'#FFF8D9',border:'#D6B84C',text:'#715C0C',fontFamily:'Inter',fontSize:11,fontWeight:850};
+      if(shape==='freetext')return{fill:'#FFFFFF',border:'#FFFFFF',text:'#17647B',fontFamily:'Inter',fontSize:20,fontWeight:800};
       return{fill:'#EFFAFF',border:'#9EDBEC',text:'#17647B',fontFamily:'Inter',fontSize:11,fontWeight:850};
     }
     function flowSafeColor(value,fallback) { const text=String(value||'').trim(); return /^#[0-9a-f]{6}$/i.test(text)?text:fallback; }
@@ -4981,7 +4988,8 @@
     function emptyFlowNode(module, shape = 'process') {
       const firstPage = flowPagePairs(module)[0]?.id || '';
       const shapeKey=flowShapeMeta(shape).key,nodeKind=shapeKey==='decision'?'decision':'process',size=flowDefaultNodeSize(shapeKey),style=flowDefaultNodeStyle(shapeKey);
-      return { id: flowUid(), kind: nodeKind, shape: shapeKey, label: { id: '', en: '' }, targetType: nodeKind === 'decision' ? 'none' : 'page', moduleId: module?.id || '', pageMenu: firstPage, topicId: '', position: { x: '', y: '' }, size, style, groupId: '' };
+      const targetType = (nodeKind === 'decision' || shapeKey === 'freetext') ? 'none' : 'page';
+      return { id: flowUid(), kind: nodeKind, shape: shapeKey, label: { id: '', en: '' }, targetType, moduleId: module?.id || '', pageMenu: firstPage, topicId: '', position: { x: '', y: '' }, size, style, groupId: '' };
     }
     function emptyFlowEdge(from = '', to = '') {
       return { id: flowUid(), from, to, label: { id: '', en: '' }, sourceSide: 'auto', targetSide: 'auto', routeMode: 'auto', waypoints: [], color: '#43AFCF', labelPosition: null };
@@ -5002,7 +5010,7 @@
         kind: (node.shape === 'decision' || node.kind === 'decision') ? 'decision' : 'process',
         shape: flowShapeMeta(node.shape || (node.kind === 'decision' ? 'decision' : 'process')).key,
         label: { id: flowTextValue(node.label?.id ?? node.label, 'id'), en: flowTextValue(node.label?.en ?? node.label, 'en') },
-        targetType: node.targetType === 'none' ? 'none' : (node.targetType === 'article' ? 'article' : 'page'),
+        targetType: (flowShapeMeta(node.shape || (node.kind === 'decision' ? 'decision' : 'process')).key === 'freetext' || node.targetType === 'none') ? 'none' : (node.targetType === 'article' ? 'article' : 'page'),
         moduleId: node.moduleId || fallbackModuleId || firstModule?.id || '',
         pageMenu: node.pageMenu || '',
         topicId: node.topicId || '',
@@ -5240,7 +5248,9 @@
       saveFlowchartWorkspace();
     }
     function flowNodeOptionLabel(node, index) {
-      const label = node?.label?.id || node?.label?.en || `${node?.kind === 'decision' ? 'Decision' : 'Step'} ${index + 1}`;
+      const shapeKey = flowShapeMeta(node?.shape || (node?.kind === 'decision' ? 'decision' : 'process')).key;
+      const fallback = shapeKey === 'freetext' ? `Free Text ${index + 1}` : (node?.kind === 'decision' ? `Decision ${index + 1}` : `Step ${index + 1}`);
+      const label = node?.label?.id || node?.label?.en || fallback;
       return `${index + 1}. ${label}`;
     }
     function flowNodeOptions(selected = '') {
@@ -5250,19 +5260,24 @@
       const root = $('flowchartNodeBuilder'); if (!root || !flowchartDraft) return;
       root.innerHTML = flowchartDraft.nodes.length ? flowchartDraft.nodes.map((node, index) => {
         const targetModule = flowTargetModule(node);
-        const noLink = node.targetType === 'none';
-        const articleDisabled = node.targetType !== 'article';
-        const posX = node?.position?.x ?? '';
-        const posY = node?.position?.y ?? '';
-        const nodeSize = flowNodeSize(node);
         const shape=flowShapeMeta(node.shape || (node.kind === 'decision' ? 'decision' : 'process'));
-        return `<div class="flowNodeEditor ${node.kind === 'decision' ? 'decision' : ''}" data-flow-node="${esc(node.id)}">
+        const isFreeText = shape.key === 'freetext';
+        const noLink = node.targetType === 'none' || isFreeText;
+        const articleDisabled = node.targetType !== 'article' || isFreeText;
+        const labelFieldId = isFreeText
+          ? `<textarea data-flow-field="labelId" rows="3" placeholder="Contoh: Catatan bebas / anotasi">${esc(node.label.id)}</textarea>`
+          : `<input data-flow-field="labelId" value="${esc(node.label.id)}" placeholder="Contoh: Create PO">`;
+        const labelFieldEn = isFreeText
+          ? `<textarea data-flow-field="labelEn" rows="3" placeholder="Example: Free text / annotation">${esc(node.label.en)}</textarea>`
+          : `<input data-flow-field="labelEn" value="${esc(node.label.en)}" placeholder="Example: Create PO">`;
+        const nodeSize = flowNodeSize(node);
+        return `<div class="flowNodeEditor ${node.kind === 'decision' ? 'decision' : ''} ${isFreeText ? 'freetext' : ''}" data-flow-node="${esc(node.id)}">
           <div><div class="flowNodeOrder">${index + 1}</div><div class="flowNodeTypeBadge">${esc(shape.label)}</div><div class="flowNodeMove"><button type="button" data-flow-up="${esc(node.id)}" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" data-flow-down="${esc(node.id)}" ${index === flowchartDraft.nodes.length - 1 ? 'disabled' : ''}>↓</button></div></div>
           <div class="field"><label>Element</label><select data-flow-field="shape">${flowShapeOptions(shape.key)}</select></div>
           <button class="flowNodeStyleBtn" type="button" data-flow-style="${esc(node.id)}" title="Color, font, and text size">🎨 Style</button>
-          <div class="field"><label>Label — ID</label><input data-flow-field="labelId" value="${esc(node.label.id)}" placeholder="Contoh: Create PO"></div>
-          <div class="field"><label>Label — EN</label><input data-flow-field="labelEn" value="${esc(node.label.en)}" placeholder="Example: Create PO"></div>
-          <div class="field"><label>Direct Link</label><select data-flow-field="targetType"><option value="none" ${node.targetType === 'none' ? 'selected' : ''}>No direct link</option><option value="page" ${node.targetType === 'page' ? 'selected' : ''}>Page Menu</option><option value="article" ${node.targetType === 'article' ? 'selected' : ''}>Article</option></select></div>
+          <div class="field"><label>Label — ID</label>${labelFieldId}</div>
+          <div class="field"><label>Label — EN</label>${labelFieldEn}</div>
+          <div class="field"><label>Direct Link</label><select data-flow-field="targetType" ${isFreeText ? 'disabled' : ''}><option value="none" ${node.targetType === 'none' ? 'selected' : ''}>No direct link</option><option value="page" ${node.targetType === 'page' ? 'selected' : ''}>Page Menu</option><option value="article" ${node.targetType === 'article' ? 'selected' : ''}>Article</option></select></div>
           <div class="field"><label>Target Main Menu</label><select data-flow-field="moduleId" ${noLink ? 'disabled' : ''}>${flowModuleOptions(node.moduleId)}</select></div>
           <div class="field"><label>Page Menu</label><select data-flow-field="pageMenu" ${noLink ? 'disabled' : ''}>${flowPageOptions(targetModule, node.pageMenu)}</select></div>
           <div class="field"><label>Article ${articleDisabled ? '(optional)' : ''}</label><select data-flow-field="topicId" ${articleDisabled ? 'disabled' : ''}>${articleOptionsForFlow(targetModule, node.pageMenu, node.topicId)}</select></div>
@@ -5271,7 +5286,7 @@
           <button class="flowNodePositionReset" type="button" data-flow-clear-position="${esc(node.id)}" title="Reset manual position" aria-label="Reset manual position">⟲</button>
           <button class="flowNodeDelete" type="button" data-flow-delete="${esc(node.id)}" aria-label="Delete node">×</button>
         </div>`;
-      }).join('') : '<div class="flowchartEmptyBuilder">Belum ada node. Klik <strong>+ Add Process</strong> atau <strong>◇ Add Decision</strong> untuk mulai membuat graph.</div>';
+      }).join('') : '<div class="flowchartEmptyBuilder">Belum ada node. Klik <strong>+ Add Element</strong> untuk mulai membuat graph.</div>';
       bindFlowchartNodes(); renderFlowchartConnections(); renderFlowchartPreview();
     }
     function bindFlowchartNodes() {
@@ -5285,8 +5300,8 @@
             if(input.dataset.flowHistoryArmed==='1'){rememberFlowState(`Edit ${flowShapeMeta(node.shape).label}`);input.dataset.flowHistoryArmed='0';}
             if (field === 'labelId') node.label.id = input.value;
             else if (field === 'labelEn') node.label.en = input.value;
-            else if (field === 'shape') { const oldShape=node.shape||'process',shape=flowShapeMeta(input.value).key;node.shape=shape;node.kind=shape==='decision'?'decision':'process';if(shape==='decision'){node.targetType='none';node.topicId='';}const oldDefault=flowDefaultNodeStyle(oldShape),current=flowNodeStyle(node);if(!node.style||((current.fill===oldDefault.fill)&&(current.border===oldDefault.border)&&(current.text===oldDefault.text)))node.style=flowDefaultNodeStyle(shape);renderFlowchartNodes();return; }
-            else if (field === 'targetType') { node.targetType = ['none','article'].includes(input.value) ? input.value : 'page'; if (node.targetType !== 'article') node.topicId = ''; renderFlowchartNodes(); return; }
+            else if (field === 'shape') { const oldShape=node.shape||'process',shape=flowShapeMeta(input.value).key;node.shape=shape;node.kind=shape==='decision'?'decision':'process';if(shape==='decision'||shape==='freetext'){node.targetType='none';node.topicId='';} if(shape==='freetext'&&(!node.label.id&&!node.label.en)){node.label.id='Free text';} const oldDefault=flowDefaultNodeStyle(oldShape),current=flowNodeStyle(node);if(!node.style||((current.fill===oldDefault.fill)&&(current.border===oldDefault.border)&&(current.text===oldDefault.text)))node.style=flowDefaultNodeStyle(shape);renderFlowchartNodes();return; }
+            else if (field === 'targetType') { if (flowShapeMeta(node.shape).key === 'freetext') { node.targetType = 'none'; renderFlowchartNodes(); return; } node.targetType = ['none','article'].includes(input.value) ? input.value : 'page'; if (node.targetType !== 'article') node.topicId = ''; renderFlowchartNodes(); return; }
             else if (field === 'moduleId') { node.moduleId = input.value; const module = flowTargetModule(node); node.pageMenu = flowPagePairs(module)[0]?.id || ''; node.topicId = ''; renderFlowchartNodes(); return; }
             else if (field === 'pageMenu') { node.pageMenu = input.value; if (node.targetType === 'article') node.topicId = ''; renderFlowchartNodes(); return; }
             else if (field === 'topicId') node.topicId = input.value;
@@ -5303,7 +5318,7 @@
             renderFlowchartPreview();
           };
           input.onchange = sync;
-          if (input.tagName === 'INPUT') input.oninput = sync;
+          if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') input.oninput = sync;
         });
       });
       $('flowchartNodeBuilder').querySelectorAll('[data-flow-style]').forEach(button=>button.onclick=()=>{const node=flowchartDraft.nodes.find(item=>item.id===button.dataset.flowStyle);openFlowNodeStyleEditor(node);});
@@ -5386,7 +5401,7 @@
             renderFlowchartPreview();
           };
           input.onchange = sync;
-          if (input.tagName === 'INPUT') input.oninput = sync;
+          if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') input.oninput = sync;
         });
       });
       $('flowchartConnectionBuilder').querySelectorAll('[data-edge-add-bend]').forEach(button => button.onclick = () => {
@@ -5413,6 +5428,7 @@
     }
 
     function flowTargetLabel(node) {
+      if (flowShapeMeta(node?.shape || (node?.kind === 'decision' ? 'decision' : 'process')).key === 'freetext') return '';
       if (node.targetType === 'none') return '';
       const module = flowTargetModule(node);
       const moduleLabel = module?.name?.id || module?.name?.en || node.moduleId || 'Main Menu';
@@ -5629,8 +5645,8 @@
       const nodeHtml = nodes.map((node, index) => {
         const p = layout.positions.get(node.id); if (!p) return '';
         const label = flowTextValue(node.label, 'id') || `Node ${index + 1}`;
-        const kind = node.kind === 'decision' ? 'decision' : 'process',shape=flowShapeMeta(node.shape || kind),targetLabel=flowTargetLabel(node);
-        const ports = flowchartUiState.cleanPreview ? '' : ['top','right','bottom','left'].map(side => `<button type="button" class="flowGraphPort ${side}" data-flow-port-node="${esc(node.id)}" data-flow-port-side="${side}" title="Drag to connect from ${portNames[side]}" aria-label="Connect ${esc(label)} from ${portNames[side]}"></button>`).join('');
+        const kind = node.kind === 'decision' ? 'decision' : 'process',shape=flowShapeMeta(node.shape || kind),targetLabel=flowTargetLabel(node),isFreeText=shape.key==='freetext';
+        const ports = flowchartUiState.cleanPreview || isFreeText ? '' : ['top','right','bottom','left'].map(side => `<button type="button" class="flowGraphPort ${side}" data-flow-port-node="${esc(node.id)}" data-flow-port-side="${side}" title="Drag to connect from ${portNames[side]}" aria-label="Connect ${esc(label)} from ${portNames[side]}"></button>`).join('');
         const resize = flowchartUiState.cleanPreview ? '' : `<button type="button" class="flowGraphResizeHandle" data-flow-resize-node="${esc(node.id)}" title="Drag to resize node" aria-label="Resize ${esc(label)}"></button>`;
         const nodeSelected = !flowchartUiState.cleanPreview && (selectedIds.has(node.id)||flowchartUiState.selectedNodeId === node.id);
         const selectedGroupIds=[...new Set(nodes.filter(item=>selectedIds.has(item.id)&&item.groupId).map(item=>item.groupId))];
@@ -5641,8 +5657,7 @@
           const style = flowNodeStyle(node), toolbarPosition = p.y < 90 ? 'below' : 'above';
           styleToolbar = `<div class="flowGraphNodeStyleToolbar ${toolbarPosition}" data-flow-node-toolbar data-flow-node-style-id="${esc(node.id)}" role="toolbar" aria-label="Style ${esc(label)}">
             <span class="flowDirectStyleLabel">Style</span>
-            <label class="flowDirectColor" title="Fill color"><input type="color" data-node-style-field="fill" value="${style.fill}"><span>Fill</span></label>
-            <label class="flowDirectColor" title="Border color"><input type="color" data-node-style-field="border" value="${style.border}"><span>Line</span></label>
+            ${isFreeText ? '' : `<label class="flowDirectColor" title="Fill color"><input type="color" data-node-style-field="fill" value="${style.fill}"><span>Fill</span></label><label class="flowDirectColor" title="Border color"><input type="color" data-node-style-field="border" value="${style.border}"><span>Line</span></label>`}
             <label class="flowDirectColor" title="Text color"><input type="color" data-node-style-field="text" value="${style.text}"><span>Text</span></label>
             <select class="flowDirectFont" data-node-style-field="fontFamily" title="Font family">${FLOW_FONTS.map(font=>`<option value="${esc(font)}" ${font===style.fontFamily?'selected':''}>${esc(font)}</option>`).join('')}</select>
             <input class="flowDirectSize" type="number" min="8" max="32" step="1" data-node-style-field="fontSize" value="${style.fontSize}" title="Font size" aria-label="Font size">
@@ -5650,7 +5665,7 @@
             <button type="button" class="flowDirectMore" data-node-style-more title="More style options" aria-label="More style options">•••</button>
           </div>`;
         }
-        return `<div class="flowGraphNodeWrap ${kind} shape-${shape.key} ${nodeSelected?'multi-selected':''} ${node.groupId?'grouped-node':''} ${selectedExistingGroup?'selected-existing-group':''}" data-preview-node-id="${esc(node.id)}" style="left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;${flowNodeStyleVars(node)}"><div class="flowGraphNode ${kind}"><span class="flowGraphNodeKind">${esc(shape.label)}</span><strong>${esc(label)}</strong>${targetLabel?`<small>${esc(targetLabel)}</small>`:''}</div>${ports}${resize}${styleToolbar}</div>`;
+        return `<div class="flowGraphNodeWrap ${kind} shape-${shape.key} ${nodeSelected?'multi-selected':''} ${node.groupId?'grouped-node':''} ${selectedExistingGroup?'selected-existing-group':''}" data-preview-node-id="${esc(node.id)}" style="left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;${flowNodeStyleVars(node)}"><div class="flowGraphNode ${kind}">${isFreeText ? '' : `<span class="flowGraphNodeKind">${esc(shape.label)}</span>`}<strong>${esc(label)}</strong>${targetLabel?`<small>${esc(targetLabel)}</small>`:''}</div>${ports}${resize}${styleToolbar}</div>`;
       }).join('');
       let selectionToolbar = '';
       if(!flowchartUiState.cleanPreview && selectedIds.size>1){
