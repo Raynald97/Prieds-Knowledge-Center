@@ -40,6 +40,7 @@
   function normalizeState(raw,defaultData){
     const state=raw&&raw.data?clone(raw):{data:clone(defaultData),assets:{},savedAt:now()};
     state.assets=state.assets||{};
+    state.flowchartArrangement=state.flowchartArrangement&&typeof state.flowchartArrangement==='object'&&!Array.isArray(state.flowchartArrangement)?state.flowchartArrangement:{};
     state.data=Array.isArray(state.data)?state.data:clone(defaultData);
     const used=new Set();
     state.data.forEach((module)=>{

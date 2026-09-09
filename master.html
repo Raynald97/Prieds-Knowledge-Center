@@ -1963,7 +1963,43 @@
     .flowNodeEditor{grid-template-columns:38px 116px 106px minmax(120px,1fr) minmax(120px,1fr) 112px minmax(130px,1fr) minmax(130px,1fr) minmax(150px,1.1fr) 74px 74px 44px 42px}
     @media(max-width:1380px){.flowConnectionEditor{grid-template-columns:34px 1fr 100px 1fr 1fr}.flowConnectionEditor .field{min-width:0}.flowConnectionDelete{align-self:end}}
 
-  </style>
+  
+    /* Flowchart Arrangement v12 */
+    .flowPagePicker{display:grid;gap:10px}.flowPageGroup{border:1px solid #D8E5EA;border-radius:9px;padding:12px;background:#FAFCFD}.flowPageGroupHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;font-size:11px;color:#34474F}.flowPageGroupHead span{font-size:9px;color:#77888F}.flowPageChoices{display:flex;flex-wrap:wrap;gap:7px}.flowArrangeFilters{display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px;margin-top:18px}.flowArrangeFilters .field{flex:0 1 250px;min-width:180px}.flowArrangeFilters .primaryBtn{min-height:38px}.flowArrangeNotice{margin-top:12px;padding:11px 13px;border-radius:8px;border:1px solid #D6E8EE;background:#F3FAFC;color:#50717C;font-size:11px;line-height:1.6}.flowArrangeHead,.flowArrangeColumnHead{display:flex;justify-content:space-between;align-items:center;gap:12px}.flowArrangeHead{margin-bottom:18px}.flowArrangeHead h2{margin:0 0 4px}.flowArrangeButtons{display:flex;gap:8px}.flowArrangeColumns{display:grid;grid-template-columns:1fr 1fr;gap:16px}.flowArrangeColumn{min-width:0;border:1px solid #D9E5E9;border-radius:10px;background:#FCFDFE;padding:13px}.flowArrangeColumnHead{margin-bottom:12px;font-size:12px;color:#34474F}.flowArrangeColumnHead span{font-size:10px;color:#70838B}.flowArrangeItems{display:grid;gap:8px;align-content:start;min-height:160px;max-height:540px;overflow:auto}.flowArrangeItem{display:flex;align-items:center;gap:10px;min-width:0;border:1px solid #DCE6EA;border-radius:8px;background:#fff;padding:10px}.flowArrangeItem.selected{border-color:#B7DEEA;background:#F6FCFE;cursor:grab}.flowArrangeItem.dragging{opacity:.4}.flowArrangeItem.dropTarget{border-color:#0B91B9;box-shadow:0 0 0 2px #D7F3FB}.flowArrangeItem input{width:16px;height:16px;flex:0 0 auto;margin:0}.flowArrangeItemText{min-width:0;flex:1}.flowArrangeItemText strong{display:block;font-size:11px;color:#34474F;overflow-wrap:anywhere}.flowArrangeItemText small{display:block;margin-top:4px;font-size:9px;color:#788A91;line-height:1.45}.flowArrangeMove{display:flex;gap:4px}.flowArrangeMove button{width:28px;height:28px;border:1px solid #CADDE4;background:#fff;border-radius:6px;color:#087C9D;cursor:pointer}.flowArrangeMove button:disabled{opacity:.3;cursor:default}.flowArrangeEmpty{padding:25px 14px;text-align:center;color:#85949A;font-size:11px;border:1px dashed #CCDDE3;border-radius:8px}.flowchartTablePages{display:flex;flex-wrap:wrap;gap:5px}.flowchartTablePages small{display:block;color:#697F88}.flowchartTablePages .flowchartModuleChip{max-width:230px}
+    @media(max-width:850px){.flowArrangeFilters,.flowArrangeColumns{grid-template-columns:1fr}.flowArrangeHead{align-items:flex-start;flex-direction:column}.flowArrangeButtons{width:100%}.flowArrangeButtons button{flex:1}.flowArrangeItems{max-height:none}}
+
+    /* Flowchart Arrangement registration — Guide Arrangement table + Add/Edit form. */
+    #panel-flow-arrange .mainMenuArrangeCard{align-items:center}
+    #panel-flow-arrange .mainMenuArrangeCopy p{max-width:780px}
+    #panel-flow-arrange .tableWrap{overflow-x:auto}
+    #panel-flow-arrange .dataTable{min-width:550px}
+    #panel-flow-arrange .actionDropdown [data-flow-arr-delete]{color:#C73729}
+    #panel-flow-arrange .actionDropdown [data-flow-arr-delete]:hover{background:#FFF0ED}
+    .flowArrangeModal{width:min(1050px,96vw);padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:92vh}
+    .flowArrangeModal .modalHeader{padding:20px 24px 14px;margin:0;flex:0 0 auto}
+    .flowArrangeModal .flowArrangeModalBody{padding:20px 24px;overflow:auto;min-height:0;flex:1}
+    .flowArrangeModal .flowArrangeModalFooter{padding:14px 24px;border-top:1px solid #DDE7EB;display:flex;justify-content:flex-end;gap:9px;background:#fff;flex:0 0 auto}
+    .flowArrangeFormGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .flowArrangeModal .flowArrangeColumns{margin-top:15px}
+    .flowArrangeModal .flowArrangeColumn{background:#F9FBFC}
+    .flowArrangeModal .flowArrangeItems{max-height:350px;min-height:130px}
+    .flowArrangeModal .flowArrangeHead{margin-top:18px;margin-bottom:9px}
+    .flowArrangeModal .flowArrangeHead h2{font-size:14px;margin:0}
+    .flowArrangeModal .flowArrangeColumnHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .flowArrangeModal .flowArrangeItem.selected{cursor:grab}
+    .flowArrangeModal .flowArrangeItem input{accent-color:#21A7CF}
+    .flowArrangeModal .flowArrangeItem:focus-within{outline:2px solid #B7DEEA;outline-offset:1px}
+    .flowArrangeModal .flowArrangeItemText strong{font-size:11px}
+    .flowArrangeModal .flowArrangeItemText small{font-size:10px}
+    .flowArrangeModal .flowArrangeSearchField{margin-bottom:12px}
+    .flowArrangeModal .flowArrangeSelectionHint{margin-top:8px;font-size:10px;color:#71858D;line-height:1.5}
+    .flowArrangeModal .flowArrangeError{margin-top:12px;padding:10px 12px;border:1px solid #F0B7B1;background:#FFF6F4;border-radius:7px;color:#A93529;font-size:11px;line-height:1.5}
+    .flowArrangeModal .flowArrangeError[hidden]{display:none}
+    .flowArrangeModal .flowArrangeEmpty{min-height:100px;display:grid;place-items:center}
+    .flowArrangeModal .flowArrangeItem{cursor:default}
+    @media(max-width:850px){.flowArrangeModal .flowArrangeFormGrid,.flowArrangeModal .flowArrangeColumns{grid-template-columns:1fr}.flowArrangeModal .flowArrangeHead{flex-direction:row}.flowArrangeFilters .field{flex:1 1 180px}}
+    @media(max-width:600px){.flowArrangeModal{width:100%;max-height:100vh;border-radius:0}.flowArrangeModal .modalHeader,.flowArrangeModal .flowArrangeModalBody,.flowArrangeModal .flowArrangeModalFooter{padding-left:15px;padding-right:15px}.flowArrangeModal .flowArrangeModalFooter button{flex:1}.flowArrangeFilters .field{flex-basis:100%}#addFlowArrangement{width:100%}}
+</style>
 </head>
 
 <body>
@@ -1996,7 +2032,7 @@
       <div class="moduleTab">🎓 Knowledge Center Admin</div>
       <nav class="tabs"><button class="tab active" data-tab="create">Create Guide</button><button class="tab"
           data-tab="list">Guide List</button><button class="tab" data-tab="arrange">Guide Arrangement</button><button class="tab"
-          data-tab="flowchart">Flowchart</button><button class="tab" data-tab="feedback">Feedback Survey Report</button></nav>
+          data-tab="flowchart">Flowchart</button><button class="tab" data-tab="flow-arrange">Flowchart Arrangement</button><button class="tab" data-tab="feedback">Feedback Survey Report</button></nav>
       <section class="panel active" id="panel-create">
         <div class="card">
           <div class="formGrid">
@@ -2178,6 +2214,7 @@
             </div>
             <div class="flowchartMoreFilter" id="flowchartMoreFilter" hidden>
               <div class="field"><label>Main Menu</label><select id="flowListModuleFilter"></select></div>
+              <div class="field"><label>Page Menu</label><select id="flowListPageFilter"><option value="">All Page Menu</option></select></div>
               <div class="field"><label>Status</label><select id="flowListStatusFilter"><option value="">All Status</option><option value="active">Active</option><option value="hidden">Hidden</option></select></div>
               <div class="flowchartMoreFilterActions"><button class="ghostBtn" id="resetFlowFilter" type="button">Reset</button><button class="primaryBtn" id="applyFlowMoreFilter" type="button">Apply Filter</button></div>
             </div>
@@ -2195,6 +2232,7 @@
                     <th>Created / Updated</th>
                     <th>Flowchart Name</th>
                     <th>Main Menu</th>
+                    <th>Page Menu</th>
                     <th>Title</th>
                     <th>Status</th>
                     <th>Steps</th>
@@ -2225,6 +2263,7 @@
               <div class="field"><label>Flowchart Name — Admin</label><input id="flowAdminName" placeholder="Contoh: Inbound Standard Flow"><span class="flowModuleHelp">Nama internal untuk membedakan banyak variasi flowchart di Flowchart List.</span></div>
               <div class="field flowchartToggleField"><label>Visibility</label><label class="flowchartToggle"><input type="checkbox" id="flowEnabled"><span>Show flowchart in index.html</span></label></div>
               <div class="field flowModulePickerField"><label>Show Flowchart In — Multiple Main Menu</label><div class="flowModulePicker" id="flowModulePicker"></div><span class="flowModuleHelp">Pilih semua Main Menu tempat flowchart ini muncul. Main Menu yang sama boleh dipilih oleh banyak flowchart.</span></div>
+              <div class="field flowModulePickerField"><label>Page Menu — Flowchart Placement</label><div id="flowPagePicker" class="flowPagePicker"></div><span class="flowModuleHelp">Pilih Page Menu untuk setiap Main Menu. Satu flowchart boleh tampil di beberapa Page Menu. Jika tidak dipilih, flowchart tetap tersedia di Belum dikelompokkan.</span></div>
               <div class="field"><label>Flowchart Title — Bahasa Indonesia</label><input id="flowTitleId" placeholder="Contoh: Alur Proses Inbound"></div>
               <div class="field"><label>Flowchart Title — English</label><input id="flowTitleEn" placeholder="Example: Inbound Process Flow"></div>
             </div>
@@ -2270,6 +2309,31 @@
               <button class="primaryBtn" id="saveFlowchart" type="button">Save Flowchart</button>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-flow-arrange">
+        <div class="card mainMenuArrangeCard">
+          <div class="mainMenuArrangeCopy">
+            <div class="mainMenuArrangeEyebrow">☰ Flowchart Content</div>
+            <h2>Flowchart Arrangement</h2>
+            <p>Daftarkan dan kelompokkan flowchart berdasarkan Page Menu. Atur konten dan urutannya tanpa mengubah graph asli.</p>
+          </div>
+          <button class="primaryBtn" id="addFlowArrangement" type="button">+ Add Flowchart Arrangement</button>
+        </div>
+        <div class="card">
+          <h2>Page Menu &amp; Flowchart Arrangement</h2>
+          <p class="helper">Pilih Main Menu untuk mencari arrangement. Gunakan Edit untuk mengatur flowchart dan Delete untuk menghapus pengelompokannya saja.</p>
+          <div class="flowArrangeFilters">
+            <div class="field"><label for="flowArrangeMain">Main Menu</label><select id="flowArrangeMain"></select></div>
+            <div class="field"><label for="flowArrangePage">Page Menu</label><select id="flowArrangePage"></select></div>
+            <button class="primaryBtn" id="flowArrangeSearchButton" type="button">Search</button>
+          </div>
+          <div class="flowArrangeNotice" id="flowArrangeNotice" hidden></div>
+        </div>
+        <div class="card">
+          <div class="tableTopBar"><div class="summary" id="flowArrangeSummary"></div><div class="pagination" id="flowArrangePagination"></div></div>
+          <div class="tableWrap"><table class="dataTable"><thead><tr><th>Main Menu</th><th>Page Menu</th><th>Total Flowchart</th><th>Action</th></tr></thead><tbody id="flowArrangeRows"></tbody></table></div>
         </div>
       </section>
 
@@ -2373,7 +2437,7 @@
   </div>
   <div class="toast" id="toast"></div>
   <script src="knowledge-data.js"></script>
-  <script src="knowledge-store.js"></script>
+  <script src="knowledge-store.js"></script><script src="knowledge-flowcharts.js"></script>
   <script>
 /* Shared Knowledge Center sync patch: event-based Firebase sync with lazy assets. */
 (function(){
@@ -2417,10 +2481,11 @@
 
   async function readRemoteCoreState() {
     const stampPromise = firebaseRequest(`${STATE_ROOT}/savedAt.json?t=${Date.now()}`);
-    const [data, aiReport, flowcharts, savedAt] = await Promise.all([
+    const [data, aiReport, flowcharts, flowchartArrangement, savedAt] = await Promise.all([
       firebaseRequest(`${STATE_ROOT}/data.json?t=${Date.now()}`),
       firebaseRequest(`${STATE_ROOT}/aiReport.json?t=${Date.now()}`),
       firebaseRequest(`${STATE_ROOT}/flowcharts.json?t=${Date.now()}`),
+      firebaseRequest(`${STATE_ROOT}/flowchartArrangement.json?t=${Date.now()}`),
       stampPromise
     ]);
     remoteInitialized = Array.isArray(data);
@@ -2430,6 +2495,7 @@
       assets: {},
       aiReport: aiReport && typeof aiReport === 'object' ? aiReport : undefined,
       flowcharts: flowcharts && typeof flowcharts === 'object' ? flowcharts : {},
+      flowchartArrangement: flowchartArrangement && typeof flowchartArrangement === 'object' ? flowchartArrangement : {},
       savedAt: savedAt || new Date().toISOString(),
       schemaVersion: localStore.schemaVersion || 1
     };
@@ -2455,6 +2521,7 @@
       data: normalized.data,
       aiReport: normalized.aiReport || null,
       flowcharts: normalized.flowcharts || {},
+      flowchartArrangement: normalized.flowchartArrangement || {},
       schemaVersion: normalized.schemaVersion,
       savedAt: normalized.savedAt
     };
@@ -3142,7 +3209,7 @@
     }
 
     function knowledgeContentFingerprint(currentState) {
-      return JSON.stringify({ data: currentState?.data || [], flowcharts: currentState?.flowcharts || {} });
+      return JSON.stringify({ data: currentState?.data || [], flowcharts: currentState?.flowcharts || {}, flowchartArrangement: currentState?.flowchartArrangement || {} });
     }
 
     let knowledgeFingerprint = knowledgeContentFingerprint(state);
@@ -3247,6 +3314,7 @@
     function refreshEditors() { const editors = [...new Set(allArticles().map(x => String(x.topic.editor || '').trim()).filter(Boolean))].sort(); $('filterEditor').innerHTML = '<option value="">All Editor</option>' + editors.map(x => `<option>${esc(x)}</option>`).join('') }
     async function switchTab(name) {
       const currentTab = document.querySelector('.tab.active')?.dataset.tab || 'create';
+      if(currentTab==='flow-arrange'&&name!=='flow-arrange'&&!flowArrangementCanLeave())return;
       if (currentTab === 'create' && name !== 'create' && hasUnsavedCreateDraft()) await saveCreateDraftNow();
       document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name));
       document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + name));
@@ -3255,6 +3323,7 @@
       if (name === 'list') renderGuideList();
       if (name === 'arrange') renderArrangement();
       if (name === 'flowchart') renderFlowchartEditor();
+      if (name === 'flow-arrange') {renderFlowArrangement();}
       if (name === 'feedback') renderFeedbackReport({ skipRefresh: true });
     }
     document.querySelectorAll('.tab').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
@@ -3860,7 +3929,7 @@
         guide.importStatus = status;
         return `<tr><td>${index + 1}</td><td>${esc(guide.moduleName)}</td><td>${esc(guide.pageName)}</td><td><strong>${esc(guide.titleId)}</strong><div class="muted">${esc(guide.titleEn)}</div></td><td>${guide.sourceRowCount}</td><td>${guide.imageCount}</td><td><span class="importStatus ${status}">${status === 'update' ? 'Will Update' : 'New Guide'}</span></td></tr>`;
       }).join('');
-      $('importExcelBody').innerHTML = `${errorHtml}<div class="importFileSummary"><div><strong>${esc(importExcelDraft.fileName)}</strong><span>Sheet: ${esc(importExcelDraft.sheetName)} • Header row ${importExcelDraft.headerRow}</span></div><div class="importStats"><b>${guides.length} guide(s)</b><b>${importExcelDraft.dataRowCount} data row(s)</b><b>${importExcelDraft.imageCount} image(s)</b></div></div><div class="tableWrap"><table class="importPreviewTable"><thead><tr><th>No.</th><th>Main Menu</th><th>Page Menu</th><th>Guide Title</th><th>Rows</th><th>Images</th><th>Import Result</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">No valid guide data found.</td></tr>'}</tbody></table></div>`;
+      $('importExcelBody').innerHTML = `${errorHtml}<div class="importFileSummary"><div><strong>${esc(importExcelDraft.fileName)}</strong><span>Sheet: ${esc(importExcelDraft.sheetName)} • Header row ${importExcelDraft.headerRow}</span></div><div class="importStats"><b>${guides.length} guide(s)</b><b>${importExcelDraft.dataRowCount} data row(s)</b><b>${importExcelDraft.imageCount} image(s)</b></div></div><div class="tableWrap"><table class="importPreviewTable"><thead><tr><th>No.</th><th>Main Menu</th><th>Page Menu</th><th>Guide Title</th><th>Rows</th><th>Images</th><th>Import Result</th></tr></thead><tbody>${rows || '<tr><td colspan="8" class="empty">No valid guide data found.</td></tr>'}</tbody></table></div>`;
       $('saveGuideImport').disabled = Boolean(importExcelDraft.errors.length || !guides.length);
     }
 
@@ -4995,7 +5064,7 @@
       return { id: flowUid(), from, to, label: { id: '', en: '' }, sourceSide: 'auto', targetSide: 'auto', routeMode: 'auto', waypoints: [], color: '#43AFCF', labelPosition: null };
     }
     function blankFlowchartDraft() {
-      return { flowId: flowUid(), adminName: '', moduleIds: [], enabled: true, title: { id: '', en: '' }, nodes: [], edges: [], nodeScaleVersion: 3, createdAt: '', updatedAt: '' };
+      return { flowId: flowUid(), adminName: '', moduleIds: [], pageMenuIds: {}, enabled: true, title: { id: '', en: '' }, nodes: [], edges: [], nodeScaleVersion: 3, createdAt: '', updatedAt: '' };
     }
 
     function normalizeFlowchartConfig(flowId, value, fallbackModuleId = '') {
@@ -5042,6 +5111,7 @@
         flowId: raw.flowId || flowId || flowUid(),
         adminName: flowTextValue(raw.adminName || raw.name || raw.title, 'id'),
         moduleIds,
+        pageMenuIds: KCFlow.normalizeAssignments(raw.pageMenuIds,moduleIds,state.data),
         enabled: raw.enabled !== false,
         title: {
           id: flowTextValue(raw.title?.id ?? raw.title, 'id'),
@@ -5065,6 +5135,7 @@
         if (!collection[flowId]) collection[flowId] = normalized;
         else {
           collection[flowId].moduleIds = [...new Set([...collection[flowId].moduleIds, ...normalized.moduleIds])];
+          Object.entries(normalized.pageMenuIds).forEach(([mid,ps])=>collection[flowId].pageMenuIds[mid]=KCFlow.uniq([...(collection[flowId].pageMenuIds[mid]||[]),...ps]));
           if (!collection[flowId].adminName && normalized.adminName) collection[flowId].adminName = normalized.adminName;
           if (!collection[flowId].nodes.length && normalized.nodes.length) collection[flowId].nodes = normalized.nodes;
           if (!collection[flowId].edges.length && normalized.edges.length) collection[flowId].edges = normalized.edges;
@@ -5111,6 +5182,7 @@
         filter.innerHTML = '<option value="">All Main Menu</option>' + flowModuleOptions(current);
         if ([...filter.options].some(option => option.value === current)) filter.value = current;
       }
+      const pageFilter=$('flowListPageFilter');if(pageFilter){const selected=pageFilter.value,mid=filter?.value||'';const pages=new Map();state.data.filter(m=>!mid||m.id===mid).forEach(m=>KCFlow.pages(m).forEach(p=>pages.set(p.id,p)));pageFilter.innerHTML='<option value="">All Page Menu</option>'+[...pages.values()].map(p=>`<option value="${esc(p.id)}">${esc(p.id)}</option>`).join('')+`<option value="${KCFlow.UNASSIGNED}">Belum dikelompokkan</option>`;if([...pageFilter.options].some(o=>o.value===selected))pageFilter.value=selected;}
     }
     function setFlowchartView(view) {
       flowchartView = view === 'editor' ? 'editor' : 'list';
@@ -5126,6 +5198,8 @@
       const query = String($('flowListSearch')?.value || '').trim().toLowerCase();
       return flowchartItems().filter(config => {
         if (moduleFilter && !config.moduleIds.includes(moduleFilter)) return false;
+        const pageFilter=$('flowListPageFilter')?.value||'';
+        if(pageFilter){const mids=moduleFilter?[moduleFilter]:config.moduleIds;if(!mids.some(mid=>pageFilter===KCFlow.UNASSIGNED?!KCFlow.assignments(config,mid).length:KCFlow.assignments(config,mid).includes(pageFilter)))return false;}
         if (statusFilter === 'active' && !config.enabled) return false;
         if (statusFilter === 'hidden' && config.enabled) return false;
         if (!query) return true;
@@ -5134,6 +5208,7 @@
       });
     }
     function renderFlowchartLibrary() {
+      ensureFlowListControls();
       const root = $('flowchartRows'); if (!root) return;
       const allRows = flowchartItems();
       const rows = filteredFlowchartItems();
@@ -5150,6 +5225,7 @@
           <td>${esc(created)}<div class="muted">Updated: ${esc(updated)}</div></td>
           <td class="flowchartTableName"><strong>${esc(flowDisplayName(config))}</strong><div class="flowchartTableId">${esc(config.flowId)}</div></td>
           <td><div class="flowchartTableModules">${modules.length ? modules.map(module => `<span class="flowchartModuleChip" title="${esc(module.name?.id || module.name?.en || module.id)}">${esc(module.name?.id || module.name?.en || module.id)}</span>`).join('') : '<span class="muted">—</span>'}</div></td>
+          <td><div class="flowchartTablePages">${modules.length?modules.map(module=>{const pages=KCFlow.assignments(config,module.id);return `<div><small>${esc(module.name?.id||module.id)}</small>${pages.length?pages.map(p=>`<span class="flowchartModuleChip">${esc(p)}</span>`).join(''):`<span class="muted">Belum dikelompokkan</span>`}</div>`}).join(''):'<span class="muted">—</span>'}</div></td>
           <td class="flowchartTableTitle"><strong>${esc(titleId)}</strong>${titleEn ? `<div class="muted">${esc(titleEn)}</div>` : ''}</td>
           <td><span class="flowchartListStatus ${config.enabled ? 'on' : 'off'}">${config.enabled ? 'Active' : 'Hidden'}</span></td>
           <td>${config.nodes.length}</td>
@@ -5170,8 +5246,13 @@
         const id = input.dataset.flowDisplayModule;
         if (input.checked) { if (!flowchartDraft.moduleIds.includes(id)) flowchartDraft.moduleIds.push(id); }
         else flowchartDraft.moduleIds = flowchartDraft.moduleIds.filter(item => item !== id);
-        renderFlowchartStatus();
+        renderFlowPagePicker();renderFlowchartStatus();saveFlowchartWorkspace();
       });
+    }
+    function renderFlowPagePicker(){
+      const root=$('flowPagePicker');if(!root||!flowchartDraft)return;
+      root.innerHTML=flowchartDraft.moduleIds.map(mid=>{const module=flowModuleById(mid);if(!module)return'';const pages=KCFlow.pages(module);return `<div class="flowPageGroup"><div class="flowPageGroupHead"><strong>${esc(module.name?.id||mid)}</strong><span>${pages.length} Page Menu</span></div><div class="flowPageChoices">${pages.length?pages.map(page=>`<label class="flowModuleChoice"><input type="checkbox" data-flow-page-module="${esc(mid)}" data-flow-page="${esc(page.id)}" ${KCFlow.assignments(flowchartDraft,mid).includes(page.id)?'checked':''}><span>${esc(page.id)}</span></label>`).join(''):'<span class="helper">Belum ada Page Menu. Buat melalui Guide Arrangement.</span>'}</div></div>`}).join('')||'<span class="helper">Pilih Main Menu terlebih dahulu.</span>';
+      root.querySelectorAll('[data-flow-page-module]').forEach(input=>input.onchange=()=>{const mid=input.dataset.flowPageModule,page=input.dataset.flowPage;flowchartDraft.pageMenuIds=flowchartDraft.pageMenuIds||{};const set=new Set(flowchartDraft.pageMenuIds[mid]||[]);if(input.checked)set.add(page);else set.delete(page);flowchartDraft.pageMenuIds[mid]=[...set];saveFlowchartWorkspace();});
     }
     function renderFlowchartStatus() {
       const badge = $('flowchartStatusBadge'); if (!badge || !flowchartDraft) return;
@@ -5188,7 +5269,7 @@
       $('flowEnabled').checked = flowchartDraft.enabled !== false;
       $('flowTitleId').value = flowchartDraft.title?.id || '';
       $('flowTitleEn').value = flowchartDraft.title?.en || '';
-      renderFlowModulePicker(); renderFlowchartStatus(); renderFlowchartNodes();
+      renderFlowModulePicker(); renderFlowPagePicker(); renderFlowchartStatus(); renderFlowchartNodes();
     }
     function renderFlowchartEditor() {
       updateFlowHistoryButtons();
@@ -6028,6 +6109,7 @@
         flowId: flowchartDraft.flowId || flowUid(),
         adminName: flowchartDraft.adminName.trim(),
         moduleIds: [...new Set(flowchartDraft.moduleIds)],
+        pageMenuIds: KCFlow.normalizeAssignments(flowchartDraft.pageMenuIds,flowchartDraft.moduleIds,state.data),
         enabled: flowchartDraft.enabled,
         title: clone(flowchartDraft.title),
         nodes: clone(flowchartDraft.nodes),
@@ -6040,6 +6122,7 @@
     async function saveFlowchart() {
       syncFlowchartHeaderDraftSilent();
       flowchartDraft.moduleIds = [...new Set(flowchartDraft.moduleIds)].filter(id => state.data.some(module => module.id === id));
+      flowchartDraft.pageMenuIds=KCFlow.normalizeAssignments(flowchartDraft.pageMenuIds,flowchartDraft.moduleIds,state.data);
       if (!flowchartDraft.adminName.trim()) { toast('Isi Flowchart Name agar variasi flowchart mudah dibedakan.'); $('flowAdminName')?.focus(); return; }
       if (!flowchartDraft.moduleIds.length) { toast('Pilih minimal 1 Main Menu pada “Show Flowchart In”.'); return; }
       if (!flowchartDraft.title.id.trim() && !flowchartDraft.title.en.trim()) { toast('Isi minimal satu Flowchart Title.'); return; }
@@ -6069,6 +6152,7 @@
         const payload = configPayloadFromDraft(existing);
         collection[payload.flowId] = payload;
         latest.flowcharts = collection;
+        latest.flowchartArrangement=KCFlow.pruneOrder(latest.flowchartArrangement,collection,latest.data);
         state = latest;
         selectedFlowId = payload.flowId;
         flowchartDraft = normalizeFlowchartConfig(payload.flowId, payload);
@@ -6164,6 +6248,7 @@
           const collection = flowchartCollection(latest.flowcharts);
           delete collection[flowId];
           latest.flowcharts = collection;
+          latest.flowchartArrangement=KCFlow.pruneOrder(latest.flowchartArrangement,collection,latest.data);
           state = latest; sharedAiReportCache = sharedAiReportFromState(state); knowledgeFingerprint = knowledgeContentFingerprint(state);
           const saved = await persist('', { skipReportRefresh: true });
           if (!saved) throw new Error('Flowchart could not be deleted.');
@@ -6175,13 +6260,194 @@
         } catch (error) { console.error('Delete flowchart failed:', error); toast(error.message || 'Flowchart gagal dihapus.'); }
       });
     }
+    // ===== Flowchart Arrangement: registered Page Menu groups =====
+    let flowArrangementContext = null;
+    let flowArrangementDragged = '';
+    let flowArrangementPage = 1;
+    let flowArrangementFilter = { main: '', page: '' };
+    let flowArrangementDraft = null;
+    let flowArrangementSaving = false;
+
+    function flowArrangementRecords(source = state) {
+      return KCFlow.registrations(source.data, flowchartCollection(source.flowcharts), source.flowchartArrangement);
+    }
+    function flowArrangementPages() {
+      const main = $('flowArrangeMain').value, select = $('flowArrangePage'), previous = select.value;
+      const pages = new Map();
+      state.data.filter(m => !main || m.id === main).forEach(m => KCFlow.pages(m).forEach(p => pages.set(p.id, p)));
+      select.innerHTML = '<option value="">All Page Menu</option>' + [...pages.values()].map(p => `<option value="${esc(p.id)}">${esc(p.id)}</option>`).join('');
+      select.value = [...select.options].some(o => o.value === previous) ? previous : '';
+    }
+    function renderFlowArrangement() {
+      const main = $('flowArrangeMain'); if (!main) return;
+      const previous = main.value;
+      main.innerHTML = moduleOptions(true);
+      main.value = state.data.some(m => m.id === previous) ? previous : '';
+      flowArrangementPages();
+      const all = flowArrangementRecords();
+      const rows = all.filter(r => (!flowArrangementFilter.main || r.moduleId === flowArrangementFilter.main) && (!flowArrangementFilter.page || r.pageMenuId === flowArrangementFilter.page));
+      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+      flowArrangementPage = Math.min(Math.max(1, flowArrangementPage), totalPages);
+      const displayed = rows.slice((flowArrangementPage - 1) * PAGE_SIZE, flowArrangementPage * PAGE_SIZE);
+      $('flowArrangeRows').innerHTML = displayed.length ? displayed.map(r => {
+        const module = flowModuleById(r.moduleId);
+        return `<tr><td>${esc(module?.name?.id || r.moduleId)}</td><td>${esc(r.pageMenuId)}</td><td>${r.items.length}</td><td><div class="actionMenu"><button class="actionMenuBtn" type="button" aria-label="Open actions" aria-expanded="false" data-flow-arr-menu="${esc(r.id)}">⋮</button><div class="actionDropdown"><button type="button" data-flow-arr-edit="${esc(r.id)}">Edit</button><button type="button" data-flow-arr-delete="${esc(r.id)}">Delete</button></div></div></td></tr>`;
+      }).join('') : '<tr><td colspan="4" class="empty">Belum ada Flowchart Arrangement yang sesuai. Klik Add Flowchart Arrangement untuk mendaftarkan.</td></tr>';
+      $('flowArrangeSummary').innerHTML = `<span>${displayed.length} arrangements shown</span><span>${all.length} total arrangements</span>`;
+      renderPagination('flowArrangePagination', flowArrangementPage, totalPages, rows.length, next => { flowArrangementPage = next; renderFlowArrangement(); });
+      const unassigned = flowchartItems().filter(c => c.moduleIds.some(mid => !KCFlow.assignments(c, mid).length)).length;
+      const notice = $('flowArrangeNotice');
+      notice.hidden = !unassigned;
+      if (unassigned) notice.textContent = `${unassigned} flowchart memiliki Main Menu yang belum dikelompokkan. Gunakan Add atau Edit untuk menempatkannya. Flowchart asli tetap tersimpan.`;
+      const root = $('flowArrangeRows');
+      root.querySelectorAll('[data-flow-arr-menu]').forEach(b => b.onclick = e => toggleActionMenu(b, e));
+      root.querySelectorAll('[data-flow-arr-edit]').forEach(b => b.onclick = () => { closeGuideActionMenus(); openFlowArrangementEditor(b.dataset.flowArrEdit); });
+      root.querySelectorAll('[data-flow-arr-delete]').forEach(b => b.onclick = () => { closeGuideActionMenus(); deleteFlowArrangementById(b.dataset.flowArrDelete); });
+    }
+    function flowArrangementRecord(id) { return flowArrangementRecords().find(r => r.id === id); }
+    function flowArrangementAvailable(mid) { return flowchartItems().filter(c => c.moduleIds.includes(mid)); }
+    function flowArrangementInfo(config) {
+      return `<div class="flowArrangeItemText"><strong>${esc(flowDisplayName(config))}</strong><small>${esc(config.title?.id || config.title?.en || '—')} • ${config.nodes?.length || 0} steps • ${config.enabled !== false ? 'Active' : 'Hidden'}</small></div>`;
+    }
+    function flowArrangementSnapshot() {
+      const d = flowArrangementDraft;
+      return d ? JSON.stringify({ moduleId: d.moduleId, pageMenuId: d.pageMenuId, ids: d.ids }) : '';
+    }
+    function flowArrangementHasChanges() { return !!flowArrangementDraft && flowArrangementSnapshot() !== flowArrangementDraft.originalSnapshot; }
+    function flowArrangementCanLeave() { return !flowArrangementSaving && (!flowArrangementHasChanges() || window.confirm('Perubahan Flowchart Arrangement belum disimpan. Buang perubahan?')); }
+    function closeFlowArrangementEditor() {
+      if (!flowArrangementCanLeave()) return;
+      flowArrangementDraft = null;
+      flowArrangementContext = null;
+      hideModal();
+    }
+    function openFlowArrangementEditor(id = '') {
+      if (flowArrangementDraft && !flowArrangementCanLeave()) return;
+      const record = id ? flowArrangementRecord(id) : null;
+      if (id && !record) { toast('Arrangement tidak ditemukan. Muat ulang daftar.'); return; }
+      if (!state.data.length) { toast('Buat Main Menu dan Page Menu terlebih dahulu.'); return; }
+      const moduleId = record?.moduleId || $('flowArrangeMain').value || state.data[0].id;
+      const pageMenuId = record?.pageMenuId || '';
+      const ids = record ? record.items.map(c => c.flowId) : [];
+      flowArrangementDraft = { mode: record ? 'edit' : 'add', recordId: record?.id || '', source: record ? { moduleId: record.moduleId, pageMenuId: record.pageMenuId } : null, moduleId, pageMenuId, ids: [...ids], originalSnapshot: '', search: '' };
+      flowArrangementContext = flowArrangementDraft;
+      flowArrangementDraft.originalSnapshot = flowArrangementSnapshot();
+      showModal(`<div class="modalHeader"><div><div class="flowchartAdminEyebrow">CONTENT MANAGEMENT</div><h2>${record ? 'Edit' : 'Add'} Flowchart Arrangement</h2></div><button class="closeModal" type="button" data-close aria-label="Close">×</button></div>
+        <div class="flowArrangeModalBody">
+          <p class="helper">Daftarkan flowchart ke Page Menu yang sudah tersedia pada Guide Arrangement. Satu flowchart dapat digunakan pada beberapa Page Menu tanpa mengubah graph aslinya.</p>
+          <div class="flowArrangeFormGrid"><div class="field"><label for="flowArrangeEditMain">Main Menu <span aria-hidden="true">*</span></label><select id="flowArrangeEditMain"></select></div><div class="field"><label for="flowArrangeEditPage">Page Menu <span aria-hidden="true">*</span></label><select id="flowArrangeEditPage"></select></div></div>
+          <div class="flowArrangeHead"><div><h2>Flowchart Selection &amp; Order</h2><p class="helper">Pilih flowchart yang ingin didaftarkan, lalu atur urutan tampilnya.</p></div></div>
+          <div class="flowArrangeColumns">
+            <div class="flowArrangeColumn"><div class="flowArrangeColumnHead"><strong>Available Flowcharts</strong><span id="flowArrangeAvailableCount"></span></div><div class="field flowArrangeSearchField"><label for="flowArrangeSearch">Search Flowchart</label><input id="flowArrangeSearch" placeholder="Search name or title" autocomplete="off"></div><div id="flowArrangeAvailable" class="flowArrangeItems"></div></div>
+            <div class="flowArrangeColumn"><div class="flowArrangeColumnHead"><strong>Selected &amp; Order</strong><span id="flowArrangeSelectedCount"></span></div><p class="helper">Drag &amp; drop atau gunakan tombol ↑ ↓ untuk mengatur urutan.</p><div id="flowArrangeSelected" class="flowArrangeItems"></div></div>
+          </div><p class="flowArrangeSelectionHint">Hanya flowchart yang terdaftar pada Main Menu pilihan yang dapat dipilih. Untuk membuat graph baru, gunakan tab Flowchart. Menghapus pilihan di sini tidak menghapus graph.</p>
+          <div class="flowArrangeError" id="flowArrangeError" role="alert" hidden></div>
+        </div><div class="flowArrangeModalFooter"><button class="ghostBtn" id="flowArrangeCancel" type="button">Cancel</button><button class="primaryBtn" id="flowArrangeSave" type="button">Save Arrangement</button></div>`);
+      $('modalBox').classList.add('flowArrangeModal');
+      $('modalBox').querySelectorAll('[data-close]').forEach(b => b.onclick = closeFlowArrangementEditor);
+      $('flowArrangeCancel').onclick = closeFlowArrangementEditor;
+      $('flowArrangeSave').onclick = saveFlowArrangement;
+      $('flowArrangeEditMain').innerHTML = moduleOptions();
+      $('flowArrangeEditMain').value = moduleId;
+      $('flowArrangeEditMain').onchange = () => {
+        const d = flowArrangementDraft, mid = $('flowArrangeEditMain').value;
+        const allowed = new Set(flowArrangementAvailable(mid).map(c => c.flowId));
+        const removed = d.ids.filter(fid => !allowed.has(fid));
+        if (removed.length && !window.confirm(`${removed.length} flowchart tidak terdaftar pada Main Menu tujuan dan akan dilepas dari pilihan arrangement ini. Lanjutkan?`)) { $('flowArrangeEditMain').value = d.moduleId; return; }
+        d.moduleId = mid; d.ids = d.ids.filter(fid => allowed.has(fid)); d.pageMenuId = '';
+        flowArrangementEditPages(); renderFlowArrangementItems();
+      };
+      $('flowArrangeEditPage').onchange = () => { flowArrangementDraft.pageMenuId = $('flowArrangeEditPage').value; renderFlowArrangementItems(); };
+      $('flowArrangeSearch').oninput = () => { flowArrangementDraft.search = $('flowArrangeSearch').value; renderFlowArrangementItems(); };
+      flowArrangementEditPages(); renderFlowArrangementItems();
+    }
+    function flowArrangementEditPages() {
+      const d = flowArrangementDraft; if (!d) return;
+      const m = flowModuleById(d.moduleId), select = $('flowArrangeEditPage');
+      const available = m ? KCFlow.pages(m) : [];
+      select.innerHTML = '<option value="">Select Page Menu</option>' + available.map(p => `<option value="${esc(p.id)}">${esc(p.id)}</option>`).join('');
+      if (available.some(p => p.id === d.pageMenuId)) select.value = d.pageMenuId;
+      else d.pageMenuId = select.value = '';
+    }
+    function flowArrangementError(message = '') {
+      const el = $('flowArrangeError'); if (!el) return;
+      el.textContent = message; el.hidden = !message;
+    }
+    function renderFlowArrangementItems() {
+      const d = flowArrangementDraft; if (!d || !$('flowArrangeAvailable')) return;
+      const all = flowArrangementAvailable(d.moduleId), map = new Map(all.map(c => [c.flowId, c]));
+      d.ids = d.ids.filter(fid => map.has(fid));
+      const selected = new Set(d.ids), query = d.search.trim().toLowerCase();
+      const available = all.filter(c => !selected.has(c.flowId) && `${c.adminName} ${c.title?.id || ''} ${c.title?.en || ''}`.toLowerCase().includes(query));
+      const chosen = d.ids.map(fid => map.get(fid)).filter(Boolean);
+      $('flowArrangeAvailableCount').textContent = `${available.length} available`;
+      $('flowArrangeSelectedCount').textContent = `${chosen.length} selected`;
+      $('flowArrangeAvailable').innerHTML = available.length ? available.map(c => `<label class="flowArrangeItem"><input type="checkbox" data-flow-arr-add="${esc(c.flowId)}">${flowArrangementInfo(c)}</label>`).join('') : '<div class="flowArrangeEmpty">Tidak ada flowchart lain yang tersedia.</div>';
+      $('flowArrangeSelected').innerHTML = chosen.length ? chosen.map((c, i) => `<div class="flowArrangeItem selected" draggable="true" data-flow-arr-row="${esc(c.flowId)}"><span aria-hidden="true" title="Drag to arrange" style="font-size:16px;color:#8BAAB5">⠿</span><input type="checkbox" checked data-flow-arr-remove="${esc(c.flowId)}" aria-label="Remove ${esc(flowDisplayName(c))}">${flowArrangementInfo(c)}<div class="flowArrangeMove"><button type="button" data-flow-arr-up="${esc(c.flowId)}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button><button type="button" data-flow-arr-down="${esc(c.flowId)}" ${i === chosen.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button></div></div>`).join('') : '<div class="flowArrangeEmpty">Belum ada flowchart yang dipilih.</div>';
+      $('flowArrangeSave').disabled = flowArrangementSaving || (!d.pageMenuId || (d.mode === 'edit' && !flowArrangementHasChanges()));
+      $('flowArrangeAvailable').querySelectorAll('[data-flow-arr-add]').forEach(x => x.onchange = () => { if (x.checked && !d.ids.includes(x.dataset.flowArrAdd)) d.ids.push(x.dataset.flowArrAdd); flowArrangementError(); renderFlowArrangementItems(); });
+      $('flowArrangeSelected').querySelectorAll('[data-flow-arr-remove]').forEach(x => x.onchange = () => { if (!x.checked) d.ids = d.ids.filter(fid => fid !== x.dataset.flowArrRemove); flowArrangementError(); renderFlowArrangementItems(); });
+      function move(id, delta) { const i = d.ids.indexOf(id), j = i + delta; if (i < 0 || j < 0 || j >= d.ids.length) return; [d.ids[i], d.ids[j]] = [d.ids[j], d.ids[i]]; renderFlowArrangementItems(); }
+      $('flowArrangeSelected').querySelectorAll('[data-flow-arr-up]').forEach(x => x.onclick = () => move(x.dataset.flowArrUp, -1));
+      $('flowArrangeSelected').querySelectorAll('[data-flow-arr-down]').forEach(x => x.onclick = () => move(x.dataset.flowArrDown, 1));
+      $('flowArrangeSelected').querySelectorAll('[data-flow-arr-row]').forEach(row => {
+        row.ondragstart = e => { if (e.target.closest('button,input')) { e.preventDefault(); return; } flowArrangementDragged = row.dataset.flowArrRow; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', flowArrangementDragged); };
+        row.ondragend = () => { flowArrangementDragged = ''; row.classList.remove('dragging'); };
+        row.ondragover = e => { if (flowArrangementDragged && flowArrangementDragged !== row.dataset.flowArrRow) { e.preventDefault(); row.classList.add('dropTarget'); } };
+        row.ondragleave = () => row.classList.remove('dropTarget');
+        row.ondrop = e => { e.preventDefault(); row.classList.remove('dropTarget'); const from = flowArrangementDragged, to = row.dataset.flowArrRow; if (!from || from === to) return; const i = d.ids.indexOf(from), j = d.ids.indexOf(to); if (i < 0 || j < 0) return; d.ids.splice(i, 1); d.ids.splice(j, 0, from); flowArrangementDragged = ''; renderFlowArrangementItems(); };
+      });
+    }
+    async function saveFlowArrangement() {
+      const d = flowArrangementDraft; if (!d || flowArrangementSaving) return;
+      const snapshot = { moduleId: d.moduleId, pageMenuId: d.pageMenuId, ids: [...d.ids], source: d.source ? { ...d.source } : null, id: d.recordId || undefined };
+      if (!snapshot.pageMenuId) { flowArrangementError('Pilih Page Menu terlebih dahulu.'); return; }
+      const button = $('flowArrangeSave'); flowArrangementSaving = true; button.disabled = true; button.textContent = 'Saving…'; flowArrangementError();
+      try {
+        const latest = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
+        const collection = flowchartCollection(latest.flowcharts);
+        const result = KCFlow.saveRegistration(latest.flowchartArrangement, collection, latest.data, snapshot);
+        latest.flowcharts = result.flowcharts;
+        latest.flowchartArrangement = result.flowchartArrangement;
+        state = latest; sharedAiReportCache = sharedAiReportFromState(state); knowledgeFingerprint = knowledgeContentFingerprint(state);
+        const saved = await persist('', { skipReportRefresh: true });
+        if (!saved) throw new Error('Arrangement could not be saved.');
+        flowArrangementSaving = false; flowArrangementDraft = null; flowArrangementContext = null;
+        hideModal(); flowArrangementPage = 1; renderFlowArrangement();
+        toast('Flowchart Arrangement berhasil disimpan.');
+      } catch (error) { console.error('Save Flowchart Arrangement failed:', error); flowArrangementError(error.message || 'Arrangement gagal disimpan.'); }
+      finally { flowArrangementSaving = false; if (flowArrangementDraft === d && button.isConnected) { button.textContent = 'Save Arrangement'; renderFlowArrangementItems(); } }
+    }
+    function deleteFlowArrangementById(id) {
+      const record = flowArrangementRecord(id); if (!record) { toast('Arrangement tidak ditemukan.'); return; }
+      const module = flowModuleById(record.moduleId);
+      confirmModal(`Delete Flowchart Arrangement “${module?.name?.id || record.moduleId} / ${record.pageMenuId}”? ${record.items.length} flowchart akan dilepas dari Page Menu ini. Graph asli, direct link, dan pengelompokan lainnya tidak akan dihapus.`, async () => {
+        try {
+          const latest = await window.KCStore.refresh(window.KC_DEFAULT_DATA);
+          const collection = flowchartCollection(latest.flowcharts);
+          const result = KCFlow.deleteRegistration(latest.flowchartArrangement, collection, latest.data, record.moduleId, record.pageMenuId);
+          latest.flowcharts = result.flowcharts;
+          latest.flowchartArrangement = result.flowchartArrangement;
+          state = latest; sharedAiReportCache = sharedAiReportFromState(state); knowledgeFingerprint = knowledgeContentFingerprint(state);
+          const saved = await persist('', { skipReportRefresh: true });
+          if (!saved) throw new Error('Arrangement could not be deleted.');
+          flowArrangementPage = 1; renderFlowArrangement();
+          successModal('Flowchart Arrangement berhasil dihapus. Graph asli dan direct link tetap tersedia.');
+        } catch (error) { console.error('Delete Flowchart Arrangement failed:', error); toast(error.message || 'Arrangement gagal dihapus.'); }
+      });
+    }
+    $('addFlowArrangement').onclick = () => openFlowArrangementEditor();
+    $('flowArrangeMain').onchange = flowArrangementPages;
+    $('flowArrangeSearchButton').onclick = () => { flowArrangementFilter = { main: $('flowArrangeMain').value, page: $('flowArrangePage').value }; flowArrangementPage = 1; renderFlowArrangement(); };
     $('newFlowchart').onclick = startNewFlowchart;
     $('backToFlowchartList').onclick = backToFlowchartList;
     $('cancelFlowchart').onclick = backToFlowchartList;
+    $('flowListModuleFilter').onchange=()=>{ensureFlowListControls();flowchartPage=1;renderFlowchartLibrary();};
+    $('flowListPageFilter').onchange=()=>{flowchartPage=1;renderFlowchartLibrary();};
     $('applyFlowFilter').onclick = () => { flowchartPage = 1; renderFlowchartLibrary(); };
     $('applyFlowMoreFilter').onclick = () => { flowchartPage = 1; renderFlowchartLibrary(); $('flowchartMoreFilter').hidden = true; };
     $('toggleFlowMoreFilter').onclick = () => { $('flowchartMoreFilter').hidden = !$('flowchartMoreFilter').hidden; };
-    $('resetFlowFilter').onclick = () => { $('flowListModuleFilter').value = ''; $('flowListStatusFilter').value = ''; flowchartPage = 1; renderFlowchartLibrary(); };
+    $('resetFlowFilter').onclick = () => { $('flowListModuleFilter').value = ''; $('flowListStatusFilter').value = ''; $('flowListPageFilter').value=''; flowchartPage = 1; renderFlowchartLibrary(); };
     $('flowListSearch').addEventListener('keydown', event => { if (event.key === 'Enter') { flowchartPage = 1; renderFlowchartLibrary(); } });
     $('flowAdminName').oninput = syncFlowchartHeaderDraft;
     $('flowEnabled').onchange = syncFlowchartHeaderDraft;
@@ -6243,7 +6509,7 @@
       else if((key==='z'&&event.shiftKey)||key==='y'){redoFlowchartEdit();event.preventDefault();}
     });
 
-    function showModal(html, small = false) { $('modalBox').className = 'modal' + (small ? ' small' : ''); $('modalBox').innerHTML = html; $('modalOverlay').classList.add('show'); $('modalBox').querySelectorAll('[data-close]').forEach(x => x.onclick = hideModal) } function hideModal() { $('modalOverlay').classList.remove('show') }
+    function showModal(html, small = false) { $('modalBox').className = 'modal' + (small ? ' small' : ''); $('modalBox').innerHTML = html; $('modalOverlay').classList.add('show'); $('modalBox').querySelectorAll('[data-close]').forEach(x => x.onclick = hideModal) } function hideModal() { if (flowArrangementDraft && $('modalBox').classList.contains('flowArrangeModal')) { if (!flowArrangementCanLeave()) return; flowArrangementDraft = null; flowArrangementContext = null; } $('modalOverlay').classList.remove('show') }
     function successModal(message) { showModal(`<button class="closeModal" style="float:right" data-close>×</button><div class="successIcon">✓</div><h2>Success</h2><p>${esc(message)}</p><div class="modalActions"><button class="primaryBtn" data-close>Close</button></div>`, true) }
     function confirmModal(message, onYes) { showModal(`<div class="confirmIcon">?</div><h2>Are you sure?</h2><p>${esc(message)}</p><div class="modalActions"><button class="ghostBtn" data-close>No</button><button class="primaryBtn" id="confirmYes">Yes</button></div>`, true); $('confirmYes').onclick = async () => { hideModal(); await onYes() } }
     $('modalOverlay').onclick = e => { if (e.target === $('modalOverlay')) hideModal() }; document.addEventListener('keydown', e => { if (e.key === 'Escape') hideModal() });
@@ -7181,6 +7447,7 @@
       if (activeTab === 'list') renderGuideList();
       else if (activeTab === 'arrange') renderArrangement();
       else if (activeTab === 'flowchart') renderFlowchartEditor();
+      else if (activeTab === 'flow-arrange') renderFlowArrangement();
       else if (activeTab === 'feedback') renderFeedbackReport({ skipRefresh: true });
     }
     function renderAll() { initSelects(); renderVisibleAdminPanel() }
@@ -7233,7 +7500,7 @@
         if (nextFingerprint !== knowledgeFingerprint) {
           // Never replace an active Create/Edit draft. Submit already refreshes the latest
           // cloud state immediately before merging and saving the user's draft.
-          if (hasUnsavedCreateDraft() || ($('panel-flowchart')?.classList.contains('active') && flowchartView === 'editor' && flowchartDraft)) {
+          if (hasUnsavedCreateDraft() || ($('panel-flowchart')?.classList.contains('active') && flowchartView === 'editor' && flowchartDraft) || ($('panel-flow-arrange')?.classList.contains('active') && flowArrangementHasChanges())) {
             // Keep the active editor untouched. The latest shared state will be merged
             // when the user explicitly saves the guide/flowchart.
             setSynced('Remote update available');
